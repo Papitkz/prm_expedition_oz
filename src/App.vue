@@ -55,8 +55,8 @@ router.afterEach(async () => {
     // Reset loading state after transition completes
     setTimeout(() => {
       isLoading.value = false
-    }, 500)
-  }, 300)
+    }, 750)
+  }, 700)
 })
 </script>
 

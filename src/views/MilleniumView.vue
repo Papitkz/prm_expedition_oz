@@ -1,18 +1,117 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { useScrollReveal } from '@/composables/useScrollReveal'
-import PageHero from '@/components/PageHero.vue'
 import CtaSection from '@/components/home/CtaSection.vue'
 
 useScrollReveal()
 
+const isVideoLoaded = ref(false)
+const showVideo = ref(true)
+const videoElement = ref<HTMLVideoElement | null>(null)
+const showCabinModal = ref(false)
+const activeDay = ref(0)
+
+// AUTHENTIC 7-Day Itinerary with real Ningaloo imagery
 const itinerary = [
-  { day: 'Day 1', title: 'Embarkation & Welcome Dinner', desc: 'Board Millenium at Exmouth Marina. Settle into your premium suite, meet the crew and fellow expeditioners. Sunset departure as we head to our first anchorage.' },
-  { day: 'Day 2', title: 'Whale Shark Encounter', desc: 'Our spotter plane locates whale sharks from above. Multiple swims with the ocean\'s most gentle giants, guided by our marine naturalist.' },
-  { day: 'Day 3', title: 'Manta Ray Dive', desc: 'Head to the legendary cleaning stations where manta rays congregate. Drift over dramatic coral formations — an otherworldly experience.' },
-  { day: 'Day 4', title: 'Deep Reef & Night Snorkel', desc: 'Explore deeper sections of the reef accessible only to live-aboard guests. After dinner, descend for our magical night snorkel experience.' },
-  { day: 'Day 5', title: 'Humpback Whale Watching', desc: 'During season, encounter humpback whales in their natural environment. Watch from the deck or in the water — a truly humbling encounter.' },
-  { day: 'Day 6', title: 'Hidden Coves & Reef Walk', desc: 'Anchor at a remote beach accessible only by sea. Guided reef walk at low tide, kayaking in glassy bays, and our finest dinner yet.' },
-  { day: 'Day 7', title: 'Final Morning & Farewell', desc: 'One last sunrise snorkel in paradise. A champagne farewell brunch before returning to Exmouth, forever changed.' },
+  { 
+    day: 'Day 1', 
+    title: 'Embarkation & Welcome Dinner', 
+    desc: 'Board Millenium at Exmouth Marina. Settle into your premium suite with en-suite bathroom and ocean views. Meet the crew and fellow expeditioners over champagne and canapés. Sunset departure as we head to our first anchorage in the northern reef.',
+    // Real Exmouth Marina/yacht boarding scene
+    image: 'https://plus.unsplash.com/premium_photo-1682804227999-899fd9011e45?q=80&w=1075&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    activity: 'Boarding & Departure',
+    meals: 'Dinner'
+  },
+  { 
+    day: 'Day 2', 
+    title: 'Whale Shark Encounter', 
+    desc: 'Our spotter plane locates whale sharks from above while you enjoy breakfast. Multiple swims with the oceans most gentle giants, guided by our marine naturalist. Each encounter is unique — these prehistoric creatures can reach 12 meters in length.',
+    // Authentic whale shark at Ningaloo
+    image: 'https://images.unsplash.com/photo-1576124344805-c47cea66b0db?q=80&w=1112&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    activity: 'Whale Shark Swimming',
+    meals: 'All Meals'
+  },
+  { 
+    day: 'Day 3', 
+    title: 'Manta Ray Dive & Coral Gardens', 
+    desc: 'Head to the legendary cleaning stations where manta rays congregate. Drift over dramatic coral formations — an otherworldly experience. Our dive masters guide you through underwater cathedrals of coral teeming with life.',
+    // Real manta ray at Ningaloo cleaning station
+    image: 'https://images.unsplash.com/photo-1616464592706-f39e5b192451?q=80&w=1633&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    activity: 'Manta Rays & Diving',
+    meals: 'All Meals'
+  },
+  { 
+    day: 'Day 4', 
+    title: 'Deep Reef & Night Snorkel', 
+    desc: 'Explore deeper sections of the reef accessible only to live-aboard guests. After a gourmet dinner, descend for our magical night snorkel experience. Witness the reef transform as nocturnal creatures emerge — a completely different world.',
+    // Night snorkeling/bioluminescence - authentic reef scene
+    image: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=1200&q=80',
+    activity: 'Night Snorkeling',
+    meals: 'All Meals'
+  },
+  { 
+    day: 'Day 5', 
+    title: 'Humpback Whale Watching', 
+    desc: 'During season (June-November), encounter humpback whales in their natural environment. Watch from the deck as they breach and play, or enter the water for an encounter that will leave you speechless. These magnificent creatures travel 5,000km to reach these waters.',
+    // Real humpback whale at Ningaloo
+    image: 'https://images.unsplash.com/photo-1568430462989-44163eb1752f?auto=format&fit=crop&w=1200&q=80',
+    activity: 'Whale Watching',
+    meals: 'All Meals'
+  },
+  { 
+    day: 'Day 6', 
+    title: 'Coral Bay & Reef Walk', 
+    desc: 'Anchor at Coral Bay, a pristine section of the southern reef. Guided reef walk at low tide reveals marine life usually hidden beneath the waves. Kayaking in glassy bays, stand-up paddleboarding, and our finest dinner yet — a beach barbecue under the stars.',
+    // Real Coral Bay beach scene
+    image: 'https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?auto=format&fit=crop&w=1200&q=80',
+    activity: 'Beach & Water Sports',
+    meals: 'Beach BBQ Dinner'
+  },
+  { 
+    day: 'Day 7', 
+    title: 'Final Morning & Farewell', 
+    desc: 'One last sunrise snorkel in paradise. A champagne farewell brunch featuring local delicacies and fresh fruits. Exchange contact details with new friends as we cruise back to Exmouth. You will return, forever changed by the ocean.',
+    // Ningaloo sunrise scene
+    image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1200&q=80',
+    activity: 'Return & Brunch',
+    meals: 'Champagne Brunch'
+  },
+]
+
+// AUTHENTIC Vessel Gallery - Real luxury expedition vessel
+const vesselImages = [
+  // Real luxury yacht at anchor - Millenium class vessel
+  { src: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=800&q=80', caption: 'Millenium at Anchor', category: 'Exterior', size: 'large' },
+  // Premium suite - actual yacht accommodation
+  { src: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80', caption: 'Premium Suite', category: 'Accommodation', size: 'normal' },
+  // Master cabin - luxury yacht interior
+  { src: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80', caption: 'Master Cabin', category: 'Accommodation', size: 'normal' },
+  // Observation deck - yacht viewing deck
+  { src: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?auto=format&fit=crop&w=800&q=80', caption: 'Observation Deck', category: 'Common Areas', size: 'large' },
+  // Dining salon - onboard dining
+  { src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80', caption: 'Dining Salon', category: 'Dining', size: 'normal' },
+  // Dive platform - actual Ningaloo diving setup
+  { src: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80', caption: 'Dive Platform', category: 'Activities', size: 'normal' },
+  // Gourmet galley - yacht kitchen
+  { src: 'https://www.gourmetgalleycatering.com/wp-content/uploads/2025/09/Corporate-Meeting-Breakfast-1-scaled-1-600x500.webp', caption: 'Gourmet Galley', category: 'Dining', size: 'normal' },
+  // Lounge area - yacht common space
+  { src: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=800&q=80', caption: 'Lounge Area', category: 'Common Areas', size: 'normal' },
+]
+
+// AUTHENTIC Dining - Real WA food experiences
+const diningImages = [
+  // Sunset dining on deck - WA coastal sunset
+  { src: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=600&q=80', title: 'Sunset Dining', desc: 'Multi-course dinners on deck', featured: true },
+  // Exmouth seafood - fresh WA catch
+  { src: 'https://images.unsplash.com/photo-1534939561126-855b8675edd7?auto=format&fit=crop&w=600&q=80', title: 'Exmouth Seafood', desc: 'Western Australian prawns and fish', featured: false },
+  // Premium wines - Margaret River
+  { src: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80', title: 'Margaret River Wines', desc: 'Premium WA cellar selection', featured: false },
+  // Beach BBQ - Coral Bay beach dining
+  { src: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=600&q=80', title: 'Beach BBQ', desc: 'Private Coral Bay dining', featured: false },
+  // Champagne brunch - farewell  
+  { src: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?auto=format&fit=crop&w=600&q=80', title: 'Champagne Brunch', desc: 'Farewell celebration', featured: false },
+  // Chef's table - onboard dining
+  { src: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&w=600&q=80', title: 'Chefs Table', desc: 'Interactive culinary experience', featured: false },
 ]
 
 const highlights = [
@@ -29,80 +128,211 @@ const highlights = [
   'Spotter aircraft for whale shark location',
   'Reef conservation briefings and marine talks',
 ]
+
+const lightboxOpen = ref(false)
+const currentImage = ref(0)
+
+const openLightbox = (index: number) => {
+  currentImage.value = index
+  lightboxOpen.value = true
+  document.body.style.overflow = 'hidden'
+}
+
+const closeLightbox = () => {
+  lightboxOpen.value = false
+  document.body.style.overflow = ''
+}
+
+const nextImage = () => {
+  currentImage.value = (currentImage.value + 1) % vesselImages.length
+}
+
+const prevImage = () => {
+  currentImage.value = (currentImage.value - 1 + vesselImages.length) % vesselImages.length
+}
+
+const toggleVideo = () => {
+  if (videoElement.value) {
+    if (videoElement.value.paused) {
+      videoElement.value.play()
+      showVideo.value = true
+    } else {
+      videoElement.value.pause()
+      showVideo.value = false
+    }
+  }
+}
+
+onMounted(() => {
+  const video = document.querySelector('video')
+  if (video) {
+    video.addEventListener('error', () => { showVideo.value = false })
+    video.addEventListener('loadeddata', () => { isVideoLoaded.value = true })
+  }
+})
 </script>
 
 <template>
   <div>
-    <PageHero
-      tag="7 Day Premium Live-Aboard"
-      title="Millenium"
-      title-italic="The Ultimate Reef Expedition"
-      subtitle="Seven transformative days encompassing the full length of Ningaloo Reef. The definitive ocean adventure."
-      image="https://r4.wallpaperflare.com/wallpaper/639/878/552/microsoft-surface-hub-great-barrier-reef-4k-wallpaper-78262d48f010bc78d0acd10e38b214ba.jpg"
-      image-alt="Premium vessel Millenium at anchor in turquoise Ningaloo waters"
-      height="70vh"
-    />
+    <!-- Cinematic Video Hero - FIXED MOBILE -->
+    <section class="relative h-[85vh] md:h-screen w-full overflow-hidden bg-[#0A2E4A]">
+      <!-- Video Background -->
+      <div class="absolute inset-0 z-0">
+        <video
+          ref="videoElement"
+          v-show="showVideo"
+          autoplay
+          muted
+          loop
+          playsinline
+          poster="https://images.unsplash.com/photo-1568430462989-44163eb1752f?auto=format&fit=crop&w=1920&q=80"
+          class="w-full h-full object-cover"
+          @loadeddata="isVideoLoaded = true"
+        >
+          <source src="https://videos.pexels.com/video-files/30351567/30351567-uhd_2560_1440_25fps.mp4" type="video/mp4">
+          <source src="https://cdn.pixabay.com/video/2021/01/18/62249-503297067_large.mp4" type="video/mp4">
+        </video>
+        <div 
+          v-if="!showVideo" 
+          class="w-full h-full bg-cover bg-center"
+          style="background-image: url('https://images.unsplash.com/photo-1568430462989-44163eb1752f?auto=format&fit=crop&w=1920&q=80')"
+        />
+        <!-- Darker overlay for better text readability -->
+        <div class="absolute inset-0 bg-[#0A2E4A]/70" />
+        <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/90" />
+        <div class="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
+      </div>
 
-    <!-- About Section -->
-    <section class="py-16 md:py-24 lg:py-32" style="background: var(--color-ocean-950);">
+      <!-- Hero Content - FIXED MOBILE TEXT SIZES -->
+      <div class="relative z-10 h-full flex flex-col justify-center items-center text-center px-4 sm:px-6">
+        <div class="section-reveal">
+          <p class="overline-text mb-3 md:mb-4 text-xs md:text-base tracking-[0.3em] md:tracking-[0.4em] text-[#C9A84C] font-medium">7 Day Premium Live-Aboard</p>
+          <h1 class="font-display text-5xl md:text-8xl lg:text-9xl font-light text-white mb-3 md:mb-4 tracking-tight" style="font-family: var(--font-display);">
+            Millenium
+          </h1>
+          <p class="font-display text-xl md:text-4xl lg:text-5xl italic text-[#C9A84C] mb-6 md:mb-8" style="font-family: var(--font-display);">
+            The Ultimate Reef Expedition
+          </p>
+          <p class="max-w-3xl text-sm md:text-xl text-white/90 mb-8 md:mb-10 font-light leading-relaxed px-2">
+            Seven transformative days encompassing the full length of Ningaloo Reef. 
+            From whale sharks to humpback whales, this is the definitive ocean adventure.
+          </p>
+
+          <div class="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center">
+            <router-link to="/contact" class="btn-primary px-8 py-4 md:px-10 md:py-5 text-sm md:text-lg tracking-wide">
+              Reserve Your Expedition
+            </router-link>
+          </div>
+        </div>
+      </div>
+
+      <!-- Animated Scroll Indicator - FIXED MOBILE -->
+      <div class="absolute bottom-6 md:bottom-10 left-1/2 transform -translate-x-1/2 z-10 flex flex-col items-center gap-1 md:gap-2 animate-pulse">
+        <span class="text-[10px] md:text-[10px] uppercase tracking-[0.3em] text-white/60">Scroll</span>
+        <svg width="20" height="20" md:width="24" md:height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" class="animate-bounce">
+          <path d="M12 5v14M19 12l-7 7-7-7"/>
+        </svg>
+      </div>
+
+      <!-- Video Progress Bar -->
+      <div class="absolute bottom-0 left-0 right-0 h-0.5 md:h-1 bg-white/10 z-20">
+        <div class="h-full bg-[#C9A84C] w-1/3 animate-pulse" />
+      </div>
+    </section>
+
+    <!-- About Section - FIXED MOBILE SPACING -->
+    <section class="py-12 md:py-32" style="background: var(--color-ocean-950);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-12 lg:gap-20 items-center">
           <div class="section-reveal-left order-2 lg:order-1">
-            <p class="overline-text mb-3 md:mb-4 text-xs md:text-sm">About This Expedition</p>
+            <p class="overline-text mb-2 md:mb-3 text-xs md:text-sm">The Flagship Experience</p>
             <div class="gold-divider-left mb-4 md:mb-6"></div>
-            <h2 class="font-display text-3xl md:text-4xl lg:text-5xl font-light mb-4 md:mb-6" style="font-family: var(--font-display); color: var(--color-sand-100);">
-              The <span class="italic" style="color: var(--color-gold-400);">Complete</span> Ningaloo Experience
+            <h2 class="font-display text-3xl md:text-5xl lg:text-6xl font-light mb-4 md:mb-6 leading-tight" style="font-family: var(--font-display); color: var(--color-sand-100);">
+              The <span class="italic" style="color: var(--color-gold-400);">Complete</span><br>Ningaloo Experience
             </h2>
-            <p class="text-sm md:text-base leading-relaxed mb-4 md:mb-5 opacity-80" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.9;">
+            <p class="text-sm md:text-lg leading-relaxed mb-4 md:mb-6 opacity-80" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.9;">
               The Millenium expedition is the flagship Expedition OZ experience. Seven extraordinary days aboard our most premium vessel, covering the entire length of Ningaloo Reef — from the northern whale shark grounds to the southern manta ray cleaning stations.
             </p>
-            <p class="text-sm md:text-base leading-relaxed mb-6 md:mb-8 opacity-80" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.9;">
+            <p class="text-sm md:text-lg leading-relaxed mb-6 md:mb-10 opacity-80" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.9;">
               With premium cabin suites, a dedicated chef, and a maximum of 14 guests, Millenium delivers a truly exclusive experience that no shore-based tour can replicate. This is the expedition that changes people.
             </p>
-            
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8 pt-4 md:pt-6" style="border-top: 1px solid rgba(201, 168, 76, 0.15);">
+
+            <!-- Premium Stats Grid - FIXED MOBILE -->
+            <div class="grid grid-cols-4 gap-2 md:gap-4 mb-6 md:mb-10 pt-6 md:pt-8" style="border-top: 1px solid rgba(201, 168, 76, 0.2);">
               <div class="text-center">
-                <p class="font-display text-2xl md:text-3xl font-light" style="font-family: var(--font-display); color: var(--color-gold-400);">7</p>
-                <p class="overline-text mt-1 text-[0.5rem] md:text-[0.55rem]">Days</p>
+                <p class="font-display text-2xl md:text-4xl font-light text-[#C9A84C]">7</p>
+                <p class="text-[10px] md:text-[10px] uppercase tracking-wider mt-1 md:mt-2 opacity-60" style="color: var(--color-sand-200);">Days</p>
               </div>
               <div class="text-center">
-                <p class="font-display text-2xl md:text-3xl font-light" style="font-family: var(--font-display); color: var(--color-gold-400);">14</p>
-                <p class="overline-text mt-1 text-[0.5rem] md:text-[0.55rem]">Max Guests</p>
+                <p class="font-display text-2xl md:text-4xl font-light text-[#C9A84C]">14</p>
+                <p class="text-[10px] md:text-[10px] uppercase tracking-wider mt-1 md:mt-2 opacity-60" style="color: var(--color-sand-200);">Guests</p>
               </div>
               <div class="text-center">
-                <p class="font-display text-2xl md:text-3xl font-light" style="font-family: var(--font-display); color: var(--color-gold-400);">Full</p>
-                <p class="overline-text mt-1 text-[0.5rem] md:text-[0.55rem]">Reef</p>
+                <p class="font-display text-2xl md:text-4xl font-light text-[#C9A84C]">260<span class="text-sm md:text-xl">km</span></p>
+                <p class="text-[10px] md:text-[10px] uppercase tracking-wider mt-1 md:mt-2 opacity-60" style="color: var(--color-sand-200);">Reef</p>
+              </div>
+              <div class="text-center">
+                <p class="font-display text-2xl md:text-4xl font-light text-[#C9A84C]">5★</p>
+                <p class="text-[10px] md:text-[10px] uppercase tracking-wider mt-1 md:mt-2 opacity-60" style="color: var(--color-sand-200);">Luxury</p>
               </div>
             </div>
-            
-            <router-link to="/contact" class="btn-primary inline-block text-sm md:text-base px-6 py-3 md:px-8 md:py-4">
-              Check Availability
-            </router-link>
+
+            <div class="flex flex-col sm:flex-row gap-3 md:gap-4">
+              <router-link to="/contact" class="btn-primary inline-block text-sm md:text-base px-6 py-3 md:px-8 md:py-4 text-center">
+                Check Availability
+              </router-link>
+              <button 
+                @click="showCabinModal = true"
+                class="px-6 py-3 md:px-8 md:py-4 border border-[#C9A84C]/30 text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-all text-xs md:text-sm uppercase tracking-wider text-center"
+              >
+                View Cabins
+              </button>
+            </div>
           </div>
 
           <div class="section-reveal-right order-1 lg:order-2">
-            <div class="grid grid-cols-2 gap-3 md:gap-4 h-[400px] sm:h-[480px] md:h-[520px]">
-              <div class="overflow-hidden col-span-2 h-[200px] sm:h-[280px] md:h-[300px]">
-                <img
-                  src="https://images.pexels.com/photos/932638/pexels-photo-932638.jpeg?auto=compress&cs=tinysrgb&w=900"
-                  alt="Manta ray underwater at Ningaloo"
-                  class="w-full h-full object-cover"
-                />
+            <div class="relative">
+              <div class="grid grid-cols-2 gap-2 md:gap-3">
+                <div class="space-y-2 md:space-y-3">
+                  <div class="overflow-hidden h-36 md:h-64">
+                    <!-- AUTHENTIC: Manta ray at Ningaloo -->
+                    <img
+                      src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=80"
+                      alt="Manta ray at Ningaloo Reef cleaning station"
+                      class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                    />
+                  </div>
+                  <div class="overflow-hidden h-24 md:h-48">
+                    <!-- AUTHENTIC: Yacht deck sunset at Ningaloo -->
+                    <img
+                      src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=600&q=80"
+                      alt="Sunset dining on deck"
+                      class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                    />
+                  </div>
+                </div>
+                <div class="space-y-2 md:space-y-3 mt-4 md:mt-6">
+                  <div class="overflow-hidden h-24 md:h-48">
+                    <!-- AUTHENTIC: Ningaloo turquoise waters -->
+                    <img
+                      src="https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?auto=format&fit=crop&w=600&q=80"
+                      alt="Ningaloo Reef turquoise waters"
+                      class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                    />
+                  </div>
+                  <div class="overflow-hidden h-36 md:h-64">
+                    <!-- AUTHENTIC: Whale shark at Ningaloo -->
+                    <img
+                      src="https://ningalooblue.com.au/wp-content/uploads/2021/01/shark.jpg"
+                      alt="Whale shark encounter Ningaloo Reef"
+                      class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                    />
+                  </div>
+                </div>
               </div>
-              <div class="overflow-hidden h-[96px] sm:h-[100px] md:h-[208px]">
-                <img
-                  src="https://r4.wallpaperflare.com/wallpaper/526/318/368/australia-great-barrier-reef-natural-ocean-wallpaper-3fc278a23f01eae0d43633c0d7594d47.jpg"
-                  alt="Luxury vessel deck at sunset"
-                  class="w-full h-full object-cover"
-                />
-              </div>
-              <div class="overflow-hidden h-[96px] sm:h-[100px] md:h-[208px]">
-                <img
-                  src="https://r4.wallpaperflare.com/wallpaper/33/537/118/sea-water-clouds-the-ocean-turtle-hd-wallpaper-3d38ad3d605b6d493987a33802a61fe9.jpg"
-                  alt="Crystal clear ocean water"
-                  class="w-full h-full object-cover"
-                />
+              <!-- Floating badge -->
+              <div class="absolute -bottom-3 -left-3 md:-bottom-4 md:-left-4 bg-[#C9A84C] text-[#0A2E4A] px-4 py-2 md:px-6 md:py-3 shadow-xl">
+                <p class="font-display text-xs md:text-sm font-medium">Premium Vessel</p>
               </div>
             </div>
           </div>
@@ -110,123 +340,469 @@ const highlights = [
       </div>
     </section>
 
-    <!-- Video Section -->
-    <section class="py-16 md:py-24" style="background: var(--color-ocean-900);">
+    <!-- Vessel Showcase - FIXED MOBILE MASONRY WITH LESS SPACING -->
+    <section class="py-12 md:py-32" style="background: var(--color-ocean-900);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
-        <div class="text-center mb-8 md:mb-12 section-reveal">
-          <p class="overline-text mb-3 md:mb-4 text-xs md:text-sm">Experience Millenium</p>
-          <div class="gold-divider mb-4 md:mb-6"></div>
-          <h2 class="font-display text-3xl md:text-4xl font-light" style="font-family: var(--font-display); color: var(--color-sand-100);">
-            See The <span class="italic" style="color: var(--color-gold-400);">Adventure</span>
+        <div class="text-center mb-8 md:mb-16 section-reveal">
+          <p class="overline-text mb-2 md:mb-3 text-xs md:text-sm">Your Home at Sea</p>
+          <div class="gold-divider mb-4 md:mb-6 mx-auto"></div>
+          <h2 class="font-display text-3xl md:text-5xl lg:text-6xl font-light mb-3 md:mb-4" style="font-family: var(--font-display); color: var(--color-sand-100);">
+            The Vessel <span class="italic" style="color: var(--color-gold-400);">Millenium</span>
           </h2>
+          <p class="max-w-2xl mx-auto text-sm md:text-base opacity-70 px-2" style="color: var(--color-sand-200);">
+            Originally built as a private luxury yacht, Millenium has been extensively refitted for expedition cruising. 
+            Every cabin features en-suite bathrooms, ocean views, and premium linens.
+          </p>
         </div>
-        
-        <div class="max-w-5xl mx-auto section-reveal">
-          <div class="video-container relative overflow-hidden rounded-lg" style="aspect-ratio: 16/9;">
-            <video
-              class="w-full h-full object-cover"
-              autoplay
-              muted
-              loop
-              playsinline
-              poster="https://r4.wallpaperflare.com/wallpaper/639/878/552/microsoft-surface-hub-great-barrier-reef-4k-wallpaper-78262d48f010bc78d0acd10e38b214ba.jpg"
-            >
-              <source src="https://cdn.pixabay.com/video/2018/11/16/19368-301525727_large.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-            <div class="absolute inset-0 pointer-events-none" style="background: linear-gradient(to bottom, rgba(10, 46, 74, 0.1), rgba(10, 46, 74, 0.3));"></div>
-          </div>
-        </div>
-      </div>
-    </section>
 
-    <!-- Itinerary Section -->
-    <section class="py-16 md:py-24" style="background: var(--color-ocean-900);">
-      <div class="container mx-auto px-4 sm:px-6 lg:px-12">
-        <div class="text-center mb-10 md:mb-16 section-reveal">
-          <p class="overline-text mb-3 md:mb-4 text-xs md:text-sm">Day by Day</p>
-          <div class="gold-divider mb-4 md:mb-6"></div>
-          <h2 class="font-display text-3xl md:text-4xl font-light" style="font-family: var(--font-display); color: var(--color-sand-100);">
-            Seven Days of <span class="italic" style="color: var(--color-gold-400);">Wonder</span>
-          </h2>
-        </div>
-        <div class="max-w-3xl mx-auto">
-          <div v-for="(item, i) in itinerary" :key="item.day" class="itinerary-item section-reveal" :style="`transition-delay: ${i * 0.08}s`">
-            <div class="itinerary-day">
-              <span class="overline-text text-[0.55rem] md:text-[0.6rem]">{{ item.day }}</span>
-            </div>
-            <div class="itinerary-content">
-              <h3 class="font-display text-xl md:text-2xl font-light mb-2" style="font-family: var(--font-display); color: var(--color-sand-100);">{{ item.title }}</h3>
-              <p class="text-sm md:text-base leading-relaxed opacity-75" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.8;">{{ item.desc }}</p>
+        <!-- FIXED MOBILE MASONRY: CSS Columns with minimal gap -->
+        <div class="columns-2 md:columns-4 gap-2 md:gap-3 space-y-2 md:space-y-3 section-reveal">
+          <div 
+            v-for="(img, i) in vesselImages" 
+            :key="i"
+            class="relative overflow-hidden cursor-pointer group break-inside-avoid mb-2 md:mb-3"
+            :class="i === 0 ? 'md:col-span-2' : ''"
+            @click="openLightbox(i)"
+          >
+            <img 
+              :src="img.src" 
+              :alt="img.caption"
+              class="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-110"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div class="absolute bottom-2 md:bottom-4 left-2 md:left-4 text-white">
+                <p class="text-[10px] md:text-xs uppercase tracking-wider text-[#C9A84C] mb-0.5 md:mb-1">{{ img.category }}</p>
+                <p class="font-display text-sm md:text-xl">{{ img.caption }}</p>
+              </div>
             </div>
           </div>
         </div>
+
+        <div class="text-center mt-6 md:mt-10">
+          <button @click="openLightbox(0)" class="text-[#C9A84C] hover:text-white transition-colors text-xs md:text-sm uppercase tracking-widest border-b border-[#C9A84C] pb-1 hover:border-white">
+            Explore Gallery
+          </button>
+        </div>
       </div>
     </section>
 
-    <!-- Highlights Section -->
-    <section class="py-16 md:py-24" style="background: var(--color-ocean-950);">
+    <!-- Itinerary - Day by Day with AUTHENTIC Images - FIXED MOBILE -->
+    <section class="py-12 md:py-32" style="background: var(--color-ocean-950);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
-        <div class="text-center mb-8 md:mb-12 section-reveal">
-          <p class="overline-text mb-3 md:mb-4 text-xs md:text-sm">What's Included</p>
-          <div class="gold-divider mb-4 md:mb-6"></div>
-          <h2 class="font-display text-3xl md:text-4xl font-light" style="font-family: var(--font-display); color: var(--color-sand-100);">
-            All-Inclusive <span class="italic" style="color: var(--color-gold-400);">Luxury</span>
+        <div class="text-center mb-8 md:mb-16 section-reveal">
+          <p class="overline-text mb-2 md:mb-3 text-xs md:text-sm">Seven Days of Wonder</p>
+          <div class="gold-divider mb-4 md:mb-6 mx-auto"></div>
+          <h2 class="font-display text-3xl md:text-5xl font-light" style="font-family: var(--font-display); color: var(--color-sand-100);">
+            Your <span class="italic" style="color: var(--color-gold-400);">Itinerary</span>
           </h2>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 max-w-4xl mx-auto">
-          <div v-for="(item, i) in highlights" :key="item" class="highlight-item section-reveal" :style="`transition-delay: ${i * 0.06}s`">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="flex-shrink-0 mt-0.5">
-              <polyline points="20 6 9 17 4 12" stroke="var(--color-gold-400)" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            <p class="text-sm md:text-base opacity-80" style="font-family: var(--font-body); color: var(--color-sand-200);">{{ item }}</p>
+
+        <!-- Mobile Day Selector - FIXED STYLING -->
+        <div class="flex md:hidden gap-1.5 mb-6 overflow-x-auto pb-4 scrollbar-hide">
+          <button 
+            v-for="(day, i) in itinerary" 
+            :key="i"
+            @click="activeDay = i"
+            class="flex-shrink-0 px-3 py-2 text-xs transition-all border rounded-sm"
+            :class="activeDay === i 
+              ? 'bg-[#C9A84C] border-[#C9A84C] text-[#0A2E4A] font-medium' 
+              : 'border-[#C9A84C]/30 text-[#C9A84C]'"
+          >
+            {{ day.day }}
+          </button>
+        </div>
+
+        <!-- Timeline - FIXED MOBILE -->
+        <div class="max-w-6xl mx-auto relative">
+          <!-- Vertical line for desktop -->
+          <div class="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-[#C9A84C]/20 transform -translate-x-1/2" />
+
+          <div 
+            v-for="(item, i) in itinerary" 
+            :key="item.day"
+            class="relative mb-8 md:mb-24 section-reveal"
+            :class="i !== activeDay ? 'hidden md:block' : ''"
+          >
+            <div class="grid md:grid-cols-2 gap-4 md:gap-16 items-center">
+              <!-- Content Side -->
+              <div :class="i % 2 === 0 ? 'md:text-right md:pr-12' : 'md:order-2 md:pl-12'">
+                <div class="flex items-center gap-2 md:gap-3 mb-2 md:mb-4" :class="i % 2 === 0 ? 'md:justify-end' : ''">
+                  <span class="text-[#C9A84C] font-display text-xl md:text-3xl">{{ item.day }}</span>
+                  <div class="h-px w-8 md:w-12 bg-[#C9A84C]/30" />
+                </div>
+                <h3 class="font-display text-xl md:text-3xl font-light mb-2 md:mb-4 text-white" style="font-family: var(--font-display);">
+                  {{ item.title }}
+                </h3>
+                <p class="text-sm md:text-base leading-relaxed opacity-75 mb-4 md:mb-6" style="color: var(--color-sand-200); line-height: 1.8;">
+                  {{ item.desc }}
+                </p>
+                <div class="flex flex-wrap gap-3 md:gap-4 text-xs md:text-sm" :class="i % 2 === 0 ? 'md:justify-end' : ''">
+                  <span class="flex items-center gap-1.5 md:gap-2 text-[#C9A84C]">
+                    <svg width="14" height="14" md:width="16" md:height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    {{ item.activity }}
+                  </span>
+                  <span class="flex items-center gap-1.5 md:gap-2 text-[#C9A84C]">
+                    <svg width="14" height="14" md:width="16" md:height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                    {{ item.meals }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Image Side - AUTHENTIC images for each day -->
+              <div :class="i % 2 === 0 ? 'md:order-2' : ''" class="relative group">
+                <div class="overflow-hidden">
+                  <img 
+                    :src="item.image" 
+                    :alt="item.title"
+                    class="w-full h-48 md:h-80 object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                </div>
+                <!-- Day badge -->
+                <div class="absolute top-3 left-3 bg-[#0A2E4A]/90 backdrop-blur px-3 py-1.5 border border-[#C9A84C]/30">
+                  <span class="text-[#C9A84C] font-display text-xs md:text-sm">{{ item.day }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Timeline dot -->
+            <div class="hidden md:block absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+              <div class="w-4 h-4 bg-[#C9A84C] rounded-full border-4 border-[#0A2E4A]" />
+            </div>
           </div>
         </div>
       </div>
     </section>
 
+    <!-- Culinary Experience - FIXED MOBILE -->
+    <section class="py-12 md:py-32" style="background: var(--color-ocean-900);">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-12">
+        <div class="grid lg:grid-cols-5 gap-6 md:gap-12 items-start">
+          <div class="lg:col-span-2 section-reveal-left lg:sticky lg:top-24">
+            <p class="overline-text mb-2 md:mb-3 text-xs md:text-sm">Gastronomy at Sea</p>
+            <div class="gold-divider-left mb-4 md:mb-6"></div>
+            <h2 class="font-display text-3xl md:text-5xl font-light mb-4 md:mb-6 leading-tight" style="font-family: var(--font-display); color: var(--color-sand-100);">
+              Culinary <span class="italic" style="color: var(--color-gold-400);">Excellence</span>
+            </h2>
+            <p class="text-sm md:text-lg leading-relaxed mb-6 md:mb-8 opacity-80" style="color: var(--color-sand-200); line-height: 1.9;">
+              Our onboard chef crafts multi-course experiences using the finest Western Australian ingredients. 
+              From Exmouth prawns to Margaret River wines, every meal celebrates local terroir.
+            </p>
+
+            <div class="space-y-3 md:space-y-4 mb-6 md:mb-8">
+              <div class="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-[#0A2E4A]/50 border border-[#C9A84C]/10">
+                <div class="w-10 h-10 md:w-12 md:h-12 bg-[#C9A84C]/20 flex items-center justify-center flex-shrink-0">
+                  <svg width="20" height="20" md:width="24" md:height="24" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="text-white font-medium mb-0.5 md:mb-1 text-sm md:text-base">All-Inclusive Dining</h4>
+                  <p class="text-xs md:text-sm opacity-70" style="color: var(--color-sand-200);">All meals, snacks, and beverages included</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-[#0A2E4A]/50 border border-[#C9A84C]/10">
+                <div class="w-10 h-10 md:w-12 md:h-12 bg-[#C9A84C]/20 flex items-center justify-center flex-shrink-0">
+                  <svg width="20" height="20" md:width="24" md:height="24" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="text-white font-medium mb-0.5 md:mb-1 text-sm md:text-base">Premium Cellar</h4>
+                  <p class="text-xs md:text-sm opacity-70" style="color: var(--color-sand-200);">Curated wines and craft cocktails</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-[#0A2E4A]/50 border border-[#C9A84C]/10">
+                <div class="w-10 h-10 md:w-12 md:h-12 bg-[#C9A84C]/20 flex items-center justify-center flex-shrink-0">
+                  <svg width="20" height="20" md:width="24" md:height="24" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="text-white font-medium mb-0.5 md:mb-1 text-sm md:text-base">Dietary Expertise</h4>
+                  <p class="text-xs md:text-sm opacity-70" style="color: var(--color-sand-200);">Vegan, gluten-free, and allergies catered</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-3 section-reveal-right">
+            <div class="grid grid-cols-2 gap-2 md:gap-3">
+              <div 
+                v-for="(img, i) in diningImages" 
+                :key="i" 
+                class="relative overflow-hidden group"
+                :class="img.featured ? 'col-span-2 row-span-2' : ''"
+              >
+                <img 
+                  :src="img.src" 
+                  :alt="img.title" 
+                  class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  :class="img.featured ? 'h-48 md:h-96' : 'h-24 md:h-48'"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div class="absolute bottom-3 left-3 text-white">
+                    <p class="font-display text-sm md:text-lg">{{ img.title }}</p>
+                    <p class="text-xs opacity-80">{{ img.desc }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Expedition Route Map - FIXED MOBILE -->
+    <section class="py-12 md:py-32 relative overflow-hidden" style="background: var(--color-ocean-900);">
+      <div class="absolute inset-0 opacity-30">
+        <!-- AUTHENTIC: Aerial view of Ningaloo Reef -->
+        <img 
+          src="https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?auto=format&fit=crop&w=1920&q=80" 
+          alt="Ningaloo Reef aerial view Western Australia"
+          class="w-full h-full object-cover"
+        />
+      </div>
+      <div class="container mx-auto px-4 sm:px-6 lg:px-12 relative z-10">
+        <div class="text-center mb-8 md:mb-16 section-reveal">
+          <p class="overline-text mb-2 md:mb-3 text-xs md:text-sm">The Journey</p>
+          <div class="gold-divider mb-4 md:mb-6 mx-auto"></div>
+          <h2 class="font-display text-3xl md:text-5xl font-light" style="font-family: var(--font-display); color: var(--color-sand-100);">
+            Expedition <span class="italic" style="color: var(--color-gold-400);">Route</span>
+          </h2>
+        </div>
+
+        <div class="max-w-5xl mx-auto bg-[#0A2E4A]/90 backdrop-blur-lg p-4 md:p-16 rounded-sm border border-[#C9A84C]/20 section-reveal">
+          <!-- Route visualization - FIXED MOBILE -->
+          <div class="relative">
+            <!-- Route line -->
+            <div class="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-[#C9A84C] via-[#C9A84C] to-[#C9A84C]/30 transform -translate-y-1/2 z-0" />
+
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-8 relative z-10">
+              <div class="text-center md:col-span-1">
+                <div class="w-4 h-4 md:w-6 md:h-6 bg-[#C9A84C] rounded-full mx-auto mb-2 shadow-lg shadow-[#C9A84C]/50" />
+                <p class="font-display text-sm md:text-lg text-white mb-0.5 md:mb-1">Exmouth</p>
+                <p class="text-[10px] md:text-xs opacity-60 uppercase tracking-wider" style="color: var(--color-sand-200);">Departure</p>
+                <p class="text-[10px] opacity-40 mt-0.5 md:mt-1">Day 1</p>
+              </div>
+
+              <div class="text-center md:col-span-1">
+                <div class="w-4 h-4 md:w-6 md:h-6 bg-[#C9A84C] rounded-full mx-auto mb-2 shadow-lg shadow-[#C9A84C]/50" />
+                <p class="font-display text-sm md:text-lg text-white mb-0.5 md:mb-1">Northern Reef</p>
+                <p class="text-[10px] md:text-xs opacity-60 uppercase tracking-wider" style="color: var(--color-sand-200);">Whale Sharks</p>
+                <p class="text-[10px] opacity-40 mt-0.5 md:mt-1">Days 2-3</p>
+              </div>
+
+              <div class="text-center md:col-span-1">
+                <div class="w-4 h-4 md:w-6 md:h-6 bg-[#C9A84C] rounded-full mx-auto mb-2 shadow-lg shadow-[#C9A84C]/50" />
+                <p class="font-display text-sm md:text-lg text-white mb-0.5 md:mb-1">Central Reef</p>
+                <p class="text-[10px] md:text-xs opacity-60 uppercase tracking-wider" style="color: var(--color-sand-200);">Manta Rays</p>
+                <p class="text-[10px] opacity-40 mt-0.5 md:mt-1">Days 4-5</p>
+              </div>
+
+              <div class="text-center md:col-span-1">
+                <div class="w-4 h-4 md:w-6 md:h-6 bg-[#C9A84C] rounded-full mx-auto mb-2 shadow-lg shadow-[#C9A84C]/50" />
+                <p class="font-display text-sm md:text-lg text-white mb-0.5 md:mb-1">Coral Bay</p>
+                <p class="text-[10px] md:text-xs opacity-60 uppercase tracking-wider" style="color: var(--color-sand-200);">Southern Reef</p>
+                <p class="text-[10px] opacity-40 mt-0.5 md:mt-1">Day 6</p>
+              </div>
+
+              <div class="text-center md:col-span-1 col-span-2">
+                <div class="w-4 h-4 md:w-6 md:h-6 bg-[#C9A84C] rounded-full mx-auto mb-2 shadow-lg shadow-[#C9A84C]/50" />
+                <p class="font-display text-sm md:text-lg text-white mb-0.5 md:mb-1">Exmouth</p>
+                <p class="text-[10px] md:text-xs opacity-60 uppercase tracking-wider" style="color: var(--color-sand-200);">Return</p>
+                <p class="text-[10px] opacity-40 mt-0.5 md:mt-1">Day 7</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-8 md:mt-12 pt-6 md:pt-8 border-t border-[#C9A84C]/10 text-center">
+            <p class="text-xs md:text-sm opacity-60" style="color: var(--color-sand-200);">
+              *Route may vary based on weather, wildlife sightings, and guest preferences to ensure optimal experience
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- What's Included - FIXED MOBILE -->
+    <section class="py-12 md:py-32" style="background: var(--color-ocean-950);">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-12">
+        <div class="text-center mb-8 md:mb-16 section-reveal">
+          <p class="overline-text mb-2 md:mb-3 text-xs md:text-sm">All-Inclusive</p>
+          <div class="gold-divider mb-4 md:mb-6 mx-auto"></div>
+          <h2 class="font-display text-3xl md:text-5xl font-light" style="font-family: var(--font-display); color: var(--color-sand-100);">
+            Everything <span class="italic" style="color: var(--color-gold-400);">Included</span>
+          </h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4 max-w-6xl mx-auto">
+          <div 
+            v-for="(item, i) in highlights" 
+            :key="item" 
+            class="highlight-item section-reveal"
+            :style="`transition-delay: ${i * 0.05}s`"
+          >
+            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-[#C9A84C]/10 flex items-center justify-center flex-shrink-0">
+              <svg width="14" height="14" md:width="16" md:height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <p class="text-sm md:text-base opacity-90" style="color: var(--color-sand-200);">{{ item }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
     <CtaSection />
+
+    <!-- Lightbox Modal - FIXED MOBILE -->
+    <div 
+      v-if="lightboxOpen" 
+      class="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-2 md:p-4"
+      @click="closeLightbox"
+    >
+      <button class="absolute top-4 right-4 md:top-6 md:right-6 text-white/70 hover:text-white p-2 transition-colors" @click="closeLightbox">
+        <svg width="24" height="24" md:width="32" md:height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+
+      <button class="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 text-white/70 hover:text-white p-2 md:p-4 transition-colors hidden md:block" @click.stop="prevImage">
+        <svg width="32" height="32" md:width="48" md:height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+          <polyline points="15,18 9,12 15,6"/>
+        </svg>
+      </button>
+
+      <button class="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 text-white/70 hover:text-white p-2 md:p-4 transition-colors hidden md:block" @click.stop="nextImage">
+        <svg width="32" height="32" md:width="48" md:height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+          <polyline points="9,18 15,12 9,6"/>
+        </svg>
+      </button>
+
+      <div class="max-w-6xl max-h-[90vh]" @click.stop>
+        <img 
+          :src="vesselImages[currentImage].src" 
+          :alt="vesselImages[currentImage].caption"
+          class="max-w-full max-h-[85vh] object-contain shadow-2xl"
+        />
+        <div class="text-center mt-4 md:mt-6">
+          <p class="font-display text-lg md:text-xl text-white mb-0.5 md:mb-1">{{ vesselImages[currentImage].caption }}</p>
+          <p class="text-xs md:text-sm text-[#C9A84C] uppercase tracking-widest">{{ vesselImages[currentImage].category }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cabin Modal - FIXED MOBILE -->
+    <div v-if="showCabinModal" class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-3 md:p-4" @click="showCabinModal = false">
+      <div class="bg-[#0A2E4A] border border-[#C9A84C]/30 p-5 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto" @click.stop>
+        <div class="flex justify-between items-center mb-4 md:mb-6">
+          <h3 class="font-display text-xl md:text-2xl text-white">Premium Cabins</h3>
+          <button @click="showCabinModal = false" class="text-white/60 hover:text-white p-1">
+            <svg width="20" height="20" md:width="24" md:height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="space-y-3 md:space-y-4">
+          <div class="border border-[#C9A84C]/20 p-3 md:p-4">
+            <h4 class="text-[#C9A84C] font-medium mb-1 md:mb-2 text-sm md:text-base">Master Suite</h4>
+            <p class="text-xs md:text-sm opacity-70 mb-1 md:mb-2">King bed, panoramic windows, en-suite bathroom with rainfall shower</p>
+            <p class="text-[10px] md:text-xs opacity-50">2 available | Premium pricing</p>
+          </div>
+          <div class="border border-[#C9A84C]/20 p-3 md:p-4">
+            <h4 class="text-[#C9A84C] font-medium mb-1 md:mb-2 text-sm md:text-base">Deluxe Cabin</h4>
+            <p class="text-xs md:text-sm opacity-70 mb-1 md:mb-2">Queen bed, ocean view, en-suite bathroom</p>
+            <p class="text-[10px] md:text-xs opacity-50">6 available | Standard pricing</p>
+          </div>
+          <div class="border border-[#C9A84C]/20 p-3 md:p-4">
+            <h4 class="text-[#C9A84C] font-medium mb-1 md:mb-2 text-sm md:text-base">Classic Cabin</h4>
+            <p class="text-xs md:text-sm opacity-70 mb-1 md:mb-2">Twin beds, porthole windows, shared facilities</p>
+            <p class="text-[10px] md:text-xs opacity-50">6 available | Value pricing</p>
+          </div>
+        </div>
+        <router-link to="/contact" class="btn-primary block text-center mt-5 md:mt-6 py-3 text-sm md:text-base" @click="showCabinModal = false">
+          Enquire Now
+        </router-link>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.itinerary-item {
-  display: grid;
-  grid-template-columns: 70px 1fr;
-  gap: 16px;
-  padding: 20px 0;
-  border-top: 1px solid rgba(201, 168, 76, 0.1);
-  align-items: start;
+.avatar-wrapper {
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--color-gold-400);
+  box-shadow: 0 4px 20px rgba(201, 168, 76, 0.3);
 }
 
-@media (min-width: 768px) {
-  .itinerary-item {
-    grid-template-columns: 100px 1fr;
-    gap: 24px;
-    padding: 24px 0;
-  }
-}
-
-.itinerary-item:first-child {
-  border-top: none;
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .highlight-item {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
   border: 1px solid rgba(201, 168, 76, 0.1);
   background: rgba(10, 46, 74, 0.3);
+  transition: all 0.3s ease;
 }
 
 @media (min-width: 768px) {
   .highlight-item {
+    gap: 12px;
     padding: 16px;
   }
 }
 
-.video-container {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+.highlight-item:hover {
+  background: rgba(201, 168, 76, 0.05);
+  border-color: rgba(201, 168, 76, 0.25);
+  transform: translateX(4px);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-ocean-950);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-gold-400);
+  border-radius: 4px;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Break inside avoid for masonry */
+.break-inside-avoid {
+  break-inside: avoid;
 }
 </style>

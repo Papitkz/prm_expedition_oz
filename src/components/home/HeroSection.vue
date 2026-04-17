@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 
 const revealed = ref(false)
 const compassSpun = ref(false)
@@ -13,6 +13,7 @@ const isMobile = ref(false)
 const touchStartX = ref(0)
 const touchEndX = ref(0)
 const carouselDirection = ref<'next' | 'prev'>('next')
+const videoError = ref(false)
 
 // Videos array - luxury expedition footage
 const videos = [
@@ -28,6 +29,7 @@ const nextVideoRef = ref<HTMLVideoElement | null>(null)
 
 let rafId: number | null = null
 let resizeObserver: ResizeObserver | null = null
+let playAttemptInterval: number | null = null
 
 // Check mobile breakpoint
 const checkMobile = () => {
@@ -46,9 +48,27 @@ const preloadNextVideo = () => {
   }
 }
 
+// Force play video with retry logic
+const forcePlay = async (video: HTMLVideoElement | null) => {
+  if (!video) return
+  
+  try {
+    video.muted = true // Ensure muted for autoplay policies
+    await video.play()
+    isPlaying.value = true
+    videoError.value = false
+  } catch (err) {
+    console.warn('Playback failed:', err)
+    // Retry after a short delay
+    setTimeout(() => {
+      if (videoRef.value === video) forcePlay(video)
+    }, 1000)
+  }
+}
+
 // Switch video when current one ends
 const handleVideoEnded = () => {
-  if (isTransitioning.value || !isPlaying.value || videos.length <= 1) return
+  if (isTransitioning.value || videos.length <= 1) return
   
   isTransitioning.value = true
   carouselDirection.value = 'next'
@@ -75,7 +95,7 @@ const performSwitch = () => {
     
     if (videoRef.value) {
       videoRef.value.style.opacity = '1'
-      videoRef.value.play().catch(() => {})
+      forcePlay(videoRef.value)
     }
     if (nextVideoRef.value) {
       nextVideoRef.value.style.opacity = '0'
@@ -85,7 +105,7 @@ const performSwitch = () => {
     if (videoRef.value) {
       videoRef.value.src = currentVideoUrl.value
       videoRef.value.load()
-      videoRef.value.play().catch(() => {})
+      forcePlay(videoRef.value)
     }
   }
   
@@ -111,7 +131,7 @@ const goToVideo = (index: number, direction: 'next' | 'prev' = 'next') => {
     if (videoRef.value) {
       videoRef.value.src = videos[index]
       videoRef.value.load()
-      videoRef.value.play().catch(() => {})
+      forcePlay(videoRef.value)
       videoRef.value.style.opacity = '1'
     }
     
@@ -122,12 +142,12 @@ const goToVideo = (index: number, direction: 'next' | 'prev' = 'next') => {
   }, 500)
 }
 
-// Toggle autoplay
+// Toggle autoplay - works on mobile too
 const toggleAutoplay = () => {
   isPlaying.value = !isPlaying.value
   
   if (isPlaying.value) {
-    videoRef.value?.play().catch(() => {})
+    forcePlay(videoRef.value)
   } else {
     videoRef.value?.pause()
   }
@@ -188,6 +208,22 @@ const onVideoLoaded = () => {
   }
 }
 
+// Handle video error
+const onVideoError = () => {
+  videoError.value = true
+  // Try next video if current fails
+  setTimeout(() => {
+    if (videoError.value) nextVideo()
+  }, 2000)
+}
+
+// Visibility change handler - resume playback when tab becomes visible
+const handleVisibilityChange = () => {
+  if (!document.hidden && isPlaying.value) {
+    forcePlay(videoRef.value)
+  }
+}
+
 onMounted(() => {
   checkMobile()
   
@@ -202,6 +238,8 @@ onMounted(() => {
   if (videoRef.value) {
     videoRef.value.src = currentVideoUrl.value
     videoRef.value.load()
+    // Initial play attempt
+    forcePlay(videoRef.value)
   }
   
   setTimeout(preloadNextVideo, 2000)
@@ -210,11 +248,23 @@ onMounted(() => {
   setTimeout(() => {
     if (!isHovering.value) showControls.value = false
   }, 4000)
+  
+  // Monitor visibility changes
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  
+  // Periodic play check for mobile (some browsers pause videos)
+  playAttemptInterval = window.setInterval(() => {
+    if (isPlaying.value && videoRef.value?.paused && !videoRef.value?.ended) {
+      forcePlay(videoRef.value)
+    }
+  }, 3000)
 })
 
 onUnmounted(() => {
   if (rafId) cancelAnimationFrame(rafId)
   if (resizeObserver) resizeObserver.disconnect()
+  if (playAttemptInterval) clearInterval(playAttemptInterval)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 </script>
 
@@ -236,6 +286,7 @@ onUnmounted(() => {
         autoplay
         muted
         playsinline
+        loop
         preload="auto"
         class="hero-video"
         :class="{ 
@@ -245,6 +296,7 @@ onUnmounted(() => {
         }"
         @loadeddata="onVideoLoaded"
         @ended="handleVideoEnded"
+        @error="onVideoError"
       />
       
       <video
@@ -256,7 +308,7 @@ onUnmounted(() => {
       />
     </div>
 
-    <!-- Mobile Carousel UI -->
+    <!-- Mobile Carousel UI with Play Controls -->
     <div v-if="isMobile" class="mobile-carousel-ui">
       <div class="swipe-hint" :class="{ 'fade-out': revealed }">
         <div class="swipe-icon">
@@ -266,6 +318,22 @@ onUnmounted(() => {
         </div>
         <span>Swipe to explore</span>
       </div>
+
+      <!-- Mobile Play/Pause Button -->
+      <button 
+        @click="toggleAutoplay"
+        class="mobile-play-btn"
+        :class="{ 'is-playing': isPlaying }"
+        aria-label="Toggle playback"
+      >
+        <svg v-if="isPlaying" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <rect x="6" y="4" width="4" height="16" rx="1"/>
+          <rect x="14" y="4" width="4" height="16" rx="1"/>
+        </svg>
+        <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </button>
 
       <div class="mobile-progress">
         <div 
@@ -626,6 +694,10 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
+.mobile-carousel-ui > * {
+  pointer-events: auto;
+}
+
 .swipe-hint {
   display: flex;
   align-items: center;
@@ -650,6 +722,33 @@ onUnmounted(() => {
 @keyframes swipePulse {
   0%, 100% { transform: translateX(0); opacity: 0.6; }
   50% { transform: translateX(8px); opacity: 1; }
+}
+
+/* Mobile Play Button */
+.mobile-play-btn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(7, 26, 43, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(201, 168, 76, 0.4);
+  border-radius: 50%;
+  color: var(--color-gold-400);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 0 auto;
+  pointer-events: auto;
+}
+
+.mobile-play-btn:active {
+  transform: scale(0.95);
+  background: rgba(201, 168, 76, 0.2);
+}
+
+.mobile-play-btn.is-playing {
+  animation: pulse 2s ease-in-out infinite;
 }
 
 .mobile-progress {
@@ -965,7 +1064,7 @@ onUnmounted(() => {
   }
   
   .hero-content {
-    padding-bottom: 8rem;
+    padding-bottom: 10rem; /* Increased for mobile controls */
   }
   
   .scroll-indicator-wrapper {
@@ -1042,6 +1141,10 @@ onUnmounted(() => {
     padding: 0.625rem 1.25rem;
     min-width: auto;
     font-size: 0.65rem;
+  }
+  
+  .hero-content {
+    padding-bottom: 6rem;
   }
 }
 </style>

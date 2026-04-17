@@ -24,9 +24,6 @@ const quickLinks = [
               Limited departures — secure your place today.
             </p>
           </div>
-          <router-link to="/contact" class="btn-primary flex-shrink-0">
-            Check Availability
-          </router-link>
         </div>
       </div>
     </div>
