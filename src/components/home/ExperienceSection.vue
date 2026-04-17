@@ -1,0 +1,83 @@
+<template>
+  <section class="py-24 lg:py-32" style="background: var(--color-ocean-950);">
+    <div class="container mx-auto px-6 lg:px-12">
+      <div class="text-center mb-20 section-reveal">
+        <p class="overline-text mb-4">The Experience</p>
+        <div class="gold-divider mb-6"></div>
+        <h2 class="font-display text-5xl lg:text-6xl font-light" style="font-family: var(--font-display); color: var(--color-sand-100);">
+          Feel Joy. <span class="italic" style="color: var(--color-gold-400);">Feel Wonder.</span>
+        </h2>
+      </div>
+
+      <div class="space-y-24">
+        <div v-for="(item, i) in experiences" :key="item.title" class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center" :class="i % 2 === 1 ? 'lg:grid-flow-col-reverse' : ''">
+          <div :class="i % 2 === 0 ? 'section-reveal-left' : 'section-reveal-right order-2 lg:order-1'">
+            <p class="overline-text mb-4">{{ item.tag }}</p>
+            <div class="gold-divider-left mb-5"></div>
+            <h3 class="font-display text-4xl lg:text-5xl font-light mb-5" style="font-family: var(--font-display); color: var(--color-sand-100);">{{ item.title }}</h3>
+            <p class="text-base leading-relaxed opacity-80" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.9;">{{ item.body }}</p>
+          </div>
+
+          <div :class="i % 2 === 0 ? 'section-reveal-right' : 'section-reveal-left order-1 lg:order-2'">
+            <div class="exp-image-frame">
+              <img :src="item.image" :alt="item.alt" class="exp-image" loading="lazy" />
+              <div class="exp-image-border"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</template>
+
+<script setup lang="ts">
+const experiences = [
+  {
+    tag: 'Marine Encounters',
+    title: 'Swim with Whale Sharks',
+    body: 'Ningaloo Reef is one of the few places on earth where you can predictably encounter whale sharks — the ocean\'s largest fish. Our expert marine naturalists ensure a safe, respectful, and utterly unforgettable experience.',
+    image: 'https://images.pexels.com/photos/3046629/pexels-photo-3046629.jpeg?auto=compress&cs=tinysrgb&w=900',
+    alt: 'Snorkeler with whale shark in blue ocean'
+  },
+  {
+    tag: 'Onboard Life',
+    title: 'Luxury Above the Waves',
+    body: 'Your vessel is your sanctuary. Beautifully appointed cabins, sundrenched decks, and cocktails at dusk — every detail aboard has been curated for your comfort. The ocean is our backdrop; luxury is our standard.',
+    image: 'https://images.pexels.com/photos/1578750/pexels-photo-1578750.jpeg?auto=compress&cs=tinysrgb&w=900',
+    alt: 'Luxury yacht deck at sunset with cocktails'
+  },
+  {
+    tag: 'The Reef',
+    title: 'A World Heritage Wilderness',
+    body: 'Ningaloo Reef spans over 300km along the coast of Western Australia — and unlike the Great Barrier Reef, it fringes directly on the shore. Crystal-clear visibility, extraordinary biodiversity, and near-untouched wilderness await.',
+    image: 'https://images.pexels.com/photos/932638/pexels-photo-932638.jpeg?auto=compress&cs=tinysrgb&w=900',
+    alt: 'Stunning coral reef underwater Ningaloo'
+  }
+]
+</script>
+
+<style scoped>
+.exp-image-frame {
+  position: relative;
+  overflow: hidden;
+  height: 420px;
+}
+
+.exp-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.exp-image-frame:hover .exp-image {
+  transform: scale(1.03);
+}
+
+.exp-image-border {
+  position: absolute;
+  inset: 12px;
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  pointer-events: none;
+}
+</style>
