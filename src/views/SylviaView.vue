@@ -31,52 +31,55 @@ const highlights = [
       title="Sylvia"
       title-italic="Northern Reef Expedition"
       subtitle="Four extraordinary days exploring the untouched northern reaches of Ningaloo Reef aboard our elegant vessel."
-      image="https://images.pexels.com/photos/1118873/pexels-photo-1118873.jpeg?auto=compress&cs=tinysrgb&w=1920"
+      image="https://r4.wallpaperflare.com/wallpaper/750/616/903/coral-reef-fish-reef-fish-aquarium-wallpaper-09e0f8ad012a8d9b26d7a85fd091264d.jpg"
       image-alt="Sailing vessel Sylvia on turquoise Ningaloo waters"
       height="70vh"
     />
 
-    <section class="py-24 lg:py-32" style="background: var(--color-ocean-950);">
-      <div class="container mx-auto px-6 lg:px-12">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
-          <div class="section-reveal-left">
-            <p class="overline-text mb-4">About This Expedition</p>
-            <div class="gold-divider-left mb-6"></div>
-            <h2 class="font-display text-4xl lg:text-5xl font-light mb-6" style="font-family: var(--font-display); color: var(--color-sand-100);">
+    <!-- About Section -->
+    <section class="py-16 md:py-24 lg:py-32" style="background: var(--color-ocean-950);">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-12">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+          <div class="section-reveal-left order-2 lg:order-1">
+            <p class="overline-text mb-3 md:mb-4 text-xs md:text-sm">About This Expedition</p>
+            <div class="gold-divider-left mb-4 md:mb-6"></div>
+            <h2 class="font-display text-3xl md:text-4xl lg:text-5xl font-light mb-4 md:mb-6" style="font-family: var(--font-display); color: var(--color-sand-100);">
               A Perfect Introduction to <span class="italic" style="color: var(--color-gold-400);">Live-Aboard</span>
             </h2>
-            <p class="text-base leading-relaxed mb-5 opacity-80" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.9;">
+            <p class="text-sm md:text-base leading-relaxed mb-4 md:mb-5 opacity-80" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.9;">
               The Sylvia expedition is designed for those who want the complete Ningaloo live-aboard experience without committing to a week at sea. Four carefully curated days, maximum 12 guests, and all the luxury you deserve.
             </p>
-            <p class="text-base leading-relaxed mb-8 opacity-80" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.9;">
+            <p class="text-sm md:text-base leading-relaxed mb-6 md:mb-8 opacity-80" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.9;">
               The northern reef is among the most pristine sections of Ningaloo — vast, biodiverse, and relatively untouched. This is where you will encounter whale sharks, glide over coral gardens, and fall utterly in love with the ocean.
             </p>
-            <div class="grid grid-cols-3 gap-6 mb-8 pt-6" style="border-top: 1px solid rgba(201, 168, 76, 0.15);">
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8 pt-4 md:pt-6" style="border-top: 1px solid rgba(201, 168, 76, 0.15);">
               <div class="text-center">
-                <p class="font-display text-3xl font-light" style="font-family: var(--font-display); color: var(--color-gold-400);">4</p>
-                <p class="overline-text mt-1" style="font-size: 0.55rem;">Days</p>
+                <p class="font-display text-2xl md:text-3xl font-light" style="font-family: var(--font-display); color: var(--color-gold-400);">4</p>
+                <p class="overline-text mt-1 text-[0.5rem] md:text-[0.55rem]">Days</p>
               </div>
               <div class="text-center">
-                <p class="font-display text-3xl font-light" style="font-family: var(--font-display); color: var(--color-gold-400);">12</p>
-                <p class="overline-text mt-1" style="font-size: 0.55rem;">Max Guests</p>
+                <p class="font-display text-2xl md:text-3xl font-light" style="font-family: var(--font-display); color: var(--color-gold-400);">12</p>
+                <p class="overline-text mt-1 text-[0.5rem] md:text-[0.55rem]">Max Guests</p>
               </div>
               <div class="text-center">
-                <p class="font-display text-3xl font-light" style="font-family: var(--font-display); color: var(--color-gold-400);">All</p>
-                <p class="overline-text mt-1" style="font-size: 0.55rem;">Inclusive</p>
+                <p class="font-display text-2xl md:text-3xl font-light" style="font-family: var(--font-display); color: var(--color-gold-400);">All</p>
+                <p class="overline-text mt-1 text-[0.5rem] md:text-[0.55rem]">Inclusive</p>
               </div>
             </div>
-            <router-link to="/contact" class="btn-primary">Check Availability</router-link>
+
+            <router-link to="/contact" class="btn-primary inline-block text-sm md:text-base px-6 py-3 md:px-8 md:py-4">
+              Check Availability
+            </router-link>
           </div>
 
-          <div class="section-reveal-right">
-            <div class="overflow-hidden" style="height: 520px;">
+          <div class="section-reveal-right order-1 lg:order-2">
+            <div class="overflow-hidden h-[300px] sm:h-[400px] md:h-[520px]">
               <img
                 src="https://images.pexels.com/photos/3046629/pexels-photo-3046629.jpeg?auto=compress&cs=tinysrgb&w=900"
                 alt="Whale shark encounter Ningaloo Reef"
-                class="w-full h-full object-cover"
-                style="transition: transform 0.6s ease;"
-                onmouseenter="this.style.transform='scale(1.03)'"
-                onmouseleave="this.style.transform='scale(1)'"
+                class="w-full h-full object-cover transition-transform duration-600 hover:scale-[1.03]"
               />
             </div>
           </div>
@@ -84,44 +87,64 @@ const highlights = [
       </div>
     </section>
 
-    <section class="py-24" style="background: var(--color-ocean-900);">
-      <div class="container mx-auto px-6 lg:px-12">
-        <div class="text-center mb-16 section-reveal">
-          <p class="overline-text mb-4">Day by Day</p>
-          <div class="gold-divider mb-6"></div>
-          <h2 class="font-display text-4xl font-light" style="font-family: var(--font-display); color: var(--color-sand-100);">
+    <!-- Itinerary Section -->
+    <section class="py-16 md:py-24" style="background: var(--color-ocean-900);">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-12">
+        <div class="text-center mb-10 md:mb-16 section-reveal">
+          <p class="overline-text mb-3 md:mb-4 text-xs md:text-sm">Day by Day</p>
+          <div class="gold-divider mb-4 md:mb-6"></div>
+          <h2 class="font-display text-3xl md:text-4xl font-light" style="font-family: var(--font-display); color: var(--color-sand-100);">
             Your <span class="italic" style="color: var(--color-gold-400);">Itinerary</span>
           </h2>
         </div>
+
         <div class="max-w-3xl mx-auto">
-          <div v-for="(item, i) in itinerary" :key="item.day" class="itinerary-item section-reveal" :style="`transition-delay: ${i * 0.1}s`">
+          <div 
+            v-for="(item, i) in itinerary" 
+            :key="item.day" 
+            class="itinerary-item section-reveal"
+            :style="`transition-delay: ${i * 0.1}s`"
+          >
             <div class="itinerary-day">
-              <span class="overline-text" style="font-size: 0.6rem;">{{ item.day }}</span>
+              <span class="overline-text text-[0.55rem] md:text-[0.6rem]">{{ item.day }}</span>
             </div>
             <div class="itinerary-content">
-              <h3 class="font-display text-2xl font-light mb-2" style="font-family: var(--font-display); color: var(--color-sand-100);">{{ item.title }}</h3>
-              <p class="text-sm leading-relaxed opacity-75" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.8;">{{ item.desc }}</p>
+              <h3 class="font-display text-xl md:text-2xl font-light mb-2" style="font-family: var(--font-display); color: var(--color-sand-100);">
+                {{ item.title }}
+              </h3>
+              <p class="text-sm md:text-base leading-relaxed opacity-75" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.8;">
+                {{ item.desc }}
+              </p>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="py-24" style="background: var(--color-ocean-950);">
-      <div class="container mx-auto px-6 lg:px-12">
-        <div class="text-center mb-12 section-reveal">
-          <p class="overline-text mb-4">What's Included</p>
-          <div class="gold-divider mb-6"></div>
-          <h2 class="font-display text-4xl font-light" style="font-family: var(--font-display); color: var(--color-sand-100);">
+    <!-- Highlights Section -->
+    <section class="py-16 md:py-24" style="background: var(--color-ocean-950);">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-12">
+        <div class="text-center mb-8 md:mb-12 section-reveal">
+          <p class="overline-text mb-3 md:mb-4 text-xs md:text-sm">What's Included</p>
+          <div class="gold-divider mb-4 md:mb-6"></div>
+          <h2 class="font-display text-3xl md:text-4xl font-light" style="font-family: var(--font-display); color: var(--color-sand-100);">
             Everything You <span class="italic" style="color: var(--color-gold-400);">Need</span>
           </h2>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
-          <div v-for="(item, i) in highlights" :key="item" class="highlight-item section-reveal" :style="`transition-delay: ${i * 0.07}s`">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 max-w-3xl mx-auto">
+          <div 
+            v-for="(item, i) in highlights" 
+            :key="item" 
+            class="highlight-item section-reveal"
+            :style="`transition-delay: ${i * 0.07}s`"
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="flex-shrink-0 mt-0.5">
               <polyline points="20 6 9 17 4 12" stroke="var(--color-gold-400)" stroke-width="2" stroke-linecap="round"/>
             </svg>
-            <p class="text-sm opacity-80" style="font-family: var(--font-body); color: var(--color-sand-200);">{{ item }}</p>
+            <p class="text-sm md:text-base opacity-80" style="font-family: var(--font-body); color: var(--color-sand-200);">
+              {{ item }}
+            </p>
           </div>
         </div>
       </div>
@@ -134,11 +157,19 @@ const highlights = [
 <style scoped>
 .itinerary-item {
   display: grid;
-  grid-template-columns: 100px 1fr;
-  gap: 24px;
-  padding: 24px 0;
+  grid-template-columns: 70px 1fr;
+  gap: 16px;
+  padding: 20px 0;
   border-top: 1px solid rgba(201, 168, 76, 0.1);
   align-items: start;
+}
+
+@media (min-width: 768px) {
+  .itinerary-item {
+    grid-template-columns: 100px 1fr;
+    gap: 24px;
+    padding: 24px 0;
+  }
 }
 
 .itinerary-item:first-child {
@@ -153,8 +184,14 @@ const highlights = [
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 16px;
+  padding: 12px;
   border: 1px solid rgba(201, 168, 76, 0.1);
   background: rgba(10, 46, 74, 0.3);
+}
+
+@media (min-width: 768px) {
+  .highlight-item {
+    padding: 16px;
+  }
 }
 </style>

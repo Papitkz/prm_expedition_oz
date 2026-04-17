@@ -101,7 +101,7 @@ const values = [
           <div class="section-reveal-left">
             <div class="overflow-hidden" style="height: 400px;">
               <img
-                src="https://images.pexels.com/photos/3046629/pexels-photo-3046629.jpeg?auto=compress&cs=tinysrgb&w=900"
+                src="https://r4.wallpaperflare.com/wallpaper/375/728/857/australia-great-barrier-reef-natural-ocean-wallpaper-f21142d03de6ee5bda28029500b8c9f2.jpg"
                 alt="Marine naturalist with whale shark"
                 class="w-full h-full object-cover"
               />

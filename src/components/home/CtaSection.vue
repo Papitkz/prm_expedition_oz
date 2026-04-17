@@ -2,7 +2,7 @@
   <section class="cta-section relative flex items-center justify-center py-32 lg:py-40 overflow-hidden">
     <div class="cta-overlay absolute inset-0 z-10"></div>
     <img
-      src="https://images.pexels.com/photos/1430676/pexels-photo-1430676.jpeg?auto=compress&cs=tinysrgb&w=1920"
+      src="https://r4.wallpaperflare.com/wallpaper/733/1/254/nature-landscape-reef-sea-colorful-blue-water-fish-wallpaper-19a0b89d41fafd8bc64788af408146bd.jpg  "
       alt="Sunset over Ningaloo Reef"
       class="absolute inset-0 w-full h-full object-cover"
       loading="lazy"

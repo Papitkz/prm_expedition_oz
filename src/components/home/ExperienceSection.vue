@@ -50,7 +50,7 @@ const experiences = [
     tag: 'The Reef',
     title: 'A World Heritage Wilderness',
     body: 'Ningaloo Reef spans over 300km along the coast of Western Australia — and unlike the Great Barrier Reef, it fringes directly on the shore. Crystal-clear visibility, extraordinary biodiversity, and near-untouched wilderness await.',
-    image: 'https://images.pexels.com/photos/932638/pexels-photo-932638.jpeg?auto=compress&cs=tinysrgb&w=900',
+    image: 'https://r4.wallpaperflare.com/wallpaper/617/792/1005/fish-landscape-the-ocean-stay-wallpaper-679fe2349f35ff7a7f820431b191e785.jpg',
     alt: 'Stunning coral reef underwater Ningaloo'
   }
 ]

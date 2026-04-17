@@ -13,7 +13,12 @@
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div v-for="(tour, i) in tours" :key="tour.name" class="tour-card group" :class="i === 0 ? 'section-reveal-left' : 'section-reveal-right'">
+        <div 
+          v-for="(tour, i) in tours" 
+          :key="tour.name" 
+          class="tour-card group" 
+          :class="i === 0 ? 'section-reveal-left' : 'section-reveal-right'"
+        >
           <div class="tour-image-wrap">
             <img :src="tour.image" :alt="tour.alt" class="tour-image" loading="lazy" />
             <div class="tour-overlay">
@@ -46,13 +51,15 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
+
 const tours = [
   {
     name: 'Sylvia',
     vessel: 'Live-Aboard Vessel',
     duration: '4 Day Expedition',
     link: '/expeditions/sylvia',
-    image: 'https://images.pexels.com/photos/1118873/pexels-photo-1118873.jpeg?auto=compress&cs=tinysrgb&w=900',
+    image: 'https://r4.wallpaperflare.com/wallpaper/750/616/903/coral-reef-fish-reef-fish-aquarium-wallpaper-09e0f8ad012a8d9b26d7a85fd091264d.jpg',
     alt: 'Luxury sailing vessel Sylvia on Ningaloo Reef',
     description: 'An intimate four-day voyage aboard Sylvia, exploring the northern reaches of Ningaloo Reef. Perfect for first-time live-aboard guests seeking a curated taste of adventure.',
     features: [
@@ -68,7 +75,7 @@ const tours = [
     vessel: 'Premium Live-Aboard',
     duration: '7 Day Expedition',
     link: '/expeditions/millenium',
-    image: 'https://images.pexels.com/photos/1001682/pexels-photo-1001682.jpeg?auto=compress&cs=tinysrgb&w=900',
+    image: 'https://r4.wallpaperflare.com/wallpaper/639/878/552/microsoft-surface-hub-great-barrier-reef-4k-wallpaper-78262d48f010bc78d0acd10e38b214ba.jpg',
     alt: 'Premium vessel Millenium at anchor in turquoise waters',
     description: 'The ultimate seven-day immersion aboard Millenium. A comprehensive journey along the full length of the reef — encountering manta rays, dugongs, turtles, and humpback whales.',
     features: [
@@ -80,9 +87,68 @@ const tours = [
     ]
   }
 ]
+
+// Intersection Observer for scroll reveal animations
+let observer: IntersectionObserver | null = null
+
+onMounted(() => {
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible')
+        observer?.unobserve(entry.target)
+      }
+    })
+  }, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  })
+
+  // Observe all reveal elements
+  const revealElements = document.querySelectorAll('.section-reveal, .section-reveal-left, .section-reveal-right')
+  revealElements.forEach((el) => observer?.observe(el))
+})
+
+onUnmounted(() => {
+  observer?.disconnect()
+})
 </script>
 
 <style scoped>
+/* Scroll Reveal Animations */
+.section-reveal,
+.section-reveal-left,
+.section-reveal-right {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.section-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-reveal-left {
+  transform: translateX(-50px);
+}
+
+.section-reveal-left.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 0.1s;
+}
+
+.section-reveal-right {
+  transform: translateX(50px);
+}
+
+.section-reveal-right.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 0.2s;
+}
+
 .tour-card {
   background: rgba(7, 26, 43, 0.6);
   border: 1px solid rgba(201, 168, 76, 0.12);
