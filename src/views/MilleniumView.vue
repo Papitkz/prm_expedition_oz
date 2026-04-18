@@ -190,7 +190,7 @@ onMounted(() => {
           @loadeddata="isVideoLoaded = true"
         >
           <source src="https://videos.pexels.com/video-files/30351567/30351567-uhd_2560_1440_25fps.mp4" type="video/mp4">
-          <source src="https://cdn.pixabay.com/video/2021/01/18/62249-503297067_large.mp4" type="video/mp4">
+          <source src="https://cdn.pixabay.com/video/2023/01/19/147192-790996333_large.mp4" type="video/mp4">
         </video>
         <div 
           v-if="!showVideo" 

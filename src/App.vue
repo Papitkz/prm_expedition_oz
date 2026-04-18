@@ -27,7 +27,7 @@ const scrollToTop = () => {
 }
 
 onMounted(() => {
-  window.addEventListener('scroll', checkScroll)
+  window.addEventListener('scroll', checkScroll, { passive: true })
 })
 
 onUnmounted(() => {
@@ -40,18 +40,18 @@ router.beforeEach((to, from, next) => {
   }
 
   isLoading.value = true
-  
+
   next()
 })
 
 router.afterEach(async () => {
   // Wait for new page to mount
   await nextTick()
-  
+
   // Small delay to ensure content is rendered
   setTimeout(() => {
     loaderRef.value?.hide()
-    
+
     // Reset loading state after transition completes
     setTimeout(() => {
       isLoading.value = false
@@ -68,14 +68,18 @@ router.afterEach(async () => {
       ref="loaderRef" 
       key="compass-loader"
     />
-    
+
     <NavBar />
-    <v-main>
+
+    <!-- Main Content - Scrolls OVER the fixed footer -->
+    <main class="main-content">
       <router-view />
-    </v-main>
-    <FooterSection />
-    
-    <!-- Scroll to Top Button - Bottom Left -->
+    </main>
+
+    <!-- FIXED FOOTER - Always at bottom, content scrolls over it -->
+    <FooterSection class="fixed-footer" />
+
+    <!-- Scroll to Top Button - Bottom Right (above footer) -->
     <transition name="fade-slide">
       <button
         v-show="showScrollTop"
@@ -93,12 +97,42 @@ router.afterEach(async () => {
 </template>
 
 <style scoped>
-/* Scroll to Top Button - Bottom Left */
+/* Main content - sits on top of footer */
+.main-content {
+  position: relative;
+  z-index: 2; /* ABOVE footer */
+  background: var(--color-ocean-950, #071a2b);
+  /* Add margin bottom so you can scroll past content to see footer */
+  margin-bottom: 400px; /* Match footer height */
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-bottom: 600px; /* Larger footer on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    margin-bottom: 700px; /* Even larger on small mobile */
+  }
+}
+
+/* FIXED FOOTER - Always at bottom, behind content */
+.fixed-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1; /* BEHIND content */
+}
+
+/* Scroll to Top Button - Bottom Right */
 .scroll-top-btn {
   position: fixed;
   bottom: 2rem;
-  left: 2rem;
-  z-index: 100;
+  right: 2rem;
+  z-index: 100; /* Above everything */
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -145,12 +179,19 @@ router.afterEach(async () => {
 @media (max-width: 768px) {
   .scroll-top-btn {
     bottom: 1.5rem;
-    left: 1.5rem;
+    right: 1.5rem;
     padding: 0.625rem 0.875rem;
   }
-  
+
   .scroll-top-text {
     display: none;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-top-btn {
+    transition: none;
   }
 }
 </style>

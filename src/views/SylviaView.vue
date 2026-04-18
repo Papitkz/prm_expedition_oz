@@ -212,7 +212,7 @@ onMounted(() => {
             <div class="relative overflow-hidden h-[250px] sm:h-[350px] md:h-[520px] group">
               <!-- AUTHENTIC: Real whale shark at Ningaloo -->
               <img
-                src="https://images.unsplash.com/photo-1582967788606-a171f1080ca8?auto=format&fit=crop&w=900&q=80"
+                src="https://www.ningaloodiscovery.com.au/wp-content/uploads/2016/01/swim-wth-turtles-1024x683.jpg"
                 alt="Whale shark encounter at Ningaloo Reef, Western Australia"
                 class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
