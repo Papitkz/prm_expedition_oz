@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const scrolled = ref(false)
 const mobileOpen = ref(false)
+const expeditionsOpen = ref(false)
 
 function handleScroll() {
   scrolled.value = window.scrollY > 60
@@ -14,16 +15,28 @@ onMounted(() => window.addEventListener('scroll', handleScroll))
 onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 
 const navLinks = [
-  { label: 'Expeditions', to: '/expeditions' },
-  { label: 'Sylvia – 4 Day', to: '/expeditions/sylvia' },
-  { label: 'Millenium – 7 Day', to: '/expeditions/millenium' },
+  { label: 'Expeditions', to: '/expeditions', hasSubmenu: true },
   { label: 'About', to: '/about' },
   { label: 'FAQ', to: '/faq' },
 ]
 
+const expeditionSubmenu = [
+  { label: 'Sylvia – 4 Day', to: '/expeditions/sylvia' },
+  { label: 'Millenium – 7 Day', to: '/expeditions/millenium' },
+]
+
 function navigate(to: string) {
   mobileOpen.value = false
+  expeditionsOpen.value = false
   router.push(to)
+}
+
+function toggleExpeditions() {
+  expeditionsOpen.value = !expeditionsOpen.value
+}
+
+function closeExpeditions() {
+  expeditionsOpen.value = false
 }
 </script>
 
@@ -39,13 +52,55 @@ function navigate(to: string) {
             EXPEDITION
           </span>
           <span class="font-heading text-xs font-300 tracking-widest text-sand-100 opacity-80" style="letter-spacing: 0.35em; font-family: var(--font-heading); color: var(--color-sand-100); font-size: 0.55rem;">
-            OZ &nbsp;·&nbsp; LUXURY MEETS NATURE
+            OZ · LUXURY MEETS NATURE
           </span>
         </router-link>
 
         <nav class="hidden lg:flex items-center gap-8">
+          <!-- Expeditions with Dropdown -->
+          <div class="relative group" @mouseleave="closeExpeditions">
+            <router-link
+              to="/expeditions"
+              class="nav-link font-heading text-xs font-500 tracking-wider uppercase flex items-center gap-1"
+              style="font-family: var(--font-heading); font-size: 0.65rem; letter-spacing: 0.18em; font-weight: 500;"
+              @mouseenter="expeditionsOpen = true"
+            >
+              Expeditions
+              <svg 
+                width="10" 
+                height="6" 
+                viewBox="0 0 10 6" 
+                fill="none" 
+                class="transition-transform duration-200"
+                :class="expeditionsOpen ? 'rotate-180' : ''"
+              >
+                <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </router-link>
+            
+            <!-- Dropdown Menu -->
+            <transition name="dropdown">
+              <div 
+                v-show="expeditionsOpen" 
+                class="absolute top-full left-0 mt-2 py-2 bg-ocean-950/95 backdrop-blur-md border border-gold-400/20 rounded-lg min-w-[180px] shadow-xl"
+                style="background: rgba(7, 26, 43, 0.95);"
+              >
+                <router-link
+                  v-for="sub in expeditionSubmenu"
+                  :key="sub.to"
+                  :to="sub.to"
+                  class="block px-4 py-2 font-heading text-xs tracking-wider uppercase text-sand-100/80 hover:text-gold-400 hover:bg-gold-400/10 transition-all duration-200"
+                  style="font-family: var(--font-heading); font-size: 0.6rem; letter-spacing: 0.15em;"
+                  @click="closeExpeditions"
+                >
+                  {{ sub.label }}
+                </router-link>
+              </div>
+            </transition>
+          </div>
+
           <router-link
-            v-for="link in navLinks"
+            v-for="link in navLinks.filter(l => !l.hasSubmenu)"
             :key="link.to"
             :to="link.to"
             class="nav-link font-heading text-xs font-500 tracking-wider uppercase"
@@ -71,8 +126,9 @@ function navigate(to: string) {
     </div>
   </header>
 
+  <!-- Mobile Menu -->
   <div class="mobile-menu" :class="{ 'mobile-menu-open': mobileOpen }">
-    <div class="flex flex-col items-center justify-center h-full gap-8">
+    <div class="flex flex-col items-center justify-center h-full gap-6">
       <router-link
         to="/"
         class="font-display text-4xl font-light mobile-nav-link"
@@ -81,8 +137,33 @@ function navigate(to: string) {
       >
         Home
       </router-link>
+      
+      <!-- Mobile Expeditions Section -->
+      <div class="flex flex-col items-center gap-3">
+        <router-link
+          to="/expeditions"
+          class="font-display text-3xl font-light mobile-nav-link"
+          style="font-family: var(--font-display); color: var(--color-sand-100);"
+          @click="navigate('/expeditions')"
+        >
+          Expeditions
+        </router-link>
+        <div class="flex flex-col items-center gap-2 ml-4">
+          <router-link
+            v-for="sub in expeditionSubmenu"
+            :key="sub.to"
+            :to="sub.to"
+            class="font-heading text-lg tracking-wider mobile-sub-link"
+            style="font-family: var(--font-heading); color: var(--color-sand-100); opacity: 0.7;"
+            @click="navigate(sub.to)"
+          >
+            {{ sub.label }}
+          </router-link>
+        </div>
+      </div>
+
       <router-link
-        v-for="link in navLinks"
+        v-for="link in navLinks.filter(l => !l.hasSubmenu)"
         :key="link.to"
         :to="link.to"
         class="font-display text-3xl font-light mobile-nav-link"
@@ -94,6 +175,13 @@ function navigate(to: string) {
       <button class="btn-primary mt-4" @click="navigate('/contact')">
         Check Availability
       </button>
+    </div>
+
+    <!-- Copyright Footer - Bottom Right -->
+    <div class="absolute bottom-6 right-6">
+      <p class="font-heading text-xs tracking-wider text-sand-100/50" style="font-family: var(--font-heading); font-size: 0.6rem; letter-spacing: 0.1em;">
+        ©2026 Expedition Drenched, AUS
+      </p>
     </div>
   </div>
 </template>
@@ -175,5 +263,27 @@ function navigate(to: string) {
 .mobile-nav-link:hover {
   color: var(--color-gold-400) !important;
   opacity: 1;
+}
+
+.mobile-sub-link {
+  text-decoration: none;
+  transition: color 0.3s ease, opacity 0.3s ease;
+}
+
+.mobile-sub-link:hover {
+  color: var(--color-gold-400) !important;
+  opacity: 1 !important;
+}
+
+/* Dropdown animation */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.2s ease;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>

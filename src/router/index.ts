@@ -12,10 +12,10 @@ const router = createRouter({
     { path: '/contact', name: 'contact', component: () => import('@/views/ContactView.vue') },
     { path: '/faq', name: 'faq', component: () => import('@/views/FaqView.vue') },
   ],
+  // FIX: Changed behavior to 'auto' for instant scroll
   scrollBehavior() {
-    return { top: 0, behavior: 'smooth' }
+    return { top: 0, behavior: 'auto' }
   }
 })
-
 
 export default router

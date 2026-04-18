@@ -45,6 +45,17 @@ router.beforeEach((to, from, next) => {
 })
 
 router.afterEach(async () => {
+  // Wait for DOM update
+  await nextTick()
+  
+  // Small delay to ensure Lenis/other scroll libraries are done
+  requestAnimationFrame(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
+  })
+
   // Wait for new page to mount
   await nextTick()
 
