@@ -12,8 +12,8 @@ const isHovering = ref(false)
 const isMobile = ref(false)
 const touchStartX = ref(0)
 const touchEndX = ref(0)
-const carouselDirection = ref<'next' | 'prev'>('next')
 const videoError = ref(false)
+const isBuffering = ref(false)
 
 // Videos array - luxury expedition footage
 const videos = [
@@ -25,143 +25,125 @@ const videos = [
 ]
 
 const videoRef = ref<HTMLVideoElement | null>(null)
-const nextVideoRef = ref<HTMLVideoElement | null>(null)
 
-let rafId: number | null = null
 let resizeObserver: ResizeObserver | null = null
 let playAttemptInterval: number | null = null
+let transitionTimeout: number | null = null
 
 // Check mobile breakpoint
 const checkMobile = () => {
   isMobile.value = window.innerWidth < 768
 }
 
-// Computed for current and next video URLs
 const currentVideoUrl = computed(() => videos[currentVideoIndex.value])
-const nextVideoUrl = computed(() => videos[(currentVideoIndex.value + 1) % videos.length])
+const nextVideoIndex = computed(() => (currentVideoIndex.value + 1) % videos.length)
+const prevVideoIndex = computed(() => currentVideoIndex.value === 0 ? videos.length - 1 : currentVideoIndex.value - 1)
 
-// Preload next video
-const preloadNextVideo = () => {
-  if (nextVideoRef.value) {
-    nextVideoRef.value.src = nextVideoUrl.value
-    nextVideoRef.value.load()
-  }
+// Preload video by creating a hidden video element
+const preloadVideo = (url: string) => {
+  const video = document.createElement('video')
+  video.src = url
+  video.preload = 'auto'
+  video.muted = true
+  video.load()
 }
 
-// Force play video with retry logic
-const forcePlay = async (video: HTMLVideoElement | null) => {
-  if (!video) return
+// Force play with better error handling
+const forcePlay = async () => {
+  if (!videoRef.value) return
   
   try {
-    video.muted = true // Ensure muted for autoplay policies
-    await video.play()
+    videoRef.value.muted = true
+    await videoRef.value.play()
     isPlaying.value = true
     videoError.value = false
+    isBuffering.value = false
   } catch (err) {
     console.warn('Playback failed:', err)
-    // Retry after a short delay
+    isPlaying.value = false
+  }
+}
+
+// Smooth video transition - FIXED VERSION
+const switchVideo = (newIndex: number) => {
+  if (isTransitioning.value || newIndex === currentVideoIndex.value || !videoRef.value) return
+  
+  isTransitioning.value = true
+  isBuffering.value = true
+  
+  // Fade out current
+  videoRef.value.style.opacity = '0.3'
+  
+  // Small delay for fade effect
+  transitionTimeout = window.setTimeout(() => {
+    // Update index
+    currentVideoIndex.value = newIndex
+    
+    // Set new source
+    videoRef.value!.src = videos[newIndex]
+    videoRef.value!.load()
+    
+    // Wait for canplaythrough for smooth playback
+    const onCanPlay = () => {
+      videoRef.value!.removeEventListener('canplaythrough', onCanPlay)
+      
+      // Fade in and play
+      videoRef.value!.style.opacity = '1'
+      forcePlay()
+      
+      isTransitioning.value = false
+      isBuffering.value = false
+      
+      // Preload next video
+      preloadVideo(videos[nextVideoIndex.value])
+    }
+    
+    videoRef.value!.addEventListener('canplaythrough', onCanPlay)
+    
+    // Fallback timeout
     setTimeout(() => {
-      if (videoRef.value === video) forcePlay(video)
-    }, 1000)
-  }
+      if (isTransitioning.value) {
+        onCanPlay()
+      }
+    }, 3000)
+    
+  }, 300)
 }
 
-// Switch video when current one ends
-const handleVideoEnded = () => {
-  if (isTransitioning.value || videos.length <= 1) return
-  
-  isTransitioning.value = true
-  carouselDirection.value = 'next'
-  
-  if (videoRef.value) {
-    videoRef.value.style.transition = 'opacity 0.5s ease-in-out'
-    videoRef.value.style.opacity = '0.3'
-  }
-  
-  setTimeout(() => {
-    rafId = requestAnimationFrame(performSwitch)
-  }, 500)
+// Go to next video (auto or manual)
+const nextVideo = () => {
+  switchVideo(nextVideoIndex.value)
 }
 
-const performSwitch = () => {
-  const nextIndex = (currentVideoIndex.value + 1) % videos.length
-  
-  if (nextVideoRef.value && nextVideoRef.value.readyState >= 3) {
-    const temp = videoRef.value
-    videoRef.value = nextVideoRef.value
-    nextVideoRef.value = temp
-    
-    currentVideoIndex.value = nextIndex
-    
-    if (videoRef.value) {
-      videoRef.value.style.opacity = '1'
-      forcePlay(videoRef.value)
-    }
-    if (nextVideoRef.value) {
-      nextVideoRef.value.style.opacity = '0'
-    }
-  } else {
-    currentVideoIndex.value = nextIndex
-    if (videoRef.value) {
-      videoRef.value.src = currentVideoUrl.value
-      videoRef.value.load()
-      forcePlay(videoRef.value)
-    }
-  }
-  
-  isTransitioning.value = false
-  videoLoaded.value = true
-  
-  setTimeout(preloadNextVideo, 1000)
+// Go to previous video
+const prevVideo = () => {
+  switchVideo(prevVideoIndex.value)
 }
 
-// Go to specific video with direction
-const goToVideo = (index: number, direction: 'next' | 'prev' = 'next') => {
-  if (index === currentVideoIndex.value || isTransitioning.value) return
-  
-  isTransitioning.value = true
-  carouselDirection.value = direction
-  
-  if (videoRef.value) {
-    videoRef.value.style.opacity = '0.3'
-  }
-  
-  setTimeout(() => {
-    currentVideoIndex.value = index
-    if (videoRef.value) {
-      videoRef.value.src = videos[index]
-      videoRef.value.load()
-      forcePlay(videoRef.value)
-      videoRef.value.style.opacity = '1'
-    }
-    
-    isTransitioning.value = false
-    videoLoaded.value = true
-    
-    setTimeout(preloadNextVideo, 1000)
-  }, 500)
+// Go to specific video
+const goToVideo = (index: number) => {
+  switchVideo(index)
 }
 
-// Toggle autoplay - works on mobile too
+// Toggle autoplay
 const toggleAutoplay = () => {
   isPlaying.value = !isPlaying.value
   
   if (isPlaying.value) {
-    forcePlay(videoRef.value)
+    forcePlay()
   } else {
     videoRef.value?.pause()
   }
 }
 
-// Previous video
-const prevVideo = () => {
-  const prevIndex = currentVideoIndex.value === 0 ? videos.length - 1 : currentVideoIndex.value - 1
-  goToVideo(prevIndex, 'prev')
-}
-
-// Next video
-const nextVideo = () => {
-  handleVideoEnded()
+// Handle video ended - auto advance
+const handleVideoEnded = () => {
+  if (videos.length > 1) {
+    nextVideo()
+  } else if (videoRef.value) {
+    videoRef.value.currentTime = 0
+    forcePlay()
+  }
 }
 
 // Touch handlers for mobile swipe
@@ -217,10 +199,10 @@ const onVideoError = () => {
   }, 2000)
 }
 
-// Visibility change handler - resume playback when tab becomes visible
+// Visibility change handler
 const handleVisibilityChange = () => {
   if (!document.hidden && isPlaying.value) {
-    forcePlay(videoRef.value)
+    forcePlay()
   }
 }
 
@@ -232,36 +214,38 @@ onMounted(() => {
   })
   resizeObserver.observe(document.body)
   
+  // Staggered reveal animations
   setTimeout(() => { revealed.value = true }, 300)
   setTimeout(() => { compassSpun.value = true }, 800)
   
+  // Initialize video
   if (videoRef.value) {
     videoRef.value.src = currentVideoUrl.value
     videoRef.value.load()
-    // Initial play attempt
-    forcePlay(videoRef.value)
+    forcePlay()
   }
   
-  setTimeout(preloadNextVideo, 2000)
+  // Preload next video
+  preloadVideo(videos[nextVideoIndex.value])
   
+  // Show controls briefly
   showControls.value = true
   setTimeout(() => {
     if (!isHovering.value) showControls.value = false
   }, 4000)
   
-  // Monitor visibility changes
   document.addEventListener('visibilitychange', handleVisibilityChange)
   
-  // Periodic play check for mobile (some browsers pause videos)
+  // Periodic play check for mobile
   playAttemptInterval = window.setInterval(() => {
-    if (isPlaying.value && videoRef.value?.paused && !videoRef.value?.ended) {
-      forcePlay(videoRef.value)
+    if (isPlaying.value && videoRef.value?.paused && !videoRef.value?.ended && !isTransitioning.value) {
+      forcePlay()
     }
   }, 3000)
 })
 
 onUnmounted(() => {
-  if (rafId) cancelAnimationFrame(rafId)
+  if (transitionTimeout) clearTimeout(transitionTimeout)
   if (resizeObserver) resizeObserver.disconnect()
   if (playAttemptInterval) clearInterval(playAttemptInterval)
   document.removeEventListener('visibilitychange', handleVisibilityChange)
@@ -279,36 +263,33 @@ onUnmounted(() => {
   >
     <div class="hero-overlay"></div>
 
-    <!-- Video Background -->
+    <!-- Video Background - SINGLE VIDEO ELEMENT -->
     <div class="video-container">
       <video
         ref="videoRef"
         autoplay
         muted
         playsinline
-        loop
         preload="auto"
         class="hero-video"
         :class="{ 
           'video-fade-in': videoLoaded,
-          'slide-next': isTransitioning && carouselDirection === 'next',
-          'slide-prev': isTransitioning && carouselDirection === 'prev'
+          'is-buffering': isBuffering
         }"
         @loadeddata="onVideoLoaded"
         @ended="handleVideoEnded"
         @error="onVideoError"
+        @waiting="isBuffering = true"
+        @playing="isBuffering = false"
       />
       
-      <video
-        ref="nextVideoRef"
-        muted
-        playsinline
-        preload="auto"
-        class="hero-video preloader"
-      />
+      <!-- Buffering Indicator -->
+      <div v-if="isBuffering" class="buffering-indicator">
+        <div class="buffering-spinner"></div>
+      </div>
     </div>
 
-    <!-- Mobile Carousel UI with Play Controls -->
+    <!-- Mobile Carousel UI -->
     <div v-if="isMobile" class="mobile-carousel-ui">
       <div class="swipe-hint" :class="{ 'fade-out': revealed }">
         <div class="swipe-icon">
@@ -319,7 +300,6 @@ onUnmounted(() => {
         <span>Swipe to explore</span>
       </div>
 
-      <!-- Mobile Play/Pause Button -->
       <button 
         @click="toggleAutoplay"
         class="mobile-play-btn"
@@ -344,8 +324,9 @@ onUnmounted(() => {
             'active': index === currentVideoIndex,
             'completed': index < currentVideoIndex
           }"
+          @click="goToVideo(index)"
         >
-          <div v-if="index === currentVideoIndex && isPlaying" class="progress-fill"></div>
+          <div v-if="index === currentVideoIndex && isPlaying && !isBuffering" class="progress-fill"></div>
         </div>
       </div>
 
@@ -366,7 +347,7 @@ onUnmounted(() => {
         <button 
           @click="prevVideo"
           class="control-btn"
-          :disabled="videos.length <= 1"
+          :disabled="videos.length <= 1 || isTransitioning"
           aria-label="Previous video"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -392,7 +373,7 @@ onUnmounted(() => {
         <button 
           @click="nextVideo"
           class="control-btn"
-          :disabled="videos.length <= 1"
+          :disabled="videos.length <= 1 || isTransitioning"
           aria-label="Next video"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -412,8 +393,9 @@ onUnmounted(() => {
           class="indicator-dot"
           :class="{ 
             'active': index === currentVideoIndex,
-            'playing': index === currentVideoIndex && isPlaying 
+            'playing': index === currentVideoIndex && isPlaying && !isBuffering
           }"
+          :disabled="isTransitioning"
           :aria-label="`Go to video ${index + 1}`"
         />
         <span class="video-counter">
@@ -506,13 +488,8 @@ onUnmounted(() => {
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  transition: opacity 0.5s ease-in-out;
+  transition: opacity 0.3s ease;
   will-change: transform, opacity;
-}
-
-.hero-video.preloader {
-  z-index: 0;
-  pointer-events: none;
 }
 
 .video-fade-in {
@@ -520,27 +497,37 @@ onUnmounted(() => {
   animation: slowZoom 20s ease-out forwards;
 }
 
+.hero-video.is-buffering {
+  opacity: 0.5;
+}
+
 @keyframes slowZoom {
   0% { transform: scale(1); }
   100% { transform: scale(1.08); }
 }
 
-.slide-next {
-  animation: slideInRight 0.5s ease-out;
+/* Buffering Indicator */
+.buffering-indicator {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  pointer-events: none;
 }
 
-.slide-prev {
-  animation: slideInLeft 0.5s ease-out;
+.buffering-spinner {
+  width: 40px;
+  height: 40px;
+  border: 2px solid rgba(201, 168, 76, 0.3);
+  border-top-color: var(--color-gold-400);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-@keyframes slideInRight {
-  from { transform: translateX(100%) scale(1); opacity: 0; }
-  to { transform: translateX(0) scale(1.08); opacity: 1; }
-}
-
-@keyframes slideInLeft {
-  from { transform: translateX(-100%) scale(1); opacity: 0; }
-  to { transform: translateX(0) scale(1.08); opacity: 1; }
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .hero-overlay {
@@ -644,9 +631,14 @@ onUnmounted(() => {
   position: relative;
 }
 
-.indicator-dot:hover {
+.indicator-dot:hover:not(:disabled) {
   background: rgba(201, 168, 76, 0.8);
   transform: scale(1.4);
+}
+
+.indicator-dot:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .indicator-dot.active {
@@ -724,7 +716,6 @@ onUnmounted(() => {
   50% { transform: translateX(8px); opacity: 1; }
 }
 
-/* Mobile Play Button */
 .mobile-play-btn {
   width: 48px;
   height: 48px;
@@ -764,6 +755,12 @@ onUnmounted(() => {
   border-radius: 1px;
   overflow: hidden;
   position: relative;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.mobile-progress-bar:active {
+  background: rgba(201, 168, 76, 0.5);
 }
 
 .mobile-progress-bar.active {
@@ -1064,7 +1061,7 @@ onUnmounted(() => {
   }
   
   .hero-content {
-    padding-bottom: 10rem; /* Increased for mobile controls */
+    padding-bottom: 10rem;
   }
   
   .scroll-indicator-wrapper {

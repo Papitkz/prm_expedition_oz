@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, nextTick, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useLenis } from '@/composables/useLenis'
 import NavBar from '@/components/NavBar.vue'
 import FooterSection from '@/components/FooterSection.vue'
@@ -9,10 +9,12 @@ import CompassLoader from '@/components/CompassLoader.vue'
 useLenis()
 
 const router = useRouter()
+const route = useRoute()
 const loaderRef = ref<InstanceType<typeof CompassLoader> | null>(null)
 const isLoading = ref(false)
+const showContent = ref(true)
+const initialLoadDone = ref(false)
 
-// Scroll to top button logic
 const showScrollTop = ref(false)
 
 const checkScroll = () => {
@@ -26,124 +28,153 @@ const scrollToTop = () => {
   })
 }
 
+const handleInitialLoad = async () => {
+  if (route.path !== '/' || initialLoadDone.value) return
+
+  isLoading.value = true
+  showContent.value = false
+  
+  await nextTick()
+  
+  // 2 SECONDS for initial / route load
+  setTimeout(() => {
+    loaderRef.value?.hide()
+    
+    setTimeout(() => {
+      showContent.value = true
+      isLoading.value = false
+      initialLoadDone.value = true
+    }, 500)
+  }, 2000)
+}
+
 onMounted(() => {
   window.addEventListener('scroll', checkScroll, { passive: true })
+  handleInitialLoad()
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', checkScroll)
 })
 
-router.beforeEach((to, from, next) => {
-  if (to.path === from.path) {
-    return next()
+watch(() => route.path, (newPath) => {
+  if (newPath === '/' && !initialLoadDone.value && !isLoading.value) {
+    handleInitialLoad()
   }
+})
 
-  isLoading.value = true
+router.beforeEach((to, from, next) => {
+  if (to.path === from.path) return next()
 
+  // Show loader for route transitions (not initial)
+  if (initialLoadDone.value) {
+    isLoading.value = true
+    showContent.value = false
+  }
+  
   next()
 })
 
 router.afterEach(async () => {
-  // Wait for DOM update
-  await nextTick()
-  
-  // Small delay to ensure Lenis/other scroll libraries are done
-  requestAnimationFrame(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    })
-  })
-
-  // Wait for new page to mount
   await nextTick()
 
-  // Small delay to ensure content is rendered
-  setTimeout(() => {
-    loaderRef.value?.hide()
-
-    // Reset loading state after transition completes
+  if (isLoading.value) {
+    // 1 SECOND for other route transitions
     setTimeout(() => {
-      isLoading.value = false
-    }, 750)
-  }, 700)
+      loaderRef.value?.hide()
+      setTimeout(() => {
+        showContent.value = true
+        isLoading.value = false
+      }, 500)
+    }, 1000)
+  }
 })
 </script>
 
 <template>
   <v-app theme="expeditionDark">
-    <!-- Global Compass Loader -->
-    <CompassLoader 
-      v-if="isLoading" 
-      ref="loaderRef" 
-      key="compass-loader"
-    />
+    <Transition name="loader-fade">
+      <div v-if="isLoading" class="loader-overlay">
+        <CompassLoader 
+          ref="loaderRef" 
+          key="compass-loader"
+        />
+      </div>
+    </Transition>
 
-    <NavBar />
+    <div v-show="showContent" class="content-wrapper">
+      <NavBar />
+      <main class="main-content">
+        <router-view />
+      </main>
+      <FooterSection class="fixed-footer" />
 
-    <!-- Main Content - Scrolls OVER the fixed footer -->
-    <main class="main-content">
-      <router-view />
-    </main>
-
-    <!-- FIXED FOOTER - Always at bottom, content scrolls over it -->
-    <FooterSection class="fixed-footer" />
-
-    <!-- Scroll to Top Button - Bottom Right (above footer) -->
-    <transition name="fade-slide">
-      <button
-        v-show="showScrollTop"
-        @click="scrollToTop"
-        class="scroll-top-btn"
-        aria-label="Scroll to top"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="18,15 12,9 6,15"></polyline>
-        </svg>
-        <span class="scroll-top-text">Top</span>
-      </button>
-    </transition>
+      <transition name="fade-slide">
+        <button
+          v-show="showScrollTop"
+          @click="scrollToTop"
+          class="scroll-top-btn"
+          aria-label="Scroll to top"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="18,15 12,9 6,15"></polyline>
+          </svg>
+          <span class="scroll-top-text">Top</span>
+        </button>
+      </transition>
+    </div>
   </v-app>
 </template>
 
 <style scoped>
-/* Main content - sits on top of footer */
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--color-ocean-950, #071a2b);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.content-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+}
+
 .main-content {
   position: relative;
-  z-index: 2; /* ABOVE footer */
+  z-index: 2;
   background: var(--color-ocean-950, #071a2b);
-  /* Add margin bottom so you can scroll past content to see footer */
-  margin-bottom: 400px; /* Match footer height */
+  margin-bottom: 400px;
 }
 
 @media (max-width: 768px) {
   .main-content {
-    margin-bottom: 600px; /* Larger footer on mobile */
+    margin-bottom: 600px;
   }
 }
 
 @media (max-width: 480px) {
   .main-content {
-    margin-bottom: 700px; /* Even larger on small mobile */
+    margin-bottom: 700px;
   }
 }
 
-/* FIXED FOOTER - Always at bottom, behind content */
 .fixed-footer {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 1; /* BEHIND content */
+  z-index: 1;
 }
 
-/* Scroll to Top Button - Bottom Right */
 .scroll-top-btn {
   position: fixed;
   bottom: 2rem;
   right: 2rem;
-  z-index: 100; /* Above everything */
+  z-index: 100;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -174,7 +205,15 @@ router.afterEach(async () => {
   text-transform: uppercase;
 }
 
-/* Transition animations */
+.loader-fade-leave-active {
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.loader-fade-leave-to {
+  opacity: 0;
+  transform: scale(1.1);
+}
+
 .fade-slide-enter-active,
 .fade-slide-leave-active {
   transition: all 0.3s ease;
@@ -186,7 +225,6 @@ router.afterEach(async () => {
   transform: translateY(20px);
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .scroll-top-btn {
     bottom: 1.5rem;
@@ -199,9 +237,9 @@ router.afterEach(async () => {
   }
 }
 
-/* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
-  .scroll-top-btn {
+  .scroll-top-btn,
+  .loader-fade-leave-active {
     transition: none;
   }
 }

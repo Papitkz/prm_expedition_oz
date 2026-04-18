@@ -1,9 +1,22 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import PageHero from '@/components/PageHero.vue'
 import CtaSection from '@/components/home/CtaSection.vue'
 
 useScrollReveal()
+
+const hoveredVessel = ref<string | null>(null)
+const mousePos = ref({ x: 0, y: 0 })
+
+const handleMouseMove = (e: MouseEvent, vessel: string) => {
+  mousePos.value = { x: e.clientX, y: e.clientY }
+  hoveredVessel.value = vessel
+}
+
+const handleMouseLeave = () => {
+  hoveredVessel.value = null
+}
 
 const compareRows = [
   { label: 'Duration', sylvia: '4 Days / 3 Nights', millenium: '7 Days / 6 Nights' },
@@ -22,6 +35,30 @@ const compareRows = [
 
 <template>
   <div>
+    <!-- Floating Hover Image - Fixed position above cursor -->
+    <Transition name="fade-scale">
+      <div 
+        v-if="hoveredVessel"
+        class="vessel-hover-image"
+        :style="{ 
+          left: mousePos.x + 'px', 
+          top: (mousePos.y - 220) + 'px' 
+        }"
+      >
+        <img 
+          v-if="hoveredVessel === 'sylvia'"
+          src="https://images.pexels.com/photos/1430677/pexels-photo-1430677.jpeg?auto=compress&cs=tinysrgb&w=400"
+          alt="Sylvia Vessel"
+        />
+        <img 
+          v-else
+          src="https://images.pexels.com/photos/1547813/pexels-photo-1547813.jpeg?auto=compress&cs=tinysrgb&w=400"
+          alt="Millenium Vessel"
+        />
+        <div class="hover-label">{{ hoveredVessel === 'sylvia' ? 'Sylvia' : 'Millenium' }}</div>
+      </div>
+    </Transition>
+
     <PageHero
       tag="Our Vessels"
       title="Choose Your"
@@ -39,54 +76,62 @@ const compareRows = [
           <h2 class="font-display text-2xl md:text-4xl lg:text-5xl font-light" style="font-family: var(--font-display); color: var(--color-sand-100);">
             Which expedition is <span class="italic" style="color: var(--color-gold-400);">right for you?</span>
           </h2>
-          <p class="mt-3 md:mt-6 max-w-2xl mx-auto text-sm md:text-base opacity-75 px-2" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.8;">
-            Both expeditions offer world-class marine encounters, all-inclusive luxury, and expert-guided experiences. The choice comes down to how deep you want to go.
-          </p>
         </div>
 
-        <!-- Desktop Table - OPTIMIZED SPACING -->
+        <!-- Desktop Table with Hover -->
         <div class="hidden md:block comparison-grid section-reveal">
           <div class="comparison-header">
             <div></div>
-            <div class="text-center py-4 md:py-6 px-2 md:px-4" style="background: rgba(201, 168, 76, 0.08); border-bottom: 2px solid var(--color-gold-400);">
-              <p class="overline-text mb-1 text-[0.5rem] md:text-[0.55rem]">Live-Aboard</p>
-              <p class="font-display text-2xl md:text-3xl font-light" style="font-family: var(--font-display); color: var(--color-gold-400);">Sylvia</p>
-              <p class="font-heading text-xs mt-1 opacity-60" style="font-family: var(--font-heading); font-size: 0.6rem; letter-spacing: 0.15em;">4 DAY EXPEDITION</p>
+            <!-- Sylvia Header with Hover -->
+            <div 
+              class="vessel-header sylvia-header"
+              @mousemove="(e) => handleMouseMove(e, 'sylvia')"
+              @mouseleave="handleMouseLeave"
+            >
+              <p class="overline-text mb-1 text-[0.55rem]">Live-Aboard</p>
+              <p class="font-display text-3xl font-light vessel-title">Sylvia</p>
+              <p class="font-heading text-xs mt-1 opacity-60">4 DAY EXPEDITION</p>
             </div>
-            <div class="text-center py-4 md:py-6 px-2 md:px-4" style="background: rgba(13, 110, 122, 0.08); border-bottom: 2px solid var(--color-ocean-500);">
-              <p class="overline-text mb-1 text-[0.5rem] md:text-[0.55rem]" style="color: var(--color-ocean-500) !important;">Premium Live-Aboard</p>
-              <p class="font-display text-2xl md:text-3xl font-light" style="font-family: var(--font-display); color: #4ea8c9;">Millenium</p>
-              <p class="font-heading text-xs mt-1 opacity-60" style="font-family: var(--font-heading); font-size: 0.6rem; letter-spacing: 0.15em;">7 DAY EXPEDITION</p>
+            <!-- Millenium Header with Hover -->
+            <div 
+              class="vessel-header millenium-header"
+              @mousemove="(e) => handleMouseMove(e, 'millenium')"
+              @mouseleave="handleMouseLeave"
+            >
+              <p class="overline-text mb-1 text-[0.55rem]">Premium Live-Aboard</p>
+              <p class="font-display text-3xl font-light vessel-title">Millenium</p>
+              <p class="font-heading text-xs mt-1 opacity-60">7 DAY EXPEDITION</p>
             </div>
           </div>
 
           <div v-for="row in compareRows" :key="row.label" class="comparison-row">
             <div class="compare-label">
-              <p class="font-heading text-xs font-500" style="font-family: var(--font-heading); color: rgba(248,245,239,0.7); font-size: 0.72rem; letter-spacing: 0.05em;">{{ row.label }}</p>
+              <p>{{ row.label }}</p>
             </div>
             <div class="compare-cell">
-              <span v-if="row.sylvia === true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke="var(--color-gold-400)" stroke-width="2.5" stroke-linecap="round"/></svg></span>
-              <span v-else-if="row.sylvia === false" class="opacity-30"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="white" stroke-width="2"/><line x1="6" y1="6" x2="18" y2="18" stroke="white" stroke-width="2"/></svg></span>
-              <span v-else class="text-sm" style="font-family: var(--font-body); color: var(--color-sand-200);">{{ row.sylvia }}</span>
+              <span v-if="row.sylvia === true"><CheckIcon /></span>
+              <span v-else-if="row.sylvia === false" class="opacity-30"><XIcon /></span>
+              <span v-else>{{ row.sylvia }}</span>
             </div>
             <div class="compare-cell">
-              <span v-if="row.millenium === true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke="#4ea8c9" stroke-width="2.5" stroke-linecap="round"/></svg></span>
-              <span v-else-if="row.millenium === false" class="opacity-30"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="white" stroke-width="2"/><line x1="6" y1="6" x2="18" y2="18" stroke="white" stroke-width="2"/></svg></span>
-              <span v-else class="text-sm" style="font-family: var(--font-body); color: var(--color-sand-200);">{{ row.millenium }}</span>
+              <span v-if="row.millenium === true"><CheckIcon color="#4ea8c9" /></span>
+              <span v-else-if="row.millenium === false" class="opacity-30"><XIcon /></span>
+              <span v-else>{{ row.millenium }}</span>
             </div>
           </div>
 
           <div class="comparison-footer">
             <div></div>
-            <div class="text-center py-4 md:py-6">
-              <router-link to="/expeditions/sylvia" class="btn-primary text-xs md:text-sm" style="padding: 10px 20px;">View Sylvia</router-link>
+            <div class="text-center py-6">
+              <router-link to="/expeditions/sylvia" class="btn-primary text-sm">View Sylvia</router-link>
             </div>
-            <div class="text-center py-4 md:py-6">
-              <router-link to="/expeditions/millenium" class="btn-outline text-xs md:text-sm" style="padding: 10px 20px;">View Millenium</router-link>
+            <div class="text-center py-6">
+              <router-link to="/expeditions/millenium" class="btn-outline text-sm">View Millenium</router-link>
             </div>
           </div>
         </div>
 
+        <!-- Mobile Cards (unchanged) -->
         <!-- Mobile Cards - OPTIMIZED WITH TIGHTER SPACING -->
         <div class="md:hidden space-y-3 section-reveal">
           <!-- Sylvia Card -->
@@ -141,10 +186,93 @@ const compareRows = [
 </template>
 
 <style scoped>
-/* Desktop Table Styles - OPTIMIZED */
+/* Floating Hover Image */
+.vessel-hover-image {
+  position: fixed;
+  width: 280px;
+  height: 180px;
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 100;
+  pointer-events: none;
+  transform: translateX(-50%);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+}
+
+.vessel-hover-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hover-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px;
+  background: linear-gradient(to top, rgba(7, 26, 43, 0.95), transparent);
+  color: var(--color-gold-400);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  text-align: center;
+}
+
+/* Fade transition */
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.fade-scale-enter-from,
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) scale(0.9) translateY(10px);
+}
+
+/* Vessel Headers - Hover targets */
+.vessel-header {
+  text-align: center;
+  padding: 24px 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  position: relative;
+}
+
+.sylvia-header {
+  background: rgba(201, 168, 76, 0.08);
+  border-bottom: 2px solid var(--color-gold-400);
+}
+
+.sylvia-header:hover {
+  background: rgba(201, 168, 76, 0.15);
+}
+
+.sylvia-header .vessel-title {
+  color: var(--color-gold-400);
+}
+
+.millenium-header {
+  background: rgba(13, 110, 122, 0.08);
+  border-bottom: 2px solid #4ea8c9;
+}
+
+.millenium-header:hover {
+  background: rgba(13, 110, 122, 0.15);
+}
+
+.millenium-header .vessel-title {
+  color: #4ea8c9;
+}
+
+.millenium-header .overline-text {
+  color: #4ea8c9 !important;
+}
+
+/* Existing table styles... */
 .comparison-grid {
   border: 1px solid rgba(201, 168, 76, 0.15);
-  overflow: hidden;
 }
 
 .comparison-header,
@@ -163,52 +291,27 @@ const compareRows = [
 }
 
 .compare-label {
-  padding: 10px 14px;
+  padding: 16px 24px;
   display: flex;
   align-items: center;
   border-right: 1px solid rgba(201, 168, 76, 0.08);
-}
-
-@media (min-width: 768px) {
-  .compare-label {
-    padding: 14px 20px;
-  }
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  color: rgba(248,245,239,0.7);
+  letter-spacing: 0.05em;
 }
 
 .compare-cell {
-  padding: 10px 14px;
+  padding: 16px 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-right: 1px solid rgba(201, 168, 76, 0.08);
-}
-
-@media (min-width: 768px) {
-  .compare-cell {
-    padding: 14px 20px;
-  }
+  font-family: var(--font-body);
+  color: var(--color-sand-200);
 }
 
 .comparison-footer {
   border-top: 1px solid rgba(201, 168, 76, 0.15);
-}
-
-/* Mobile Card Styles - TIGHTER SPACING */
-.mobile-vessel-card {
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.mobile-feature-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  gap: 8px;
-}
-
-.mobile-feature-row:last-child {
-  border-bottom: none;
 }
 </style>

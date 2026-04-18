@@ -234,10 +234,6 @@ onMounted(() => {
         </svg>
       </div>
 
-      <!-- Video Progress Bar -->
-      <div class="absolute bottom-0 left-0 right-0 h-0.5 md:h-1 bg-white/10 z-20">
-        <div class="h-full bg-[#C9A84C] w-1/3 animate-pulse" />
-      </div>
     </section>
 
     <!-- About Section - FIXED MOBILE SPACING -->
