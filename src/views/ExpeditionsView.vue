@@ -1,10 +1,54 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, defineComponent, h } from 'vue'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import PageHero from '@/components/PageHero.vue'
 import CtaSection from '@/components/home/CtaSection.vue'
 
 useScrollReveal()
+
+// Define the missing CheckIcon component so it renders in the table
+const CheckIcon = defineComponent({
+  props: {
+    color: {
+      type: String,
+      default: 'var(--color-gold-400)'
+    }
+  },
+  setup(props) {
+    return () => h('svg', {
+      width: '24',
+      height: '24',
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: props.color,
+      'stroke-width': '2.5',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round'
+    }, [
+      h('polyline', { points: '20 6 9 17 4 12' })
+    ])
+  }
+})
+
+// Define the missing XIcon component
+const XIcon = defineComponent({
+  setup() {
+    return () => h('svg', {
+      width: '24',
+      height: '24',
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: 'currentColor',
+      'stroke-width': '2',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+      style: { opacity: '0.3' }
+    }, [
+      h('line', { x1: '18', y1: '6', x2: '6', y2: '18' }),
+      h('line', { x1: '6', y1: '6', x2: '18', y2: '18' })
+    ])
+  }
+})
 
 const hoveredVessel = ref<string | null>(null)
 const mousePos = ref({ x: 0, y: 0 })
@@ -20,11 +64,11 @@ const handleMouseLeave = () => {
 
 const compareRows = [
   { label: 'Duration', sylvia: '4 Days / 3 Nights', millenium: '7 Days / 6 Nights' },
-  { label: 'Whale Shark Snorkeling', sylvia: true, millenium: true },
-  { label: 'Reef Snorkeling', sylvia: true, millenium: true },
-  { label: 'All Meals & Beverages', sylvia: true, millenium: true },
-  { label: 'Marine Naturalist Guide', sylvia: true, millenium: true },
-  { label: 'Kayaks & Paddleboards', sylvia: true, millenium: true },
+  { label: 'Whale Shark Snorkeling', sylvia: true, millenium: true }, // BOTH CHECKS
+  { label: 'Reef Snorkeling', sylvia: true, millenium: true },       // BOTH CHECKS
+  { label: 'All Meals & Beverages', sylvia: true, millenium: true }, // BOTH CHECKS
+  { label: 'Marine Naturalist Guide', sylvia: true, millenium: true }, // BOTH CHECKS
+  { label: 'Kayaks & Paddleboards', sylvia: true, millenium: true },   // BOTH CHECKS
   { label: 'Manta Ray Encounters', sylvia: false, millenium: true },
   { label: 'Night Snorkeling', sylvia: false, millenium: true },
   { label: 'Humpback Whale Watching', sylvia: false, millenium: true },
@@ -108,12 +152,15 @@ const compareRows = [
             <div class="compare-label">
               <p>{{ row.label }}</p>
             </div>
+            <!-- Sylvia Column -->
             <div class="compare-cell">
               <span v-if="row.sylvia === true"><CheckIcon /></span>
               <span v-else-if="row.sylvia === false" class="opacity-30"><XIcon /></span>
               <span v-else>{{ row.sylvia }}</span>
             </div>
+            <!-- Millenium Column -->
             <div class="compare-cell">
+              <!-- Pass blue color for Millenium checks -->
               <span v-if="row.millenium === true"><CheckIcon color="#4ea8c9" /></span>
               <span v-else-if="row.millenium === false" class="opacity-30"><XIcon /></span>
               <span v-else>{{ row.millenium }}</span>
@@ -131,8 +178,7 @@ const compareRows = [
           </div>
         </div>
 
-        <!-- Mobile Cards (unchanged) -->
-        <!-- Mobile Cards - OPTIMIZED WITH TIGHTER SPACING -->
+        <!-- Mobile Cards -->
         <div class="md:hidden space-y-3 section-reveal">
           <!-- Sylvia Card -->
           <div class="mobile-vessel-card" style="background: rgba(201, 168, 76, 0.08); border: 1px solid rgba(201, 168, 76, 0.2);">
@@ -270,7 +316,7 @@ const compareRows = [
   color: #4ea8c9 !important;
 }
 
-/* Existing table styles... */
+/* Comparison Grid Styles */
 .comparison-grid {
   border: 1px solid rgba(201, 168, 76, 0.15);
 }

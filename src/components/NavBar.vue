@@ -6,12 +6,83 @@ const router = useRouter()
 const scrolled = ref(false)
 const mobileOpen = ref(false)
 
+// --- Cursor Effects Toggle ---
+const cursorEffectsEnabled = ref(true)
+
+function toggleCursorEffects() {
+  cursorEffectsEnabled.value = !cursorEffectsEnabled.value
+  localStorage.setItem('cursorEffects', cursorEffectsEnabled.value.toString())
+  // Emit event to App.vue to actually toggle the canvas
+  window.dispatchEvent(new CustomEvent('toggleCursorEffects', { 
+    detail: { enabled: cursorEffectsEnabled.value } 
+  }))
+}
+
+// Check localStorage on mount and emit initial state
+onMounted(() => {
+  const saved = localStorage.getItem('cursorEffects')
+  if (saved !== null) {
+    cursorEffectsEnabled.value = saved === 'true'
+  }
+  // Emit initial state to sync App.vue on page load
+  window.dispatchEvent(new CustomEvent('toggleCursorEffects', { 
+    detail: { enabled: cursorEffectsEnabled.value } 
+  }))
+})
+
+// --- Real-time Clock with Timezone ---
+const currentTime = ref('')
+const selectedTimezone = ref('Australia/Sydney') // Default to AUS time
+const showTimezoneDropdown = ref(false)
+
+const timezones = [
+  { label: 'Sydney (AEDT/AEST)', value: 'Australia/Sydney' },
+  { label: 'Melbourne', value: 'Australia/Melbourne' },
+  { label: 'Perth', value: 'Australia/Perth' },
+  { label: 'London (GMT)', value: 'Europe/London' },
+  { label: 'New York (EST)', value: 'America/New_York' },
+  { label: 'Los Angeles (PST)', value: 'America/Los_Angeles' },
+  { label: 'Tokyo (JST)', value: 'Asia/Tokyo' },
+  { label: 'Singapore', value: 'Asia/Singapore' },
+  { label: 'Dubai', value: 'Asia/Dubai' },
+  { label: 'Paris (CET)', value: 'Europe/Paris' },
+]
+
+let timeInterval: number | null = null
+
+function formatTime() {
+  const now = new Date()
+  const formatter = new Intl.DateTimeFormat('en-AU', {
+    timeZone: selectedTimezone.value,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    timeZoneName: 'short'
+  })
+  currentTime.value = formatter.format(now)
+}
+
+function selectTimezone(timezone: string) {
+  selectedTimezone.value = timezone
+  showTimezoneDropdown.value = false
+  formatTime() // Immediate update
+}
+
 function handleScroll() {
   scrolled.value = window.scrollY > 60
 }
 
-onMounted(() => window.addEventListener('scroll', handleScroll))
-onUnmounted(() => window.removeEventListener('scroll', handleScroll))
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll)
+  formatTime()
+  timeInterval = window.setInterval(formatTime, 1000)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+  if (timeInterval) clearInterval(timeInterval)
+})
 
 const navLinks = [
   { label: 'Expeditions', to: '/expeditions' },
@@ -25,6 +96,22 @@ function navigate(to: string) {
   mobileOpen.value = false
   router.push(to)
 }
+
+// Close dropdown when clicking outside
+function handleClickOutside(e: MouseEvent) {
+  const target = e.target as HTMLElement
+  if (!target.closest('.timezone-wrapper')) {
+    showTimezoneDropdown.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <template>
@@ -97,9 +184,63 @@ function navigate(to: string) {
     </div>
   </div>
 
-  <!-- Copyright Notice -->
-  <div class="copyright-notice">
-    ©2026 Expedition Drenche, AUS
+  <!-- Bottom Controls Bar -->
+  <div class="bottom-controls">
+    <!-- Cursor Effects Toggle -->
+    <button 
+      class="control-btn cursor-toggle" 
+      @click="toggleCursorEffects"
+      :class="{ 'active': cursorEffectsEnabled }"
+      :title="cursorEffectsEnabled ? 'Disable cursor effects' : 'Enable cursor effects'"
+    >
+      <svg v-if="cursorEffectsEnabled" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M12 1v6m0 6v6m4.22-10.22l4.24-4.24M6.34 17.66l-4.24 4.24M23 12h-6m-6 0H1m20.24 4.24l-4.24-4.24M6.34 6.34L2.1 2.1"></path>
+      </svg>
+      <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M12 1v6m0 6v6m4.22-10.22l4.24-4.24M6.34 17.66l-4.24 4.24M23 12h-6m-6 0H1m20.24 4.24l-4.24-4.24M6.34 6.34L2.1 2.1"></path>
+        <line x1="1" y1="1" x2="23" y2="23"></line>
+      </svg>
+      <span class="control-label">Cursor FX</span>
+    </button>
+
+    <div class="divider"></div>
+
+    <!-- Real-time Clock with Timezone Selector -->
+    <div class="timezone-wrapper">
+      <div class="clock-display" @click="showTimezoneDropdown = !showTimezoneDropdown">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12,6 12,12 16,14"></polyline>
+        </svg>
+        <span class="time-text">{{ currentTime }}</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="dropdown-arrow" :class="{ 'open': showTimezoneDropdown }">
+          <polyline points="6,9 12,15 18,9"></polyline>
+        </svg>
+      </div>
+      
+      <transition name="dropdown">
+        <div v-if="showTimezoneDropdown" class="timezone-dropdown">
+          <div 
+            v-for="tz in timezones" 
+            :key="tz.value"
+            class="timezone-option"
+            :class="{ 'selected': selectedTimezone === tz.value }"
+            @click="selectTimezone(tz.value)"
+          >
+            {{ tz.label }}
+          </div>
+        </div>
+      </transition>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Copyright -->
+    <div class="copyright-notice">
+      ©2026 Expedition Drenche, AUS
+    </div>
   </div>
 </template>
 
@@ -182,15 +323,211 @@ function navigate(to: string) {
   opacity: 1;
 }
 
-.copyright-notice {
+/* --- Bottom Controls Bar --- */
+.bottom-controls {
   position: fixed;
   bottom: 16px;
   right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 50;
   font-family: var(--font-heading);
   font-size: 0.65rem;
   letter-spacing: 0.1em;
+}
+
+.divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(248, 245, 239, 0.2);
+}
+
+/* Cursor Toggle Button */
+.control-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(7, 26, 43, 0.8);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 20px;
   color: rgba(248, 245, 239, 0.6);
-  z-index: 50;
-  pointer-events: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(4px);
+}
+
+.control-btn:hover {
+  border-color: rgba(201, 168, 76, 0.6);
+  color: rgba(248, 245, 239, 0.9);
+}
+
+.control-btn.active {
+  background: rgba(201, 168, 76, 0.15);
+  border-color: var(--color-gold-400);
+  color: var(--color-gold-400);
+}
+
+.control-btn.active:hover {
+  background: rgba(201, 168, 76, 0.25);
+}
+
+.control-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Clock & Timezone */
+.timezone-wrapper {
+  position: relative;
+}
+
+.clock-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(7, 26, 43, 0.8);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 20px;
+  color: var(--color-gold-400);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(4px);
+  user-select: none;
+}
+
+.clock-display:hover {
+  border-color: rgba(201, 168, 76, 0.6);
+  background: rgba(7, 26, 43, 0.9);
+}
+
+.time-text {
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  min-width: 85px;
+  text-align: center;
+}
+
+.dropdown-arrow {
+  transition: transform 0.3s ease;
+  opacity: 0.6;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+/* Timezone Dropdown */
+.timezone-dropdown {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: rgba(7, 26, 43, 0.98);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 8px;
+  padding: 4px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.timezone-option {
+  padding: 8px 12px;
+  color: rgba(248, 245, 239, 0.8);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  font-size: 0.65rem;
+  white-space: nowrap;
+}
+
+.timezone-option:hover {
+  background: rgba(201, 168, 76, 0.15);
+  color: var(--color-gold-400);
+}
+
+.timezone-option.selected {
+  background: rgba(201, 168, 76, 0.25);
+  color: var(--color-gold-400);
+}
+
+/* Copyright */
+.copyright-notice {
+  color: rgba(248, 245, 239, 0.5);
+  font-size: 0.6rem;
+  padding: 6px 0;
+}
+
+/* Dropdown Animation */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.2s ease;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  .bottom-controls {
+    bottom: 12px;
+    right: 12px;
+    left: 12px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .control-label {
+    display: none;
+  }
+
+  .time-text {
+    font-size: 0.65rem;
+    min-width: 75px;
+  }
+
+  .copyright-notice {
+    order: -1;
+    width: 100%;
+    text-align: center;
+    padding: 4px 0;
+  }
+
+  .divider {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .bottom-controls {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+
+  .copyright-notice {
+    order: 0;
+    width: auto;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .control-btn,
+  .clock-display,
+  .timezone-option {
+    transition: none;
+  }
 }
 </style>

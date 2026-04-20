@@ -969,6 +969,7 @@ onUnmounted(() => {
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.8s ease;
+  pointer-events: none; /* ← This fixes it */
 }
 
 .scroll-text {

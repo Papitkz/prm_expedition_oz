@@ -137,16 +137,20 @@ const quickLinks = [
         </div>
       </div>
 
-      <div class="footer-divider mt-12 mb-7"></div>
+      <!-- Divider -->
+      <div class="footer-divider mt-12 mb-8"></div>
 
-      <div class="flex flex-col md:flex-row justify-between items-center gap-3">
+      <!-- Left Aligned Copyright Section -->
+      <div class="flex flex-col items-start gap-3 w-full">
         <p class="footer-meta">&copy; {{ currentYear }} Expedition OZ. All rights reserved.</p>
+        
         <div class="flex items-center gap-6">
           <a href="#" class="footer-meta hover:opacity-70 transition-opacity" style="text-decoration: none;">Privacy Policy</a>
           <a href="#" class="footer-meta hover:opacity-70 transition-opacity" style="text-decoration: none;">Terms</a>
           <p class="footer-meta">ABN 00 000 000 000</p>
         </div>
       </div>
+
     </div>
   </footer>
 </template>

@@ -1,6 +1,8 @@
 <template>
   <section class="py-24 lg:py-32" style="background: var(--color-ocean-950);">
     <div class="container mx-auto px-6 lg:px-12">
+      
+      <!-- YOUR EXACT HEADER - UNTOUCHED -->
       <div class="text-center mb-20 section-reveal">
         <p class="overline-text mb-4">The Experience</p>
         <div class="gold-divider mb-6"></div>
@@ -9,8 +11,14 @@
         </h2>
       </div>
 
+      <!-- YOUR EXACT ALTERNATING LAYOUT - UNTOUCHED -->
       <div class="space-y-24">
-        <div v-for="(item, i) in experiences" :key="item.title" class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center" :class="i % 2 === 1 ? 'lg:grid-flow-col-reverse' : ''">
+        <div 
+          v-for="(item, i) in experiences" 
+          :key="item.title" 
+          class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center" 
+          :class="i % 2 === 1 ? 'lg:grid-flow-col-reverse' : ''"
+        >
           <div :class="i % 2 === 0 ? 'section-reveal-left' : 'section-reveal-right order-2 lg:order-1'">
             <p class="overline-text mb-4">{{ item.tag }}</p>
             <div class="gold-divider-left mb-5"></div>
@@ -26,6 +34,24 @@
           </div>
         </div>
       </div>
+
+      <!-- ONLY ADDITION: Bridge to Tour Comparison -->
+      <div class="bridge-section section-reveal mt-24">
+        <div class="bridge-content">
+          <div class="bridge-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <p class="bridge-text">
+            Now that you've felt what awaits — 
+            <span class="bridge-accent">which vessel will carry you there?</span>
+          </p>
+        </div>
+      </div>
+
     </div>
   </section>
 </template>
@@ -57,6 +83,7 @@ const experiences = [
 </script>
 
 <style scoped>
+/* YOUR EXACT STYLES - UNTOUCHED */
 .exp-image-frame {
   position: relative;
   overflow: hidden;
@@ -79,5 +106,60 @@ const experiences = [
   inset: 12px;
   border: 1px solid rgba(201, 168, 76, 0.25);
   pointer-events: none;
+}
+
+/* ONLY ADDITION: Bridge Styles */
+.bridge-section {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.bridge-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.bridge-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 3rem 2rem;
+  border-top: 1px solid rgba(201, 168, 76, 0.1);
+  border-bottom: 1px solid rgba(201, 168, 76, 0.1);
+}
+
+.bridge-icon {
+  color: var(--color-gold-400);
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
+.bridge-text {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: var(--color-sand-200);
+  opacity: 0.8;
+}
+
+.bridge-accent {
+  color: var(--color-gold-400);
+  font-style: italic;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .bridge-content {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+
+  .bridge-accent {
+    display: block;
+    margin-top: 0.5rem;
+  }
 }
 </style>
