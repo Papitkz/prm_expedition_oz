@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
+import NotFoundView  from '../views/NotFoundView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -11,6 +12,7 @@ const router = createRouter({
     { path: '/about', name: 'about', component: () => import('@/views/AboutView.vue') },
     { path: '/contact', name: 'contact', component: () => import('@/views/ContactView.vue') },
     { path: '/faq', name: 'faq', component: () => import('@/views/FaqView.vue') },
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
   ],
   // FIX: Changed behavior to 'auto' for instant scroll
   scrollBehavior() {
