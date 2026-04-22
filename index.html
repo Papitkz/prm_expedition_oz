@@ -31,42 +31,47 @@
     <meta name="twitter:image" content="https://expeditionoz.netlify.app/og-image.jpg" />
     
     <!-- Structured Data - LocalBusiness/TravelAgency -->
-    <script type="application/ld+json">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "Expedition OZ Live-Aboard Expeditions",
+  "itemListElement": [
     {
-      "@context": "https://schema.org",
-      "@type": "TravelAgency",
-      "name": "Expedition OZ",
-      "url": "https://expeditionoz.netlify.app",
-      "logo": "https://cdn.freebiesupply.com/logos/large/2x/expedition-1-logo-png-transparent.png",
-      "description": "Luxury live-aboard experiences in Ningaloo Reef, Western Australia",
-      "areaServed": {
-        "@type": "Place",
-        "name": "Ningaloo Reef, Western Australia"
-      },
-      "hasOfferCatalog": {
-        "@type": "OfferCatalog",
-        "name": "Expedition Tours",
-        "itemListElement": [
-          {
-            "@type": "Offer",
-            "itemOffered": {
-              "@type": "Product",
-              "name": "Sylvia 4-Day Expedition",
-              "description": "4-day luxury live-aboard expedition"
-            }
-          },
-          {
-            "@type": "Offer",
-            "itemOffered": {
-              "@type": "Product",
-              "name": "Millenium 7-Day Expedition",
-              "description": "7-day luxury live-aboard expedition"
-            }
-          }
-        ]
+      "@type": "ListItem",
+      "position": 1,
+      "item": {
+        "@type": "TouristAttraction",
+        "name": "Sylvia 4-Day Expedition",
+        "description": "Intimate 4-day northern Ningaloo Reef live-aboard",
+        "url": "https://expeditionoz.netlify.app/expeditions/sylvia",
+        "touristType": "Adventure traveler, Luxury traveler",
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": "-21.9342",
+          "longitude": "113.9683"
+        }
+      }
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "item": {
+        "@type": "TouristAttraction",
+        "name": "Millenium 7-Day Expedition",
+        "description": "Ultimate 7-day full Ningaloo Reef live-aboard",
+        "url": "https://expeditionoz.netlify.app/expeditions/millenium",
+        "touristType": "Adventure traveler, Luxury traveler",
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": "-22.0305",
+          "longitude": "113.9200"
+        }
       }
     }
-    </script>
+  ]
+}
+</script>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
