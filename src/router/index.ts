@@ -1,4 +1,5 @@
-import { createRouter, createWebHistory } from 'vue-router'
+// src/router/index.ts
+import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
 
@@ -13,8 +14,13 @@ export const routes: RouteRecordRaw[] = [
   { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue') },
 ]
 
+// Use memory history for SSR, web history for client
+const history = typeof window !== 'undefined' 
+  ? createWebHistory(import.meta.env.BASE_URL) 
+  : createMemoryHistory(import.meta.env.BASE_URL)
+
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history,
   routes,
   scrollBehavior() {
     return { top: 0, behavior: 'auto' }
