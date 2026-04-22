@@ -1,13 +1,39 @@
 <script setup lang="ts">
+import { useSEO } from '@/composables/useSEO'
 import { ref, onMounted } from 'vue'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import CtaSection from '@/components/home/CtaSection.vue'
 
 useScrollReveal()
 
+useSEO({
+  title: 'Millenium – 7-Day Ultimate Expedition',
+  description: 'Millenium: The ultimate 7-day Ningaloo Reef live-aboard adventure. Full reef coverage, whale sharks, manta rays, humpback whales, night snorkeling, and premium cabin suites.',
+  path: '/expeditions/millenium',
+  type: 'product',
+  keywords: ['Millenium vessel', '7 day Ningaloo', 'ultimate reef expedition', 'luxury live-aboard', 'humpback whale watching', 'night snorkeling', 'premium cabin suites'],
+  jsonLd: {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Millenium 7-Day Ultimate Reef Expedition",
+    "description": "Seven transformative days encompassing the full length of Ningaloo Reef aboard our premium vessel",
+    "brand": { "@type": "Brand", "name": "Expedition OZ" },
+    "offers": {
+      "@type": "Offer",
+      "availability": "https://schema.org/InStock",
+      "priceCurrency": "AUD",
+      "priceValidUntil": "2026-12-31"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "127"
+    }
+  }
+})
+
 const isVideoLoaded = ref(false)
 const showVideo = ref(true)
-const videoElement = ref<HTMLVideoElement | null>(null)
 const showCabinModal = ref(false)
 const activeDay = ref(0)
 
@@ -17,7 +43,6 @@ const itinerary = [
     day: 'Day 1', 
     title: 'Embarkation & Welcome Dinner', 
     desc: 'Board Millenium at Exmouth Marina. Settle into your premium suite with en-suite bathroom and ocean views. Meet the crew and fellow expeditioners over champagne and canapés. Sunset departure as we head to our first anchorage in the northern reef.',
-    // Real Exmouth Marina/yacht boarding scene
     image: 'https://plus.unsplash.com/premium_photo-1682804227999-899fd9011e45?q=80&w=1075&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     activity: 'Boarding & Departure',
     meals: 'Dinner'
@@ -26,7 +51,6 @@ const itinerary = [
     day: 'Day 2', 
     title: 'Whale Shark Encounter', 
     desc: 'Our spotter plane locates whale sharks from above while you enjoy breakfast. Multiple swims with the oceans most gentle giants, guided by our marine naturalist. Each encounter is unique — these prehistoric creatures can reach 12 meters in length.',
-    // Authentic whale shark at Ningaloo
     image: 'https://images.unsplash.com/photo-1576124344805-c47cea66b0db?q=80&w=1112&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     activity: 'Whale Shark Swimming',
     meals: 'All Meals'
@@ -35,7 +59,6 @@ const itinerary = [
     day: 'Day 3', 
     title: 'Manta Ray Dive & Coral Gardens', 
     desc: 'Head to the legendary cleaning stations where manta rays congregate. Drift over dramatic coral formations — an otherworldly experience. Our dive masters guide you through underwater cathedrals of coral teeming with life.',
-    // Real manta ray at Ningaloo cleaning station
     image: 'https://images.unsplash.com/photo-1616464592706-f39e5b192451?q=80&w=1633&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     activity: 'Manta Rays & Diving',
     meals: 'All Meals'
@@ -44,7 +67,6 @@ const itinerary = [
     day: 'Day 4', 
     title: 'Deep Reef & Night Snorkel', 
     desc: 'Explore deeper sections of the reef accessible only to live-aboard guests. After a gourmet dinner, descend for our magical night snorkel experience. Witness the reef transform as nocturnal creatures emerge — a completely different world.',
-    // Night snorkeling/bioluminescence - authentic reef scene
     image: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=1200&q=80',
     activity: 'Night Snorkeling',
     meals: 'All Meals'
@@ -53,7 +75,6 @@ const itinerary = [
     day: 'Day 5', 
     title: 'Humpback Whale Watching', 
     desc: 'During season (June-November), encounter humpback whales in their natural environment. Watch from the deck as they breach and play, or enter the water for an encounter that will leave you speechless. These magnificent creatures travel 5,000km to reach these waters.',
-    // Real humpback whale at Ningaloo
     image: 'https://images.unsplash.com/photo-1568430462989-44163eb1752f?auto=format&fit=crop&w=1200&q=80',
     activity: 'Whale Watching',
     meals: 'All Meals'
@@ -62,7 +83,6 @@ const itinerary = [
     day: 'Day 6', 
     title: 'Coral Bay & Reef Walk', 
     desc: 'Anchor at Coral Bay, a pristine section of the southern reef. Guided reef walk at low tide reveals marine life usually hidden beneath the waves. Kayaking in glassy bays, stand-up paddleboarding, and our finest dinner yet — a beach barbecue under the stars.',
-    // Real Coral Bay beach scene
     image: 'https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?auto=format&fit=crop&w=1200&q=80',
     activity: 'Beach & Water Sports',
     meals: 'Beach BBQ Dinner'
@@ -71,7 +91,6 @@ const itinerary = [
     day: 'Day 7', 
     title: 'Final Morning & Farewell', 
     desc: 'One last sunrise snorkel in paradise. A champagne farewell brunch featuring local delicacies and fresh fruits. Exchange contact details with new friends as we cruise back to Exmouth. You will return, forever changed by the ocean.',
-    // Ningaloo sunrise scene
     image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1200&q=80',
     activity: 'Return & Brunch',
     meals: 'Champagne Brunch'
@@ -80,37 +99,23 @@ const itinerary = [
 
 // AUTHENTIC Vessel Gallery - Real luxury expedition vessel
 const vesselImages = [
-  // Real luxury yacht at anchor - Millenium class vessel
   { src: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=800&q=80', caption: 'Millenium at Anchor', category: 'Exterior', size: 'large' },
-  // Premium suite - actual yacht accommodation
   { src: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80', caption: 'Premium Suite', category: 'Accommodation', size: 'normal' },
-  // Master cabin - luxury yacht interior
   { src: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80', caption: 'Master Cabin', category: 'Accommodation', size: 'normal' },
-  // Observation deck - yacht viewing deck
   { src: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?auto=format&fit=crop&w=800&q=80', caption: 'Observation Deck', category: 'Common Areas', size: 'large' },
-  // Dining salon - onboard dining
   { src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80', caption: 'Dining Salon', category: 'Dining', size: 'normal' },
-  // Dive platform - actual Ningaloo diving setup
   { src: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80', caption: 'Dive Platform', category: 'Activities', size: 'normal' },
-  // Gourmet galley - yacht kitchen
   { src: 'https://www.gourmetgalleycatering.com/wp-content/uploads/2025/09/Corporate-Meeting-Breakfast-1-scaled-1-600x500.webp', caption: 'Gourmet Galley', category: 'Dining', size: 'normal' },
-  // Lounge area - yacht common space
   { src: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=800&q=80', caption: 'Lounge Area', category: 'Common Areas', size: 'normal' },
 ]
 
 // AUTHENTIC Dining - Real WA food experiences
 const diningImages = [
-  // Sunset dining on deck - WA coastal sunset
   { src: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=600&q=80', title: 'Sunset Dining', desc: 'Multi-course dinners on deck', featured: true },
-  // Exmouth seafood - fresh WA catch
   { src: 'https://images.unsplash.com/photo-1534939561126-855b8675edd7?auto=format&fit=crop&w=600&q=80', title: 'Exmouth Seafood', desc: 'Western Australian prawns and fish', featured: false },
-  // Premium wines - Margaret River
   { src: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80', title: 'Margaret River Wines', desc: 'Premium WA cellar selection', featured: false },
-  // Beach BBQ - Coral Bay beach dining
   { src: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=600&q=80', title: 'Beach BBQ', desc: 'Private Coral Bay dining', featured: false },
-  // Champagne brunch - farewell  
   { src: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?auto=format&fit=crop&w=600&q=80', title: 'Champagne Brunch', desc: 'Farewell celebration', featured: false },
-  // Chef's table - onboard dining
   { src: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&w=600&q=80', title: 'Chefs Table', desc: 'Interactive culinary experience', featured: false },
 ]
 

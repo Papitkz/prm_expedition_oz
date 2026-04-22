@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
+import { createHead } from '@unhead/vue/client'  // Updated import
 import 'vuetify/styles'
 import '@mdi/font/css/materialdesignicons.css'
 import './style.css'
@@ -31,7 +32,10 @@ const vuetify = createVuetify({
   }
 })
 
-createApp(App)
-  .use(router)
-  .use(vuetify)
-  .mount('#app')
+const app = createApp(App)
+
+app.use(createHead())  // Now safe to use
+app.use(router)
+app.use(vuetify)
+
+app.mount('#app')

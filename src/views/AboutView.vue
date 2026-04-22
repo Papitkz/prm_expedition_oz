@@ -1,9 +1,38 @@
 <script setup lang="ts">
+import { useSEO } from '@/composables/useSEO'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import PageHero from '@/components/PageHero.vue'
 import CtaSection from '@/components/home/CtaSection.vue'
 
 useScrollReveal()
+
+useSEO({
+  title: 'About Us',
+  description: 'Discover the story behind Expedition OZ. Passionate marine experts dedicated to sustainable luxury tourism in Ningaloo Reef, Western Australia.',
+  path: '/about',
+  type: 'article',
+  keywords: ['Expedition OZ', 'about us', 'Ningaloo Reef', 'marine conservation', 'Western Australia', 'live-aboard team'],
+  jsonLd: {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "name": "About Expedition OZ",
+    "description": "Discover the story behind Expedition OZ. Passionate marine experts dedicated to sustainable luxury tourism in Ningaloo Reef.",
+    "url": "https://expedition-oz.com/about",
+    "mainEntity": {
+      "@type": "Organization",
+      "name": "Expedition OZ",
+      "url": "https://expedition-oz.com",
+      "logo": "https://expedition-oz.com/logo.png",
+      "description": "Luxury live-aboard experiences in Ningaloo Reef, Western Australia",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Exmouth",
+        "addressRegion": "WA",
+        "addressCountry": "AU"
+      }
+    }
+  }
+})
 
 const values = [
   {

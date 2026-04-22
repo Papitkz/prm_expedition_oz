@@ -1,10 +1,65 @@
 <script setup lang="ts">
+import { useSEO } from '@/composables/useSEO'
 import { ref } from 'vue'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import PageHero from '@/components/PageHero.vue'
 import CtaSection from '@/components/home/CtaSection.vue'
 
 useScrollReveal()
+
+useSEO({
+  title: 'FAQ',
+  description: 'Find answers about our luxury live-aboard expeditions in Ningaloo Reef. Booking, preparation, marine life encounters, and what to expect aboard Sylvia and Millenium.',
+  path: '/faq',
+  type: 'article',
+  keywords: ['Ningaloo Reef FAQ', 'live-aboard questions', 'whale shark tours FAQ', 'Expedition OZ booking', 'what to bring Ningaloo', 'Exmouth travel tips'],
+  jsonLd: {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I check availability and make a booking?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Contact our team via the enquiry form or by phone. We'll discuss available departure dates, confirm passenger numbers, and guide you through the booking process. A deposit secures your place."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I need to be an experienced snorkeler?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Not at all. Our expeditions welcome all abilities. Our marine naturalists provide full snorkeling instruction and will be with you in the water throughout every session."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Are whale shark encounters guaranteed?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ningaloo has one of the highest rates of whale shark encounter success in the world. We use a spotter aircraft to locate whale sharks before entering the water. We are proud of our success rate, but as with all wildlife, encounters cannot be 100% guaranteed."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is included in the price?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Everything. All meals and premium beverages, all snorkel equipment including wetsuits and fins, kayaks and paddleboards, marine naturalist guiding, spotter aircraft (whale shark season), and your cabin accommodation."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "When is the best time to visit Ningaloo?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Whale sharks are present from approximately March to August, with peak season April–June. Manta rays are year-round. Humpback whales are seen July–October. We offer expeditions year-round with different seasonal highlights."
+        }
+      }
+    ]
+  }
+})
 
 const openIndex = ref<number | null>(null)
 

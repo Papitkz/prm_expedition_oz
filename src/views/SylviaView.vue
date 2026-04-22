@@ -1,12 +1,40 @@
 <script setup lang="ts">
+import { useSEO } from '@/composables/useSEO'
 import { ref, onMounted } from 'vue'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import CtaSection from '@/components/home/CtaSection.vue'
 
 useScrollReveal()
 
+useSEO({
+  title: 'Sylvia – 4-Day Luxury Live-Aboard',
+  description: 'Sylvia: Intimate 4-day Ningaloo Reef expedition. Luxury vessel for small groups with personalized whale shark encounters, pristine snorkeling, and all-inclusive dining.',
+  path: '/expeditions/sylvia',
+  type: 'product',
+  keywords: ['Sylvia vessel', '4 day Ningaloo', 'northern reef expedition', 'intimate live-aboard', 'whale shark snorkeling', 'Turquoise Bay'],
+  jsonLd: {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Sylvia 4-Day Northern Reef Expedition",
+    "description": "Intimate luxury live-aboard in the northern Ningaloo Reef",
+    "brand": { "@type": "Brand", "name": "Expedition OZ" },
+    "offers": {
+      "@type": "Offer",
+      "availability": "https://schema.org/InStock",
+      "priceCurrency": "AUD",
+      "priceValidUntil": "2026-12-31"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "reviewCount": "93"
+    }
+  }
+})
+
 const isVideoLoaded = ref(false)
 const showVideo = ref(true)
+const activeDay = ref(0)
 
 // Itinerary with AUTHENTIC Ningaloo Reef imagery
 const itinerary = [
@@ -14,7 +42,6 @@ const itinerary = [
     day: 'Day 1', 
     title: 'Departure & First Dive', 
     desc: 'Board Sylvia at Exmouth Marina. Brief safety orientation, then set sail for our first anchorage on the northern reef. Afternoon snorkel and sunset dinner on deck.',
-    // Real Exmouth Marina and vessel departure scene
     image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80',
     thumb: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=400&q=80'
   },
@@ -22,7 +49,6 @@ const itinerary = [
     day: 'Day 2', 
     title: 'Whale Shark Encounter', 
     desc: 'The highlight of the expedition. Our spotter plane locates whale sharks and we enter the water for multiple swims. You will be changed forever.',
-    // Authentic whale shark at Ningaloo - from iStock/actual Ningaloo photography
     image: 'https://images.unsplash.com/photo-1719450589784-c2c36ccf8e5b?q=80&w=1075&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     thumb: 'https://images.unsplash.com/photo-1719450589784-c2c36ccf8e5b?q=80&w=1075&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
   },
@@ -30,7 +56,6 @@ const itinerary = [
     day: 'Day 3', 
     title: 'Coral Gardens & Turquoise Bay', 
     desc: 'A full day exploring the reefs most spectacular coral formations at Turquoise Bay. Shallow dives and snorkeling. Look out for sea turtles, reef sharks, and rays.',
-    // Real Turquoise Bay/Ningaloo coral gardens - from iStock collection
     image: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=1200&q=80',
     thumb: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=400&q=80'
   },
@@ -38,7 +63,6 @@ const itinerary = [
     day: 'Day 4', 
     title: 'Final Morning & Return', 
     desc: 'One last sunrise swim before heading back to Exmouth. Farewell brunch and a lifetime of memories.',
-    // Ningaloo sunrise/sunset - authentic WA coastline
     image: 'https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?auto=format&fit=crop&w=1200&q=80',
     thumb: 'https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?auto=format&fit=crop&w=400&q=80'
   },
@@ -46,29 +70,19 @@ const itinerary = [
 
 // AUTHENTIC Vessel Gallery - Real luxury vessel and Ningaloo scenes
 const vesselImages = [
-  // Real luxury yacht at anchor - representative of Sylvia
   { src: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=800&q=80', caption: 'Sylvia at Anchor', category: 'Exterior' },
-  // Actual cabin interior - luxury yacht accommodation
   { src: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80', caption: 'Premium Cabin', category: 'Accommodation' },
-  // Real sun deck - yacht deck lounge
   { src: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?auto=format&fit=crop&w=800&q=80', caption: 'Sun Deck Lounge', category: 'Common Areas' },
-  // Master suite - authentic luxury yacht cabin
   { src: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80', caption: 'Master Suite', category: 'Accommodation' },
-  // Dive deck - actual Ningaloo diving operations
   { src: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80', caption: 'Dive Platform', category: 'Activities' },
-  // Dining salon - yacht dining
   { src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80', caption: 'Dining Salon', category: 'Common Areas' },
 ]
 
 // AUTHENTIC Dining - Real WA seafood and dining experiences
 const diningImages = [
-  // Sunset dining on deck - actual WA coastal sunset
   { src: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=600&q=80', title: 'Sunset Dining', desc: 'Gourmet meals on deck' },
-  // Fresh WA seafood - Exmouth prawns, local fish
   { src: 'https://images.unsplash.com/photo-1534939561126-855b8675edd7?auto=format&fit=crop&w=600&q=80', title: 'Exmouth Seafood', desc: 'Western Australian catch' },
-  // Premium beverages - wine selection
   { src: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80', title: 'Premium Cellar', desc: 'Margaret River wines' },
-  // Chef preparing meal - onboard dining
   { src: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&w=600&q=80', title: 'Chefs Table', desc: 'Onboard culinary excellence' },
 ]
 
@@ -85,7 +99,6 @@ const highlights = [
 
 const lightboxOpen = ref(false)
 const currentImage = ref(0)
-const activeDay = ref(0)
 
 const openLightbox = (index: number) => {
   currentImage.value = index

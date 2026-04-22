@@ -1,10 +1,46 @@
 <script setup lang="ts">
+import { useSEO } from '@/composables/useSEO'
 import { ref, defineComponent, h } from 'vue'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import PageHero from '@/components/PageHero.vue'
 import CtaSection from '@/components/home/CtaSection.vue'
 
 useScrollReveal()
+
+useSEO({
+  title: 'Our Expeditions',
+  description: 'Choose your luxury live-aboard adventure in Ningaloo Reef. Sylvia offers 4-day intimate reef exploration, while Millenium delivers 7-day ultimate wilderness immersion.',
+  path: '/expeditions',
+  type: 'website',
+  keywords: ['Ningaloo Reef expeditions', 'live-aboard tours', 'Sylvia vessel', 'Millenium vessel', 'luxury reef tours', 'Western Australia'],
+  jsonLd: {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Expedition OZ Live-Aboard Expeditions",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "item": {
+          "@type": "Product",
+          "name": "Sylvia 4-Day Expedition",
+          "description": "Intimate 4-day northern Ningaloo Reef live-aboard",
+          "url": "https://expedition-oz.com/expeditions/sylvia"
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "item": {
+          "@type": "Product",
+          "name": "Millenium 7-Day Expedition",
+          "description": "Ultimate 7-day full Ningaloo Reef live-aboard",
+          "url": "https://expedition-oz.com/expeditions/millenium"
+        }
+      }
+    ]
+  }
+})
 
 // Define the missing CheckIcon component so it renders in the table
 const CheckIcon = defineComponent({
@@ -64,11 +100,11 @@ const handleMouseLeave = () => {
 
 const compareRows = [
   { label: 'Duration', sylvia: '4 Days / 3 Nights', millenium: '7 Days / 6 Nights' },
-  { label: 'Whale Shark Snorkeling', sylvia: true, millenium: true }, // BOTH CHECKS
-  { label: 'Reef Snorkeling', sylvia: true, millenium: true },       // BOTH CHECKS
-  { label: 'All Meals & Beverages', sylvia: true, millenium: true }, // BOTH CHECKS
-  { label: 'Marine Naturalist Guide', sylvia: true, millenium: true }, // BOTH CHECKS
-  { label: 'Kayaks & Paddleboards', sylvia: true, millenium: true },   // BOTH CHECKS
+  { label: 'Whale Shark Snorkeling', sylvia: true, millenium: true },
+  { label: 'Reef Snorkeling', sylvia: true, millenium: true },
+  { label: 'All Meals & Beverages', sylvia: true, millenium: true },
+  { label: 'Marine Naturalist Guide', sylvia: true, millenium: true },
+  { label: 'Kayaks & Paddleboards', sylvia: true, millenium: true },
   { label: 'Manta Ray Encounters', sylvia: false, millenium: true },
   { label: 'Night Snorkeling', sylvia: false, millenium: true },
   { label: 'Humpback Whale Watching', sylvia: false, millenium: true },
