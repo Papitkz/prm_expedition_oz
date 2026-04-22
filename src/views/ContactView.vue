@@ -11,7 +11,7 @@ useSEO({
   description: 'Book your Ningaloo Reef luxury expedition. Contact Expedition OZ for availability, private charters, and bespoke marine adventures in Western Australia.',
   path: '/contact',
   type: 'website',
-  keywords: ['book Ningaloo Reef', 'Expedition OZ contact', 'live-aboard booking', 'Exmouth tours', 'private charter', 'whale shark booking','Expedition OZ],
+  keywords: ['book Ningaloo Reef', 'Expedition OZ contact', 'live-aboard booking', 'Exmouth tours', 'private charter', 'whale shark booking','Expedition OZ'],
 jsonLd: {
   "@context": "https://schema.org",
   "@type": "ContactPage",

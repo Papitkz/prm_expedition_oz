@@ -11,7 +11,7 @@ useSEO({
   description: 'Choose your luxury live-aboard adventure in Ningaloo Reef. Sylvia offers 4-day intimate reef exploration, while Millenium delivers 7-day ultimate wilderness immersion.',
   path: '/expeditions',
   type: 'website',
-  keywords: ['Ningaloo Reef expeditions', 'live-aboard tours', 'Sylvia vessel', 'Millenium vessel', 'luxury reef tours', 'Western Australia','Expedition OZ],
+  keywords: ['Ningaloo Reef expeditions', 'live-aboard tours', 'Sylvia vessel', 'Millenium vessel', 'luxury reef tours', 'Western Australia','Expedition OZ'],
   jsonLd: {
     "@context": "https://schema.org",
     "@type": "ItemList",
