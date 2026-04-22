@@ -8,7 +8,7 @@ export default defineConfig({
     vue(),
     vuetify({ 
       autoImport: true,
-      styles: { configFile: 'src/styles/settings.scss' } // or remove if no scss
+      styles: { configFile: 'src/styles/settings.scss' }
     })
   ],
   resolve: {
@@ -18,12 +18,5 @@ export default defineConfig({
   },
   ssr: {
     noExternal: ['vuetify'],
-  },
-  ssgOptions: {
-    script: 'async',
-    formatting: 'minify',
-    includedRoutes(paths) {
-      return paths.filter(i => !i.includes(':')) // exclude dynamic params
-    }
   }
 })

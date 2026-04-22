@@ -1,8 +1,8 @@
 // vite-ssg.config.ts
-import { defineConfig } from 'vite'
+import type { ViteSSGOptions } from 'vite-ssg'
 
-export default defineConfig({
-  ssr: {
-    noExternal: ['vuetify'],
-  },
-})
+export default {
+  includedRoutes(paths: string[]) {
+    return paths.filter((i: string) => !i.includes(':'))
+  }
+} satisfies ViteSSGOptions
