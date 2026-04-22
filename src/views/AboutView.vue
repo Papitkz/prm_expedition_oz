@@ -17,12 +17,12 @@ useSEO({
     "@type": "AboutPage",
     "name": "About Expedition OZ",
     "description": "Discover the story behind Expedition OZ. Passionate marine experts dedicated to sustainable luxury tourism in Ningaloo Reef.",
-    "url": "https://expedition-oz.com/about",
+    "url": "https://expeditionoz.netlify.app/about",
     "mainEntity": {
       "@type": "Organization",
       "name": "Expedition OZ",
       "url": "https://expedition-oz.com",
-      "logo": "https://expedition-oz.com/logo.png",
+      "logo": "https://expeditionoz.netlify.app/logo.png",
       "description": "Luxury live-aboard experiences in Ningaloo Reef, Western Australia",
       "address": {
         "@type": "PostalAddress",

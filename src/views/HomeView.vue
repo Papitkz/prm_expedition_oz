@@ -14,7 +14,7 @@ useScrollReveal()
 useSEO({
   title: 'Luxury Live-Aboard Ningaloo Reef',
   description: 'Experience luxury live-aboard expeditions in Ningaloo Reef, Western Australia. Swim with whale sharks, snorkel coral gardens, and explore marine wilderness aboard Sylvia or Millenium.',
-  image: 'https://expedition-oz.com/og-home.jpg',  // ← FIXED: removed space
+  image: 'https://expeditionoz.netlify.app/og-home.jpg',  // ← FIXED: removed space
   type: 'website',
   keywords: ['Ningaloo Reef', 'live-aboard', 'luxury tours', 'whale sharks', 'Western Australia', 'Sylvia', 'Millenium'],
   jsonLd: {
@@ -22,7 +22,7 @@ useSEO({
     "@type": "TravelAgency",
     "name": "Expedition OZ",
     "url": "https://expedition-oz.com",  // ← FIXED
-    "logo": "https://expedition-oz.com/logo.png",  // ← FIXED
+    "logo": "https://expeditionoz.netlify.app/logo.png",  // ← FIXED
     "description": "Luxury live-aboard experiences in Ningaloo Reef, Western Australia",
     "address": {
       "@type": "PostalAddress",

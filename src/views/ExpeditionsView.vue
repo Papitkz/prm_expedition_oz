@@ -25,7 +25,7 @@ useSEO({
           "@type": "Product",
           "name": "Sylvia 4-Day Expedition",
           "description": "Intimate 4-day northern Ningaloo Reef live-aboard",
-          "url": "https://expedition-oz.com/expeditions/sylvia"
+          "url": "https://expeditionoz.netlify.app/expeditions/sylvia"
         }
       },
       {
@@ -35,7 +35,7 @@ useSEO({
           "@type": "Product",
           "name": "Millenium 7-Day Expedition",
           "description": "Ultimate 7-day full Ningaloo Reef live-aboard",
-          "url": "https://expedition-oz.com/expeditions/millenium"
+          "url": "https://expeditionoz.netlify.app/expeditions/millenium"
         }
       }
     ]

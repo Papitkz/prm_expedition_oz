@@ -17,7 +17,7 @@ useSEO({
     "@type": "ContactPage",
     "name": "Contact Expedition OZ",
     "description": "Book your Ningaloo Reef luxury expedition",
-    "url": "https://expedition-oz.com/contact",
+    "url": "https://expeditionoz.netlify.app/contact",
     "mainEntity": {
       "@type": "TravelAgency",
       "name": "Expedition OZ",
