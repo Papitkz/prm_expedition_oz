@@ -5,13 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "build": "vue-tsc --noEmit && vite-ssg build",
     "preview": "vite preview"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
     "@unhead/addons": "^3.0.4",
-    "@unhead/vue": "^3.0.4",
+    "@unhead/vue": "1.9.16",
     "@vueuse/core": "^14.2.1",
     "@vueuse/head": "^2.0.0",
     "add": "^2.0.6",

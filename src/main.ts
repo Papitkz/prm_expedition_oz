@@ -1,9 +1,8 @@
-// main.ts
 import { ViteSSG } from 'vite-ssg'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
-import { createHead } from '@unhead/vue/client'  // Updated import
+import { createHead } from '@unhead/vue'
 import 'vuetify/styles'
 import '@mdi/font/css/materialdesignicons.css'
 import './style.css'
@@ -37,7 +36,7 @@ export const createApp = ViteSSG(
   App,
   { routes, base: '/' },
   ({ app, router, isClient }) => {
-    app.use(createHead()) // ← Now works for SSR + client
+    app.use(createHead())
     app.use(router)
     app.use(vuetify)
   }

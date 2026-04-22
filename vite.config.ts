@@ -17,4 +17,4 @@ export default defineConfig({
     script: 'async',
     formatting: 'minify'
   }
-})  
+})

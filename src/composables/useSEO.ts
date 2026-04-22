@@ -1,4 +1,3 @@
-// src/composables/useSEO.ts
 import { useHead, useSeoMeta } from '@unhead/vue'
 import { useRoute } from 'vue-router'
 
@@ -140,7 +139,7 @@ export function useSEO(config: SEOConfig = {}) {
     ogImageHeight: 630,
     ogImageType: 'image/jpeg',
     ogUrl: () => canonical,
-    ogType: 'website',  // Hardcode or use if/else below
+    ogType: 'website',
     ogSiteName: SITE_NAME,
     ogLocale: 'en_AU',
     twitterCard: 'summary_large_image',
