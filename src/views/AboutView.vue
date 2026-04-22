@@ -21,7 +21,7 @@ useSEO({
     "mainEntity": {
       "@type": "Organization",
       "name": "Expedition OZ",
-      "url": "https://expedition-oz.com",
+      "url": "https://expeditionoz.netlify.app",  // ✅ Fixed
       "logo": "https://expeditionoz.netlify.app/logo.png",
       "description": "Luxury live-aboard experiences in Ningaloo Reef, Western Australia",
       "address": {

@@ -17,12 +17,35 @@ useSEO({
     "@type": "Product",
     "name": "Millenium 7-Day Ultimate Reef Expedition",
     "description": "Seven transformative days encompassing the full length of Ningaloo Reef aboard our premium vessel",
-    "brand": { "@type": "Brand", "name": "Expedition OZ" },
+    "image": "https://expeditionoz.netlify.app/images/millenium-hero.jpg",
+    "brand": {
+      "@type": "Brand",
+      "name": "Expedition OZ"
+    },
+    "url": "https://expeditionoz.netlify.app/expeditions/millenium",
     "offers": {
       "@type": "Offer",
-      "availability": "https://schema.org/InStock",
+      "price": "4495.00",
       "priceCurrency": "AUD",
-      "priceValidUntil": "2026-12-31"
+      "availability": "https://schema.org/InStock",
+      "priceValidUntil": "2026-12-31",
+      "url": "https://expeditionoz.netlify.app/expeditions/millenium",
+      "shippingDetails": {
+        "@type": "OfferShippingDetails",
+        "shippingRate": {
+          "@type": "MonetaryAmount",
+          "value": "0",
+          "currency": "AUD"
+        },
+        "shippingDestination": {
+          "@type": "DefinedRegion",
+          "addressCountry": "AU"
+        }
+      },
+      "hasMerchantReturnPolicy": {
+        "@type": "MerchantReturnPolicy",
+        "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
+      }
     },
     "aggregateRating": {
       "@type": "AggregateRating",

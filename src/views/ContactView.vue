@@ -12,27 +12,28 @@ useSEO({
   path: '/contact',
   type: 'website',
   keywords: ['book Ningaloo Reef', 'Expedition OZ contact', 'live-aboard booking', 'Exmouth tours', 'private charter', 'whale shark booking'],
-  jsonLd: {
-    "@context": "https://schema.org",
-    "@type": "ContactPage",
-    "name": "Contact Expedition OZ",
-    "description": "Book your Ningaloo Reef luxury expedition",
-    "url": "https://expeditionoz.netlify.app/contact",
-    "mainEntity": {
-      "@type": "TravelAgency",
-      "name": "Expedition OZ",
-      "telephone": "+61-8-9123-4567",
-      "email": "hello@expeditionoz.com.au",
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "Exmouth Marina",
-        "addressLocality": "Exmouth",
-        "addressRegion": "WA",
-        "postalCode": "6707",
-        "addressCountry": "AU"
-      }
+jsonLd: {
+  "@context": "https://schema.org",
+  "@type": "ContactPage",
+  "name": "Contact Expedition OZ",
+  "description": "Book your Ningaloo Reef luxury expedition",
+  "url": "https://expeditionoz.netlify.app/contact",
+  "mainEntity": {
+    "@type": "TravelAgency",
+    "name": "Expedition OZ",
+    "url": "https://expeditionoz.netlify.app",  // ✅ Add this
+    "telephone": "+61-8-9123-4567",
+    "email": "hello@expeditionoz.com.au",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Exmouth Marina",
+      "addressLocality": "Exmouth",
+      "addressRegion": "WA",
+      "postalCode": "6707",
+      "addressCountry": "AU"
     }
   }
+}
 })
 
 const form = ref({
