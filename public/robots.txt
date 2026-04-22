@@ -1,6 +1,6 @@
 User-agent: *
 Allow: /
-Sitemap: https://expedition-oz.com/sitemap.xml
+Sitemap: https://expeditionoz.netlify.app/sitemap.xml
 
 # Block AI scrapers
 User-agent: GPTBot
