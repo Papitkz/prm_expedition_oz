@@ -36,6 +36,7 @@ const isVideoLoaded = ref(false)
 const showVideo = ref(true)
 const videoElement = ref<HTMLVideoElement | null>(null)
 const showCabinModal = ref(false)
+const activeDay = ref(0)
 
 // AUTHENTIC 7-Day Itinerary with real Ningaloo imagery
 const itinerary = [
