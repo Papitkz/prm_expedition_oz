@@ -221,7 +221,50 @@ const clearSensitiveData = () => {
 // Block keyboard shortcuts
 const blockDevToolsShortcuts = (e: KeyboardEvent) => {
   // F12
-s
+  if (e.key === 'F12') {
+    e.preventDefault()
+    e.stopPropagation()
+    triggerDevToolsWarning()
+    return false
+  }
+  
+  // Ctrl+Shift+I / Cmd+Option+I
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i')) {
+    e.preventDefault()
+    e.stopPropagation()
+    triggerDevToolsWarning()
+    return false
+  }
+  
+  // Ctrl+Shift+J / Cmd+Option+J
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'J' || e.key === 'j')) {
+    e.preventDefault()
+    e.stopPropagation()
+    triggerDevToolsWarning()
+    return false
+  }
+  
+  // Ctrl+Shift+C / Cmd+Option+C
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'C' || e.key === 'c')) {
+    e.preventDefault()
+    e.stopPropagation()
+    triggerDevToolsWarning()
+    return false
+  }
+  
+  // Ctrl+U (View Source)
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U')) {
+    e.preventDefault()
+    e.stopPropagation()
+    return false
+  }
+  
+  // Ctrl+S (Save Page) - optional
+  if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+    e.preventDefault()
+    e.stopPropagation()
+    return false
+  }
 }
 
 // Block right-click context menu (Inspect Element)
