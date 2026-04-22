@@ -15,7 +15,7 @@ interface SEOConfig {
 }
 
 const SITE_NAME = 'Expedition OZ'
-const SITE_URL = 'https://expedition-oz.com'  // ← FIXED: no trailing space
+const SITE_URL = 'https://expedition-oz.com'
 const DEFAULT_IMAGE = `${SITE_URL}/og-default.jpg`
 
 export function useSEO(config: SEOConfig = {}) {
@@ -30,49 +30,49 @@ export function useSEO(config: SEOConfig = {}) {
       description: config.description || 'Luxury live-aboard experiences in Ningaloo Reef, Western Australia.',
       canonical: `${SITE_URL}${path}`,
       ogImage: config.image || DEFAULT_IMAGE,
-      ogType: (config.type || 'website') as 'website' | 'article' | 'product',  // ← FIXED: cast type
+      ogType: (config.type || 'website') as 'website' | 'article' | 'product',
       robots: config.noindex ? 'noindex, nofollow' : 'index, follow',
-      keywords: config.keywords?.join(', ') || 'Ningaloo Reef, live-aboard, Western Australia, luxury tours'
-
+      keywords: config.keywords?.join(', ') || 'Ningaloo Reef, live-aboard, Western Australia, luxury tours',
+      
     }
   })
 
-  useSeoMeta({
-    title: () => seo.value.title,
-    description: () => seo.value.description,
-    keywords: () => seo.value.keywords,
-    robots: () => seo.value.robots,
-    ogTitle: () => seo.value.title,
-    ogDescription: () => seo.value.description,
-    ogImage: () => seo.value.ogImage,
-    ogImageWidth: 1200,
-    ogImageHeight: 630,
-    ogImageType: 'image/jpeg',
-    ogUrl: () => seo.value.canonical,
-    ogType: () => seo.value.ogType as any,  // ← FIXED: cast to any to bypass strict type
-    ogSiteName: SITE_NAME,
-    ogLocale: 'en_AU',
-    twitterCard: 'summary_large_image',
-    twitterTitle: () => seo.value.title,
-    twitterDescription: () => seo.value.description,
-    twitterImage: () => seo.value.ogImage
-  })
+useSeoMeta({
+  title: () => seo.value.title,
+  description: () => seo.value.description,
+  ogTitle: () => seo.value.title,
+  ogDescription: () => seo.value.description,
+  ogImage: () => seo.value.ogImage,
+  ogImageWidth: 1200,
+  ogImageHeight: 630,
+  ogImageType: 'image/jpeg',
+  ogUrl: () => seo.value.canonical,
+  ogType: 'website',  // Hardcode or use if/else below
+  ogSiteName: SITE_NAME,
+  ogLocale: 'en_AU',
+  twitterCard: 'summary_large_image',
+  twitterTitle: () => seo.value.title,
+  twitterDescription: () => seo.value.description,
+  twitterImage: () => seo.value.ogImage
+})
 
   useHead({
     htmlAttrs: { lang: 'en-AU' },
     link: [
       { rel: 'canonical', href: () => seo.value.canonical },
-      { rel: 'preconnect', href: 'https://fonts.googleapis.com' }  // ← FIXED: no trailing space
+      { rel: 'preconnect', href: 'https://fonts.googleapis.com' }
     ],
     meta: [
       { name: 'author', content: config.author || 'Expedition OZ' },
-      { name: 'theme-color', content: '#071a2b' }
+      { name: 'theme-color', content: '#071a2b' },
+      { name: 'keywords', content: () => seo.value.keywords },  // Moved here
+      { name: 'robots', content: () => seo.value.robots }
     ],
     script: config.jsonLd ? [{
       type: 'application/ld+json',
       innerHTML: () => JSON.stringify({
         ...config.jsonLd,
-        '@context': 'https://schema.org'  // ← FIXED: no trailing space
+        '@context': 'https://schema.org'
       })
     }] : []
   })
