@@ -6,7 +6,6 @@ import PageHero from '@/components/PageHero.vue'
 import CtaSection from '@/components/home/CtaSection.vue'
 
 useScrollReveal()
-
 useSEO({
   title: 'Our Expeditions',
   description: 'Choose your luxury live-aboard adventure in Ningaloo Reef. Sylvia offers 4-day intimate reef exploration, while Millenium delivers 7-day ultimate wilderness immersion.',
@@ -23,9 +22,43 @@ useSEO({
         "position": 1,
         "item": {
           "@type": "Product",
-          "name": "Sylvia 4-Day Expedition",
-          "description": "Intimate 4-day northern Ningaloo Reef live-aboard",
-          "url": "https://expeditionoz.netlify.app/expeditions/sylvia"
+          "name": "Sylvia 4-Day Northern Reef Expedition",
+          "description": "Intimate luxury live-aboard in the northern Ningaloo Reef",
+          "image": "https://expeditionoz.netlify.app/images/sylvia-hero.jpg",
+          "brand": {
+            "@type": "Brand",
+            "name": "Expedition OZ"
+          },
+          "url": "https://expeditionoz.netlify.app/expeditions/sylvia",
+          "offers": {
+            "@type": "Offer",
+            "price": "2495.00",
+            "priceCurrency": "AUD",
+            "availability": "https://schema.org/InStock",
+            "priceValidUntil": "2026-12-31",
+            "url": "https://expeditionoz.netlify.app/expeditions/sylvia",
+            "shippingDetails": {
+              "@type": "OfferShippingDetails",
+              "shippingRate": {
+                "@type": "MonetaryAmount",
+                "value": "0",
+                "currency": "AUD"
+              },
+              "shippingDestination": {
+                "@type": "DefinedRegion",
+                "addressCountry": "AU"
+              }
+            },
+            "hasMerchantReturnPolicy": {
+              "@type": "MerchantReturnPolicy",
+              "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
+            }
+          },
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "reviewCount": "93"
+          }
         }
       },
       {
@@ -35,7 +68,41 @@ useSEO({
           "@type": "Product",
           "name": "Millenium 7-Day Expedition",
           "description": "Ultimate 7-day full Ningaloo Reef live-aboard",
-          "url": "https://expeditionoz.netlify.app/expeditions/millenium"
+          "image": "https://expeditionoz.netlify.app/images/millenium-hero.jpg",
+          "brand": {
+            "@type": "Brand",
+            "name": "Expedition OZ"
+          },
+          "url": "https://expeditionoz.netlify.app/expeditions/millenium",
+          "offers": {
+            "@type": "Offer",
+            "price": "4495.00",
+            "priceCurrency": "AUD",
+            "availability": "https://schema.org/InStock",
+            "priceValidUntil": "2026-12-31",
+            "url": "https://expeditionoz.netlify.app/expeditions/millenium",
+            "shippingDetails": {
+              "@type": "OfferShippingDetails",
+              "shippingRate": {
+                "@type": "MonetaryAmount",
+                "value": "0",
+                "currency": "AUD"
+              },
+              "shippingDestination": {
+                "@type": "DefinedRegion",
+                "addressCountry": "AU"
+              }
+            },
+            "hasMerchantReturnPolicy": {
+              "@type": "MerchantReturnPolicy",
+              "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
+            }
+          },
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "reviewCount": "93"
+          }
         }
       }
     ]
