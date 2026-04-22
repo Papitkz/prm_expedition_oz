@@ -11,7 +11,7 @@ useSEO({
   description: 'Sylvia: Intimate 4-day Ningaloo Reef expedition. Luxury vessel for small groups with personalized whale shark encounters, pristine snorkeling, and all-inclusive dining.',
   path: '/expeditions/sylvia',
   type: 'product',
-  keywords: ['Sylvia vessel', '4 day Ningaloo', 'northern reef expedition', 'intimate live-aboard', 'whale shark snorkeling', 'Turquoise Bay'],
+  keywords: ['Sylvia vessel','Expedition OZ', '4 day Ningaloo', 'northern reef expedition', 'intimate live-aboard', 'whale shark snorkeling', 'Turquoise Bay'],
   jsonLd: {
     "@context": "https://schema.org",
     "@type": "Product",

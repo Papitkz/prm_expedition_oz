@@ -11,7 +11,7 @@ useSEO({
   description: 'Millenium: The ultimate 7-day Ningaloo Reef live-aboard adventure. Full reef coverage, whale sharks, manta rays, humpback whales, night snorkeling, and premium cabin suites.',
   path: '/expeditions/millenium',
   type: 'product',
-  keywords: ['Millenium vessel', '7 day Ningaloo', 'ultimate reef expedition', 'luxury live-aboard', 'humpback whale watching', 'night snorkeling', 'premium cabin suites'],
+  keywords: ['Millenium vessel','Expedition OZ', '7 day Ningaloo', 'ultimate reef expedition', 'luxury live-aboard', 'humpback whale watching', 'night snorkeling', 'premium cabin suites'],
   jsonLd: {
     "@context": "https://schema.org",
     "@type": "Product",

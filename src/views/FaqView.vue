@@ -12,7 +12,7 @@ useSEO({
   description: 'Find answers about our luxury live-aboard expeditions in Ningaloo Reef. Booking, preparation, marine life encounters, and what to expect aboard Sylvia and Millenium.',
   path: '/faq',
   type: 'article',
-  keywords: ['Ningaloo Reef FAQ', 'live-aboard questions', 'whale shark tours FAQ', 'Expedition OZ booking', 'what to bring Ningaloo', 'Exmouth travel tips'],
+  keywords: ['Ningaloo Reef FAQ', 'live-aboard questions', 'whale shark tours FAQ', 'Expedition OZ booking', 'what to bring Ningaloo', 'Exmouth travel tips','Expedition OZ],
   jsonLd: {
     "@context": "https://schema.org",
     "@type": "FAQPage",
