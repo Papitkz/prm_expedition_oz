@@ -35,7 +35,7 @@ useSEO({
       "latitude": -21.9315,
       "longitude": 114.1280
     },
-    "telephone": "+61-xxx-xxx-xxx",
+    "telephone": "+61-234-567-890",
     "priceRange": "$$$$",
     "openingHoursSpecification": {
       "@type": "OpeningHoursSpecification",

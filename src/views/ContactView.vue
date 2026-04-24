@@ -95,7 +95,7 @@ const expeditions = [
                 </svg>
                 <div>
                   <p class="overline-text mb-1" style="font-size: 0.55rem;">Phone</p>
-                  <a href="tel:+61891234567" class="text-sm" style="font-family: var(--font-body); color: var(--color-sand-200); text-decoration: none;">+61 8 9123 4567</a>
+                  <a href="tel:+61891234567" class="text-sm" style="font-family: var(--font-body); color: var(--color-sand-200); text-decoration: none;">+61-234-567-890</a>
                 </div>
               </div>
 

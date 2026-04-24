@@ -39,9 +39,26 @@ useSEO({
         },
         "shippingDestination": {
           "@type": "DefinedRegion",
-          "addressCountry": "AU"
+          "addressCountry": "AU",
+          "applicableCountry": "AU"
+        },
+         "deliveryTime": {
+          "@type": "ShippingDeliveryTime",
+          "handlingTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 0,
+            "maxValue": 1,
+            "unitCode": "DAY"
+          },
+          "transitTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 0,
+            "maxValue": 0,
+            "unitCode": "DAY"
+          }
         }
       },
+      "applicableCountry": "AU",
       "hasMerchantReturnPolicy": {
         "@type": "MerchantReturnPolicy",
         "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"

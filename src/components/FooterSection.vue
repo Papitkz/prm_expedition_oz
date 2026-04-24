@@ -60,19 +60,19 @@ const quickLinks = [
             Expedition OZ operates luxury live-aboard tours through the world's greatest fringing reef — Ningaloo, Western Australia. Adventure, ocean, and pure luxury in one extraordinary experience.
           </p>
           <div class="flex gap-3 mt-7">
-            <a href="#" class="social-icon" aria-label="Instagram">
+            <a href="https://www.instagram.com/ExpeditionOz/" class="social-icon" aria-label="Instagram">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
                 <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
               </svg>
             </a>
-            <a href="#" class="social-icon" aria-label="Facebook">
+            <a href="https://www.facebook.com/ExpeditionOz/" class="social-icon" aria-label="Facebook">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
               </svg>
             </a>
-            <a href="#" class="social-icon" aria-label="YouTube">
+            <a href="https://m.youtube.com/@ExpeditionOz" class="social-icon" aria-label="YouTube">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/>
                 <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/>
@@ -104,7 +104,7 @@ const quickLinks = [
               </div>
               <div>
                 <p class="contact-label">Phone</p>
-                <p class="contact-value">+61 8 9123 4567</p>
+                <p class="contact-value">+61-234-567-890</p>
               </div>
             </a>
 

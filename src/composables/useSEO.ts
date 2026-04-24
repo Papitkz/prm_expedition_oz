@@ -46,11 +46,11 @@ export function buildOrganizationSchema() {
       latitude: -21.9315,
       longitude: 114.1280,
     },
-    telephone: '+61-xxx-xxx-xxx',
+    telephone: '+61-234-567-890',
     priceRange: '$$$$',
     sameAs: [
-      'https://facebook.com/expeditionoz',
-      'https://instagram.com/expeditionoz',
+      'https://www.facebook.com/ExpeditionOz/',
+      'https://instagram.com/ExpeditionOz',
     ],
   }
 }
