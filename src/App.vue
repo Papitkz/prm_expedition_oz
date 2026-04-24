@@ -649,7 +649,7 @@ const animateRipples = () => {
 
 .scroll-top-btn {
   position: fixed;
-  bottom:3rem;
+  bottom: 3rem;
   right: 2rem;
   z-index: 100;
   display: flex;
@@ -694,10 +694,15 @@ const animateRipples = () => {
   transform: translateY(20px);
 }
 
+/* ============================================
+   MOBILE FIX: Move scroll-to-top to bottom-left
+   to avoid overlapping cursor FX toggle
+   ============================================ */
 @media (max-width: 768px) {
   .scroll-top-btn {
-    bottom: 5rem;
-    right: 1.5rem;
+    bottom: 1.5rem;
+    left: 1.5rem;
+    right: auto;
     padding: 0.625rem 0.875rem;
   }
 
