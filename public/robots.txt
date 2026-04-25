@@ -1,9 +1,8 @@
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /api/
+
 Sitemap: https://expeditionoz.netlify.app/sitemap.xml
 
-# Block AI scrapers
-User-agent: GPTBot
-Disallow: /
-User-agent: CCBot
-Disallow: /
+# Crawl-delay: 10
