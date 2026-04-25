@@ -1,4 +1,4 @@
-<script setup lang="ts">
+l<script setup lang="ts">
 import { useSEO } from '@/composables/useSEO'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import HeroSection from '@/components/home/HeroSection.vue'
@@ -13,16 +13,15 @@ useScrollReveal()
 
 useSEO({
   title: 'Luxury Live-Aboard Ningaloo Reef',
-  description: 'Experience luxury live-aboard expeditions in Ningaloo Reef, Western Australia. Swim with whale sharks, snorkel coral gardens, and explore marine wilderness aboard Sylvia or Millenium.',
-  image: 'https://expeditionoz.netlify.app/og-home.jpg',  // ← FIXED: removed space
+  description: 'Experience luxury live-aboard expeditions on Ningaloo Reef, Western Australia. Swim with whale sharks, snorkel coral gardens, and explore marine wilderness aboard Sylvia or Millenium.',
+  image: 'https://expeditionoz.netlify.app/og-image.jpg',
   type: 'website',
-  keywords: ['Ningaloo Reef', 'live-aboard', 'luxury tours', 'whale sharks', 'Western Australia', 'Sylvia', 'Millenium','Expedition OZ'],
   jsonLd: {
-    "@context": "https://schema.org",  // ← FIXED
+    "@context": "https://schema.org",
     "@type": "TravelAgency",
     "name": "Expedition OZ",
-    "url": "https://expedition-oz.com",  // ← FIXED
-    "logo": "https://expeditionoz.netlify.app/logo.png",  // ← FIXED
+    "url": "https://expeditionoz.netlify.app/",
+    "logo": "https://expeditionoz.netlify.app/logo.png",
     "description": "Luxury live-aboard experiences in Ningaloo Reef, Western Australia",
     "address": {
       "@type": "PostalAddress",
@@ -39,8 +38,9 @@ useSEO({
     "priceRange": "$$$$",
     "openingHoursSpecification": {
       "@type": "OpeningHoursSpecification",
-      "validFrom": "2026-04-01",
-      "validThrough": "2026-09-30"
+      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      "opens": "08:00",
+      "closes": "17:00"
     }
   }
 })
