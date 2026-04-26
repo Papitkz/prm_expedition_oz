@@ -11,7 +11,6 @@ useSEO({
   description: 'Sylvia: Intimate 4-day Ningaloo Reef expedition. Luxury vessel for small groups with personalized whale shark encounters, pristine snorkeling, and all-inclusive dining.',
   path: '/expeditions/sylvia',
   type: 'product',
-  keywords: ['Sylvia vessel','Expedition OZ', '4 day Ningaloo', 'northern reef expedition', 'intimate live-aboard', 'whale shark snorkeling', 'Turquoise Bay'],
   jsonLd: {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -39,10 +38,9 @@ useSEO({
         },
         "shippingDestination": {
           "@type": "DefinedRegion",
-          "addressCountry": "AU",
-          "applicableCountry": "AU"
+          "addressCountry": "AU"
         },
-         "deliveryTime": {
+        "deliveryTime": {
           "@type": "ShippingDeliveryTime",
           "handlingTime": {
             "@type": "QuantitativeValue",
@@ -58,7 +56,6 @@ useSEO({
           }
         }
       },
-      "applicableCountry": "AU",
       "hasMerchantReturnPolicy": {
         "@type": "MerchantReturnPolicy",
         "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
@@ -76,7 +73,6 @@ const isVideoLoaded = ref(false)
 const showVideo = ref(true)
 const activeDay = ref(0)
 
-// Itinerary with AUTHENTIC Ningaloo Reef imagery
 const itinerary = [
   { 
     day: 'Day 1', 
@@ -108,7 +104,6 @@ const itinerary = [
   },
 ]
 
-// AUTHENTIC Vessel Gallery - Real luxury vessel and Ningaloo scenes
 const vesselImages = [
   { src: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=800&q=80', caption: 'Sylvia at Anchor', category: 'Exterior' },
   { src: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80', caption: 'Premium Cabin', category: 'Accommodation' },
@@ -118,7 +113,6 @@ const vesselImages = [
   { src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80', caption: 'Dining Salon', category: 'Common Areas' },
 ]
 
-// AUTHENTIC Dining - Real WA seafood and dining experiences
 const diningImages = [
   { src: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=600&q=80', title: 'Sunset Dining', desc: 'Gourmet meals on deck' },
   { src: 'https://images.unsplash.com/photo-1534939561126-855b8675edd7?auto=format&fit=crop&w=600&q=80', title: 'Exmouth Seafood', desc: 'Western Australian catch' },
@@ -170,9 +164,8 @@ onMounted(() => {
 
 <template>
   <div>
-    <!-- Cinematic Video Hero - FIXED MOBILE -->
+    <!-- Cinematic Video Hero -->
     <section class="relative h-[85vh] md:h-screen w-full overflow-hidden">
-      <!-- Video Background -->
       <div class="absolute inset-0 z-0">
         <video
           v-if="showVideo"
@@ -191,12 +184,10 @@ onMounted(() => {
           class="w-full h-full bg-cover bg-center"
           style="background-image: url('https://images.unsplash.com/photo-1582967788606-a171f1080ca8?auto=format&fit=crop&w=1920&q=80')"
         />
-        <!-- Darker overlay for better text readability -->
         <div class="absolute inset-0 bg-[#0A2E4A]/70" />
         <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
       </div>
 
-      <!-- Hero Content - FIXED MOBILE TEXT SIZES -->
       <div class="relative z-10 h-full flex flex-col justify-center items-center text-center px-4">
         <p class="overline-text mb-3 md:mb-4 text-xs md:text-sm tracking-[0.3em] text-white/90">4 Day Live-Aboard Expedition</p>
         <h1 class="font-display text-4xl md:text-7xl lg:text-8xl font-light text-white mb-3 md:mb-4" style="font-family: var(--font-display);">
@@ -215,15 +206,14 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Scroll Indicator -->
       <div class="absolute bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-10 animate-bounce">
-        <svg width="20" height="20" md:width="24" md:height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
           <path d="M12 5v14M19 12l-7 7-7-7"/>
         </svg>
       </div>
     </section>
 
-    <!-- About Section - FIXED MOBILE SPACING -->
+    <!-- About Section -->
     <section class="py-12 md:py-24 lg:py-32" style="background: var(--color-ocean-950);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-12 lg:gap-16 items-start">
@@ -240,7 +230,6 @@ onMounted(() => {
               The northern reef is among the most pristine sections of Ningaloo — vast, biodiverse, and relatively untouched. This is where you will encounter whale sharks, glide over coral gardens, and fall utterly in love with the ocean.
             </p>
 
-            <!-- Stats Grid - FIXED MOBILE -->
             <div class="grid grid-cols-3 gap-2 md:gap-6 mb-4 md:mb-8 pt-3 md:pt-6" style="border-top: 1px solid rgba(201, 168, 76, 0.15);">
               <div class="text-center">
                 <p class="font-display text-xl md:text-3xl font-light" style="font-family: var(--font-display); color: var(--color-gold-400);">4</p>
@@ -263,7 +252,6 @@ onMounted(() => {
 
           <div class="section-reveal-right order-1 lg:order-2">
             <div class="relative overflow-hidden h-[250px] sm:h-[350px] md:h-[520px] group">
-              <!-- AUTHENTIC: Real whale shark at Ningaloo -->
               <img
                 src="https://www.ningaloodiscovery.com.au/wp-content/uploads/2016/01/swim-wth-turtles-1024x683.jpg"
                 alt="Whale shark encounter at Ningaloo Reef, Western Australia"
@@ -276,7 +264,7 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- Vessel Showcase - FIXED MOBILE MASONRY WITH LESS SPACING -->
+    <!-- Vessel Showcase -->
     <section class="py-12 md:py-24" style="background: var(--color-ocean-900);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
         <div class="text-center mb-8 md:mb-16 section-reveal">
@@ -290,7 +278,6 @@ onMounted(() => {
           </p>
         </div>
 
-        <!-- FIXED MOBILE MASONRY: CSS Columns with minimal gap -->
         <div class="columns-2 md:columns-3 gap-2 md:gap-3 space-y-2 md:space-y-3 section-reveal">
           <div 
             v-for="(img, i) in vesselImages" 
@@ -320,7 +307,7 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- Itinerary with AUTHENTIC Day-by-Day Imagery - FIXED MOBILE -->
+    <!-- Itinerary -->
     <section class="py-12 md:py-24" style="background: var(--color-ocean-950);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
         <div class="text-center mb-6 md:mb-16 section-reveal">
@@ -331,7 +318,6 @@ onMounted(() => {
           </h2>
         </div>
 
-        <!-- Interactive Day Selector (Mobile) - FIXED STYLING -->
         <div class="flex md:hidden justify-center gap-1.5 mb-4 overflow-x-auto pb-2 scrollbar-hide">
           <button 
             v-for="(day, i) in itinerary" 
@@ -344,7 +330,6 @@ onMounted(() => {
           </button>
         </div>
 
-        <!-- Day Content - FIXED MOBILE SPACING -->
         <div class="max-w-5xl mx-auto">
           <div 
             v-for="(item, i) in itinerary" 
@@ -357,9 +342,7 @@ onMounted(() => {
             ]"
             :style="`transition-delay: ${i * 0.1}s`"
           >
-            <!-- Image - FIXED MOBILE HEIGHT -->
             <div :class="i % 2 === 1 ? 'md:order-2' : ''" class="relative group overflow-hidden">
-              <!-- AUTHENTIC images for each day -->
               <img 
                 :src="item.image" 
                 :alt="item.title"
@@ -370,7 +353,6 @@ onMounted(() => {
               </div>
             </div>
 
-            <!-- Content - FIXED MOBILE TEXT -->
             <div :class="i % 2 === 1 ? 'md:order-1' : ''">
               <h3 class="font-display text-xl md:text-3xl font-light mb-2 md:mb-4" style="font-family: var(--font-display); color: var(--color-sand-100);">
                 {{ item.title }}
@@ -380,13 +362,13 @@ onMounted(() => {
               </p>
               <div class="flex items-center gap-3 md:gap-4 text-[#C9A84C] text-xs md:text-sm">
                 <span class="flex items-center gap-1.5 md:gap-2">
-                  <svg width="14" height="14" md:width="16" md:height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                   </svg>
                   Full Day
                 </span>
                 <span class="flex items-center gap-1.5 md:gap-2">
-                  <svg width="14" height="14" md:width="16" md:height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                   </svg>
                   All Meals
@@ -398,7 +380,7 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- Dining Experience - FIXED MOBILE -->
+    <!-- Dining Experience -->
     <section class="py-12 md:py-24" style="background: var(--color-ocean-900);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
         <div class="grid lg:grid-cols-2 gap-6 md:gap-12 items-center">
@@ -413,19 +395,19 @@ onMounted(() => {
             </p>
             <ul class="space-y-2 md:space-y-3 mb-6 md:mb-8">
               <li class="flex items-center gap-2 md:gap-3 text-sm" style="color: var(--color-sand-200);">
-                <svg width="18" height="18" md:width="20" md:height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
                 All-inclusive gourmet meals
               </li>
               <li class="flex items-center gap-2 md:gap-3 text-sm" style="color: var(--color-sand-200);">
-                <svg width="18" height="18" md:width="20" md:height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
                 Premium wines and craft cocktails
               </li>
               <li class="flex items-center gap-2 md:gap-3 text-sm" style="color: var(--color-sand-200);">
-                <svg width="18" height="18" md:width="20" md:height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
                 Dietary requirements catered
@@ -433,7 +415,6 @@ onMounted(() => {
             </ul>
           </div>
 
-          <!-- Dining Grid - FIXED MOBILE SPACING -->
           <div class="grid grid-cols-2 gap-2 md:gap-3 section-reveal-right">
             <div v-for="(img, i) in diningImages" :key="i" class="relative overflow-hidden group" :class="i === 0 ? 'col-span-2' : ''">
               <img :src="img.src" :alt="img.title" class="w-full h-36 md:h-48 object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -449,10 +430,9 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- Route Map - FIXED MOBILE -->
+    <!-- Route Map -->
     <section class="py-12 md:py-24 relative overflow-hidden" style="background: var(--color-ocean-900);">
       <div class="absolute inset-0 opacity-20">
-        <!-- AUTHENTIC: Aerial view of Ningaloo Reef -->
         <img 
           src="https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?auto=format&fit=crop&w=1920&q=80" 
           alt="Ningaloo Reef aerial view"
@@ -470,10 +450,8 @@ onMounted(() => {
 
         <div class="max-w-4xl mx-auto bg-[#0A2E4A]/80 backdrop-blur-md p-4 md:p-12 rounded-sm border border-[#C9A84C]/20 section-reveal">
           <div class="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6 relative">
-            <!-- Route Line -->
             <div class="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-[#C9A84C]/30 -translate-y-1/2 z-0" />
 
-            <!-- Waypoints - FIXED MOBILE -->
             <div class="relative z-10 text-center flex md:block items-center gap-3 md:gap-0 w-full md:w-auto">
               <div class="w-3 h-3 bg-[#C9A84C] rounded-full md:mx-auto md:mb-2 flex-shrink-0" />
               <div class="text-left md:text-center">
@@ -516,7 +494,7 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- Highlights Section - FIXED MOBILE -->
+    <!-- Highlights -->
     <section class="py-12 md:py-24" style="background: var(--color-ocean-950);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
         <div class="text-center mb-6 md:mb-12 section-reveal">
@@ -534,7 +512,7 @@ onMounted(() => {
             class="highlight-item section-reveal"
             :style="`transition-delay: ${i * 0.07}s`"
           >
-            <svg width="14" height="14" md:width="16" md:height="16" viewBox="0 0 24 24" fill="none" class="flex-shrink-0 mt-0.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="flex-shrink-0 mt-0.5">
               <polyline points="20 6 9 17 4 12" stroke="#C9A84C" stroke-width="2" stroke-linecap="round"/>
             </svg>
             <p class="text-sm md:text-base opacity-80" style="font-family: var(--font-body); color: var(--color-sand-200);">
@@ -547,7 +525,7 @@ onMounted(() => {
 
     <CtaSection />
 
-    <!-- Lightbox Modal - FIXED MOBILE -->
+    <!-- Lightbox -->
     <div 
       v-if="lightboxOpen" 
       class="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-2 md:p-4"
@@ -557,7 +535,7 @@ onMounted(() => {
         class="absolute top-2 right-2 md:top-4 md:right-4 text-white/70 hover:text-white p-2"
         @click="closeLightbox"
       >
-        <svg width="24" height="24" md:width="32" md:height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
       </button>
@@ -566,7 +544,7 @@ onMounted(() => {
         class="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white p-2 md:p-4 hidden md:block"
         @click.stop="prevImage"
       >
-        <svg width="32" height="32" md:width="48" md:height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
           <polyline points="15,18 9,12 15,6"/>
         </svg>
       </button>
@@ -575,7 +553,7 @@ onMounted(() => {
         class="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white p-2 md:p-4 hidden md:block"
         @click.stop="nextImage"
       >
-        <svg width="32" height="32" md:width="48" md:height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
           <polyline points="9,18 15,12 9,6"/>
         </svg>
       </button>
@@ -659,7 +637,6 @@ html {
   50% { transform: translateX(-50%) translateY(-10px); }
 }
 
-/* Hide scrollbar for mobile day selector */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
@@ -668,7 +645,6 @@ html {
   scrollbar-width: none;
 }
 
-/* Break inside avoid for masonry */
 .break-inside-avoid {
   break-inside: avoid;
 }
