@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useSEO } from '@/composables/useSEO'
+import { useSEO, buildBreadcrumbSchema } from '@/composables/useSEO'
 import { ref, onMounted } from 'vue'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import CtaSection from '@/components/home/CtaSection.vue'
@@ -11,65 +11,69 @@ useSEO({
   description: 'Millenium: The ultimate 7-day Ningaloo Reef live-aboard adventure. Full reef coverage, whale sharks, manta rays, humpback whales, night snorkeling, and premium cabin suites.',
   path: '/expeditions/millenium',
   type: 'product',
-  keywords: ['Millenium vessel','Expedition OZ', '7 day Ningaloo', 'ultimate reef expedition', 'luxury live-aboard', 'humpback whale watching', 'night snorkeling', 'premium cabin suites'],
-  jsonLd: {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    "name": "Millenium 7-Day Ultimate Reef Expedition",
-    "description": "Seven transformative days encompassing the full length of Ningaloo Reef aboard our premium vessel",
-    "image": "https://expeditionoz.netlify.app/images/millenium-hero.jpg",
-    "brand": {
-      "@type": "Brand",
-      "name": "Expedition OZ"
-    },
-    "url": "https://expeditionoz.netlify.app/expeditions/millenium",
-    "offers": {
-      "@type": "Offer",
-      "price": "4495.00",
-      "priceCurrency": "AUD",
-      "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-12-31",
+  jsonLd: [
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "Millenium 7-Day Ultimate Reef Expedition",
+      "description": "Seven transformative days encompassing the full length of Ningaloo Reef aboard our premium vessel",
+      "image": "https://expeditionoz.netlify.app/images/millenium-hero.jpg",
+      "brand": {
+        "@type": "Brand",
+        "name": "Expedition OZ"
+      },
       "url": "https://expeditionoz.netlify.app/expeditions/millenium",
-      "shippingDetails": {
-        "@type": "OfferShippingDetails",
-        "shippingRate": {
-          "@type": "MonetaryAmount",
-          "value": "0",
-          "currency": "AUD"
-        },
-        "shippingDestination": {
-          "@type": "DefinedRegion",
-          "addressCountry": "AU",
-          "applicableCountry": "AU"
-        },
-         "deliveryTime": {
-          "@type": "ShippingDeliveryTime",
-          "handlingTime": {
-            "@type": "QuantitativeValue",
-            "minValue": 0,
-            "maxValue": 1,
-            "unitCode": "DAY"
+      "offers": {
+        "@type": "Offer",
+        "price": "4495.00",
+        "priceCurrency": "AUD",
+        "availability": "https://schema.org/InStock",
+        "priceValidUntil": "2026-12-31",
+        "url": "https://expeditionoz.netlify.app/expeditions/millenium",
+        "shippingDetails": {
+          "@type": "OfferShippingDetails",
+          "shippingRate": {
+            "@type": "MonetaryAmount",
+            "value": "0",
+            "currency": "AUD"
           },
-          "transitTime": {
-            "@type": "QuantitativeValue",
-            "minValue": 0,
-            "maxValue": 0,
-            "unitCode": "DAY"
+          "shippingDestination": {
+            "@type": "DefinedRegion",
+            "addressCountry": "AU"
+          },
+          "deliveryTime": {
+            "@type": "ShippingDeliveryTime",
+            "handlingTime": {
+              "@type": "QuantitativeValue",
+              "minValue": 0,
+              "maxValue": 1,
+              "unitCode": "DAY"
+            },
+            "transitTime": {
+              "@type": "QuantitativeValue",
+              "minValue": 0,
+              "maxValue": 0,
+              "unitCode": "DAY"
+            }
           }
+        },
+        "hasMerchantReturnPolicy": {
+          "@type": "MerchantReturnPolicy",
+          "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
         }
       },
-      
-      "hasMerchantReturnPolicy": {
-        "@type": "MerchantReturnPolicy",
-        "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "reviewCount": "127"
       }
     },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.9",
-      "reviewCount": "127"
-    }
-  }
+    buildBreadcrumbSchema([
+      { name: 'Home', url: 'https://expeditionoz.netlify.app/' },
+      { name: 'Expeditions', url: 'https://expeditionoz.netlify.app/expeditions' },
+      { name: 'Millenium', url: 'https://expeditionoz.netlify.app/expeditions/millenium' },
+    ])
+  ]
 })
 
 const isVideoLoaded = ref(false)
@@ -78,13 +82,12 @@ const videoElement = ref<HTMLVideoElement | null>(null)
 const showCabinModal = ref(false)
 const activeDay = ref(0)
 
-// AUTHENTIC 7-Day Itinerary with real Ningaloo imagery
 const itinerary = [
   { 
     day: 'Day 1', 
     title: 'Embarkation & Welcome Dinner', 
     desc: 'Board Millenium at Exmouth Marina. Settle into your premium suite with en-suite bathroom and ocean views. Meet the crew and fellow expeditioners over champagne and canapés. Sunset departure as we head to our first anchorage in the northern reef.',
-    image: 'https://plus.unsplash.com/premium_photo-1682804227999-899fd9011e45?q=80&w=1075&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    image: 'https://plus.unsplash.com/premium_photo-1682804227999-899fd9011e45?q=80&w=1075&auto=format&fit=crop',
     activity: 'Boarding & Departure',
     meals: 'Dinner'
   },
@@ -92,7 +95,7 @@ const itinerary = [
     day: 'Day 2', 
     title: 'Whale Shark Encounter', 
     desc: 'Our spotter plane locates whale sharks from above while you enjoy breakfast. Multiple swims with the oceans most gentle giants, guided by our marine naturalist. Each encounter is unique — these prehistoric creatures can reach 12 meters in length.',
-    image: 'https://images.unsplash.com/photo-1576124344805-c47cea66b0db?q=80&w=1112&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    image: 'https://images.unsplash.com/photo-1576124344805-c47cea66b0db?q=80&w=1112&auto=format&fit=crop',
     activity: 'Whale Shark Swimming',
     meals: 'All Meals'
   },
@@ -100,7 +103,7 @@ const itinerary = [
     day: 'Day 3', 
     title: 'Manta Ray Dive & Coral Gardens', 
     desc: 'Head to the legendary cleaning stations where manta rays congregate. Drift over dramatic coral formations — an otherworldly experience. Our dive masters guide you through underwater cathedrals of coral teeming with life.',
-    image: 'https://images.unsplash.com/photo-1616464592706-f39e5b192451?q=80&w=1633&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    image: 'https://images.unsplash.com/photo-1616464592706-f39e5b192451?q=80&w=1633&auto=format&fit=crop',
     activity: 'Manta Rays & Diving',
     meals: 'All Meals'
   },
@@ -138,7 +141,6 @@ const itinerary = [
   },
 ]
 
-// AUTHENTIC Vessel Gallery - Real luxury expedition vessel
 const vesselImages = [
   { src: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=800&q=80', caption: 'Millenium at Anchor', category: 'Exterior', size: 'large' },
   { src: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80', caption: 'Premium Suite', category: 'Accommodation', size: 'normal' },
@@ -146,11 +148,10 @@ const vesselImages = [
   { src: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?auto=format&fit=crop&w=800&q=80', caption: 'Observation Deck', category: 'Common Areas', size: 'large' },
   { src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80', caption: 'Dining Salon', category: 'Dining', size: 'normal' },
   { src: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80', caption: 'Dive Platform', category: 'Activities', size: 'normal' },
-  { src: 'https://www.gourmetgalleycatering.com/wp-content/uploads/2025/09/Corporate-Meeting-Breakfast-1-scaled-1-600x500.webp', caption: 'Gourmet Galley', category: 'Dining', size: 'normal' },
+  { src: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&w=800&q=80', caption: 'Gourmet Galley', category: 'Dining', size: 'normal' },
   { src: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=800&q=80', caption: 'Lounge Area', category: 'Common Areas', size: 'normal' },
 ]
 
-// AUTHENTIC Dining - Real WA food experiences
 const diningImages = [
   { src: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=600&q=80', title: 'Sunset Dining', desc: 'Multi-course dinners on deck', featured: true },
   { src: 'https://images.unsplash.com/photo-1534939561126-855b8675edd7?auto=format&fit=crop&w=600&q=80', title: 'Exmouth Seafood', desc: 'Western Australian prawns and fish', featured: false },
@@ -220,9 +221,8 @@ onMounted(() => {
 
 <template>
   <div>
-    <!-- Cinematic Video Hero - FIXED MOBILE -->
+    <!-- Cinematic Video Hero -->
     <section class="relative h-[85vh] md:h-screen w-full overflow-hidden bg-[#0A2E4A]">
-      <!-- Video Background -->
       <div class="absolute inset-0 z-0">
         <video
           ref="videoElement"
@@ -236,20 +236,17 @@ onMounted(() => {
           @loadeddata="isVideoLoaded = true"
         >
           <source src="https://videos.pexels.com/video-files/30351567/30351567-uhd_2560_1440_25fps.mp4" type="video/mp4">
-          <source src="https://cdn.pixabay.com/video/2023/01/19/147192-790996333_large.mp4" type="video/mp4">
         </video>
         <div 
           v-if="!showVideo" 
           class="w-full h-full bg-cover bg-center"
           style="background-image: url('https://images.unsplash.com/photo-1568430462989-44163eb1752f?auto=format&fit=crop&w=1920&q=80')"
         />
-        <!-- Darker overlay for better text readability -->
         <div class="absolute inset-0 bg-[#0A2E4A]/70" />
         <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/90" />
         <div class="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
       </div>
 
-      <!-- Hero Content - FIXED MOBILE TEXT SIZES -->
       <div class="relative z-10 h-full flex flex-col justify-center items-center text-center px-4 sm:px-6">
         <div class="section-reveal">
           <p class="overline-text mb-3 md:mb-4 text-xs md:text-base tracking-[0.3em] md:tracking-[0.4em] text-[#C9A84C] font-medium">7 Day Premium Live-Aboard</p>
@@ -272,17 +269,15 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Animated Scroll Indicator - FIXED MOBILE -->
       <div class="absolute bottom-6 md:bottom-10 left-1/2 transform -translate-x-1/2 z-10 flex flex-col items-center gap-1 md:gap-2 animate-pulse">
         <span class="text-[10px] md:text-[10px] uppercase tracking-[0.3em] text-white/60">Scroll</span>
-        <svg width="20" height="20" md:width="24" md:height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" class="animate-bounce">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" class="animate-bounce">
           <path d="M12 5v14M19 12l-7 7-7-7"/>
         </svg>
       </div>
-
     </section>
 
-    <!-- About Section - FIXED MOBILE SPACING -->
+    <!-- About Section -->
     <section class="py-12 md:py-32" style="background: var(--color-ocean-950);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-12 lg:gap-20 items-center">
@@ -299,7 +294,6 @@ onMounted(() => {
               With premium cabin suites, a dedicated chef, and a maximum of 14 guests, Millenium delivers a truly exclusive experience that no shore-based tour can replicate. This is the expedition that changes people.
             </p>
 
-            <!-- Premium Stats Grid - FIXED MOBILE -->
             <div class="grid grid-cols-4 gap-2 md:gap-4 mb-6 md:mb-10 pt-6 md:pt-8" style="border-top: 1px solid rgba(201, 168, 76, 0.2);">
               <div class="text-center">
                 <p class="font-display text-2xl md:text-4xl font-light text-[#C9A84C]">7</p>
@@ -337,7 +331,6 @@ onMounted(() => {
               <div class="grid grid-cols-2 gap-2 md:gap-3">
                 <div class="space-y-2 md:space-y-3">
                   <div class="overflow-hidden h-36 md:h-64">
-                    <!-- AUTHENTIC: Manta ray at Ningaloo -->
                     <img
                       src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=80"
                       alt="Manta ray at Ningaloo Reef cleaning station"
@@ -345,7 +338,6 @@ onMounted(() => {
                     />
                   </div>
                   <div class="overflow-hidden h-24 md:h-48">
-                    <!-- AUTHENTIC: Yacht deck sunset at Ningaloo -->
                     <img
                       src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=600&q=80"
                       alt="Sunset dining on deck"
@@ -355,7 +347,6 @@ onMounted(() => {
                 </div>
                 <div class="space-y-2 md:space-y-3 mt-4 md:mt-6">
                   <div class="overflow-hidden h-24 md:h-48">
-                    <!-- AUTHENTIC: Ningaloo turquoise waters -->
                     <img
                       src="https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?auto=format&fit=crop&w=600&q=80"
                       alt="Ningaloo Reef turquoise waters"
@@ -363,16 +354,14 @@ onMounted(() => {
                     />
                   </div>
                   <div class="overflow-hidden h-36 md:h-64">
-                    <!-- AUTHENTIC: Whale shark at Ningaloo -->
                     <img
-                      src="https://ningalooblue.com.au/wp-content/uploads/2021/01/shark.jpg"
+                      src="https://images.unsplash.com/photo-1568430462989-44163eb1752f?auto=format&fit=crop&w=600&q=80"
                       alt="Whale shark encounter Ningaloo Reef"
                       class="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
                     />
                   </div>
                 </div>
               </div>
-              <!-- Floating badge -->
               <div class="absolute -bottom-3 -left-3 md:-bottom-4 md:-left-4 bg-[#C9A84C] text-[#0A2E4A] px-4 py-2 md:px-6 md:py-3 shadow-xl">
                 <p class="font-display text-xs md:text-sm font-medium">Premium Vessel</p>
               </div>
@@ -382,7 +371,7 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- Vessel Showcase - FIXED MOBILE MASONRY WITH LESS SPACING -->
+    <!-- Vessel Showcase -->
     <section class="py-12 md:py-32" style="background: var(--color-ocean-900);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
         <div class="text-center mb-8 md:mb-16 section-reveal">
@@ -397,7 +386,6 @@ onMounted(() => {
           </p>
         </div>
 
-        <!-- FIXED MOBILE MASONRY: CSS Columns with minimal gap -->
         <div class="columns-2 md:columns-4 gap-2 md:gap-3 space-y-2 md:space-y-3 section-reveal">
           <div 
             v-for="(img, i) in vesselImages" 
@@ -428,7 +416,7 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- Itinerary - Day by Day with AUTHENTIC Images - FIXED MOBILE -->
+    <!-- Itinerary -->
     <section class="py-12 md:py-32" style="background: var(--color-ocean-950);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
         <div class="text-center mb-8 md:mb-16 section-reveal">
@@ -439,7 +427,6 @@ onMounted(() => {
           </h2>
         </div>
 
-        <!-- Mobile Day Selector - FIXED STYLING -->
         <div class="flex md:hidden gap-1.5 mb-6 overflow-x-auto pb-4 scrollbar-hide">
           <button 
             v-for="(day, i) in itinerary" 
@@ -454,9 +441,7 @@ onMounted(() => {
           </button>
         </div>
 
-        <!-- Timeline - FIXED MOBILE -->
         <div class="max-w-6xl mx-auto relative">
-          <!-- Vertical line for desktop -->
           <div class="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-[#C9A84C]/20 transform -translate-x-1/2" />
 
           <div 
@@ -466,7 +451,6 @@ onMounted(() => {
             :class="i !== activeDay ? 'hidden md:block' : ''"
           >
             <div class="grid md:grid-cols-2 gap-4 md:gap-16 items-center">
-              <!-- Content Side -->
               <div :class="i % 2 === 0 ? 'md:text-right md:pr-12' : 'md:order-2 md:pl-12'">
                 <div class="flex items-center gap-2 md:gap-3 mb-2 md:mb-4" :class="i % 2 === 0 ? 'md:justify-end' : ''">
                   <span class="text-[#C9A84C] font-display text-xl md:text-3xl">{{ item.day }}</span>
@@ -480,13 +464,13 @@ onMounted(() => {
                 </p>
                 <div class="flex flex-wrap gap-3 md:gap-4 text-xs md:text-sm" :class="i % 2 === 0 ? 'md:justify-end' : ''">
                   <span class="flex items-center gap-1.5 md:gap-2 text-[#C9A84C]">
-                    <svg width="14" height="14" md:width="16" md:height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                     </svg>
                     {{ item.activity }}
                   </span>
                   <span class="flex items-center gap-1.5 md:gap-2 text-[#C9A84C]">
-                    <svg width="14" height="14" md:width="16" md:height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                     </svg>
                     {{ item.meals }}
@@ -494,7 +478,6 @@ onMounted(() => {
                 </div>
               </div>
 
-              <!-- Image Side - AUTHENTIC images for each day -->
               <div :class="i % 2 === 0 ? 'md:order-2' : ''" class="relative group">
                 <div class="overflow-hidden">
                   <img 
@@ -503,14 +486,12 @@ onMounted(() => {
                     class="w-full h-48 md:h-80 object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                 </div>
-                <!-- Day badge -->
                 <div class="absolute top-3 left-3 bg-[#0A2E4A]/90 backdrop-blur px-3 py-1.5 border border-[#C9A84C]/30">
                   <span class="text-[#C9A84C] font-display text-xs md:text-sm">{{ item.day }}</span>
                 </div>
               </div>
             </div>
 
-            <!-- Timeline dot -->
             <div class="hidden md:block absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
               <div class="w-4 h-4 bg-[#C9A84C] rounded-full border-4 border-[#0A2E4A]" />
             </div>
@@ -519,7 +500,7 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- Culinary Experience - FIXED MOBILE -->
+    <!-- Culinary Experience -->
     <section class="py-12 md:py-32" style="background: var(--color-ocean-900);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
         <div class="grid lg:grid-cols-5 gap-6 md:gap-12 items-start">
@@ -537,7 +518,7 @@ onMounted(() => {
             <div class="space-y-3 md:space-y-4 mb-6 md:mb-8">
               <div class="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-[#0A2E4A]/50 border border-[#C9A84C]/10">
                 <div class="w-10 h-10 md:w-12 md:h-12 bg-[#C9A84C]/20 flex items-center justify-center flex-shrink-0">
-                  <svg width="20" height="20" md:width="24" md:height="24" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                   </svg>
                 </div>
@@ -548,7 +529,7 @@ onMounted(() => {
               </div>
               <div class="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-[#0A2E4A]/50 border border-[#C9A84C]/10">
                 <div class="w-10 h-10 md:w-12 md:h-12 bg-[#C9A84C]/20 flex items-center justify-center flex-shrink-0">
-                  <svg width="20" height="20" md:width="24" md:height="24" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                   </svg>
                 </div>
@@ -559,7 +540,7 @@ onMounted(() => {
               </div>
               <div class="flex items-start gap-3 md:gap-4 p-3 md:p-4 bg-[#0A2E4A]/50 border border-[#C9A84C]/10">
                 <div class="w-10 h-10 md:w-12 md:h-12 bg-[#C9A84C]/20 flex items-center justify-center flex-shrink-0">
-                  <svg width="20" height="20" md:width="24" md:height="24" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
                     <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
                   </svg>
                 </div>
@@ -598,10 +579,9 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- Expedition Route Map - FIXED MOBILE -->
+    <!-- Expedition Route Map -->
     <section class="py-12 md:py-32 relative overflow-hidden" style="background: var(--color-ocean-900);">
       <div class="absolute inset-0 opacity-30">
-        <!-- AUTHENTIC: Aerial view of Ningaloo Reef -->
         <img 
           src="https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?auto=format&fit=crop&w=1920&q=80" 
           alt="Ningaloo Reef aerial view Western Australia"
@@ -618,9 +598,7 @@ onMounted(() => {
         </div>
 
         <div class="max-w-5xl mx-auto bg-[#0A2E4A]/90 backdrop-blur-lg p-4 md:p-16 rounded-sm border border-[#C9A84C]/20 section-reveal">
-          <!-- Route visualization - FIXED MOBILE -->
           <div class="relative">
-            <!-- Route line -->
             <div class="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-[#C9A84C] via-[#C9A84C] to-[#C9A84C]/30 transform -translate-y-1/2 z-0" />
 
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-8 relative z-10">
@@ -670,7 +648,7 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- What's Included - FIXED MOBILE -->
+    <!-- What's Included -->
     <section class="py-12 md:py-32" style="background: var(--color-ocean-950);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
         <div class="text-center mb-8 md:mb-16 section-reveal">
@@ -689,7 +667,7 @@ onMounted(() => {
             :style="`transition-delay: ${i * 0.05}s`"
           >
             <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-[#C9A84C]/10 flex items-center justify-center flex-shrink-0">
-              <svg width="14" height="14" md:width="16" md:height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
             </div>
@@ -699,29 +677,28 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- Final CTA -->
     <CtaSection />
 
-    <!-- Lightbox Modal - FIXED MOBILE -->
+    <!-- Lightbox Modal -->
     <div 
       v-if="lightboxOpen" 
       class="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-2 md:p-4"
       @click="closeLightbox"
     >
       <button class="absolute top-4 right-4 md:top-6 md:right-6 text-white/70 hover:text-white p-2 transition-colors" @click="closeLightbox">
-        <svg width="24" height="24" md:width="32" md:height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
         </svg>
       </button>
 
       <button class="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 text-white/70 hover:text-white p-2 md:p-4 transition-colors hidden md:block" @click.stop="prevImage">
-        <svg width="32" height="32" md:width="48" md:height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
           <polyline points="15,18 9,12 15,6"/>
         </svg>
       </button>
 
       <button class="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 text-white/70 hover:text-white p-2 md:p-4 transition-colors hidden md:block" @click.stop="nextImage">
-        <svg width="32" height="32" md:width="48" md:height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
           <polyline points="9,18 15,12 9,6"/>
         </svg>
       </button>
@@ -739,13 +716,13 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Cabin Modal - FIXED MOBILE -->
+    <!-- Cabin Modal -->
     <div v-if="showCabinModal" class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-3 md:p-4" @click="showCabinModal = false">
       <div class="bg-[#0A2E4A] border border-[#C9A84C]/30 p-5 md:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto" @click.stop>
         <div class="flex justify-between items-center mb-4 md:mb-6">
           <h3 class="font-display text-xl md:text-2xl text-white">Premium Cabins</h3>
           <button @click="showCabinModal = false" class="text-white/60 hover:text-white p-1">
-            <svg width="20" height="20" md:width="24" md:height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </button>
@@ -843,7 +820,6 @@ html {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Break inside avoid for masonry */
 .break-inside-avoid {
   break-inside: avoid;
 }
