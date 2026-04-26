@@ -1,115 +1,120 @@
 <script setup lang="ts">
-import { useSEO } from '@/composables/useSEO'
+import { useSEO, buildBreadcrumbSchema } from '@/composables/useSEO'
 import { ref, defineComponent, h } from 'vue'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import PageHero from '@/components/PageHero.vue'
 import CtaSection from '@/components/home/CtaSection.vue'
 
 useScrollReveal()
+
 useSEO({
-  title: 'Our Expeditions',
+  title: 'Our Expeditions — Luxury Live-Aboard Ningaloo Reef',
   description: 'Choose your luxury live-aboard adventure in Ningaloo Reef. Sylvia offers 4-day intimate reef exploration, while Millenium delivers 7-day ultimate wilderness immersion.',
   path: '/expeditions',
   type: 'website',
-  keywords: ['Ningaloo Reef expeditions', 'live-aboard tours', 'Sylvia vessel', 'Millenium vessel', 'luxury reef tours', 'Western Australia','Expedition OZ'],
-  jsonLd: {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    "name": "Expedition OZ Live-Aboard Expeditions",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "item": {
-          "@type": "Product",
-          "name": "Sylvia 4-Day Northern Reef Expedition",
-          "description": "Intimate luxury live-aboard in the northern Ningaloo Reef",
-          "image": "https://expeditionoz.netlify.app/images/sylvia-hero.jpg",
-          "brand": {
-            "@type": "Brand",
-            "name": "Expedition OZ"
-          },
-          "url": "https://expeditionoz.netlify.app/expeditions/sylvia",
-          "offers": {
-            "@type": "Offer",
-            "price": "2495.00",
-            "priceCurrency": "AUD",
-            "availability": "https://schema.org/InStock",
-            "priceValidUntil": "2026-12-31",
+  jsonLd: [
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "Expedition OZ Live-Aboard Expeditions",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "Product",
+            "name": "Sylvia 4-Day Northern Reef Expedition",
+            "description": "Intimate luxury live-aboard in the northern Ningaloo Reef",
+            "image": "https://expeditionoz.netlify.app/images/sylvia-hero.jpg",
+            "brand": {
+              "@type": "Brand",
+              "name": "Expedition OZ"
+            },
             "url": "https://expeditionoz.netlify.app/expeditions/sylvia",
-            "shippingDetails": {
-              "@type": "OfferShippingDetails",
-              "shippingRate": {
-                "@type": "MonetaryAmount",
-                "value": "0",
-                "currency": "AUD"
+            "offers": {
+              "@type": "Offer",
+              "price": "2495.00",
+              "priceCurrency": "AUD",
+              "availability": "https://schema.org/InStock",
+              "priceValidUntil": "2026-12-31",
+              "url": "https://expeditionoz.netlify.app/expeditions/sylvia",
+              "shippingDetails": {
+                "@type": "OfferShippingDetails",
+                "shippingRate": {
+                  "@type": "MonetaryAmount",
+                  "value": "0",
+                  "currency": "AUD"
+                },
+                "shippingDestination": {
+                  "@type": "DefinedRegion",
+                  "addressCountry": "AU"
+                }
               },
-              "shippingDestination": {
-                "@type": "DefinedRegion",
-                "addressCountry": "AU"
+              "hasMerchantReturnPolicy": {
+                "@type": "MerchantReturnPolicy",
+                "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
               }
             },
-            "hasMerchantReturnPolicy": {
-              "@type": "MerchantReturnPolicy",
-              "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.8",
+              "reviewCount": "93"
             }
-          },
-          "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.8",
-            "reviewCount": "93"
           }
-        }
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "item": {
-          "@type": "Product",
-          "name": "Millenium 7-Day Expedition",
-          "description": "Ultimate 7-day full Ningaloo Reef live-aboard",
-          "image": "https://expeditionoz.netlify.app/images/millenium-hero.jpg",
-          "brand": {
-            "@type": "Brand",
-            "name": "Expedition OZ"
-          },
-          "url": "https://expeditionoz.netlify.app/expeditions/millenium",
-          "offers": {
-            "@type": "Offer",
-            "price": "4495.00",
-            "priceCurrency": "AUD",
-            "availability": "https://schema.org/InStock",
-            "priceValidUntil": "2026-12-31",
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "Product",
+            "name": "Millenium 7-Day Ultimate Reef Expedition",
+            "description": "Ultimate 7-day full Ningaloo Reef live-aboard",
+            "image": "https://expeditionoz.netlify.app/images/millenium-hero.jpg",
+            "brand": {
+              "@type": "Brand",
+              "name": "Expedition OZ"
+            },
             "url": "https://expeditionoz.netlify.app/expeditions/millenium",
-            "shippingDetails": {
-              "@type": "OfferShippingDetails",
-              "shippingRate": {
-                "@type": "MonetaryAmount",
-                "value": "0",
-                "currency": "AUD"
+            "offers": {
+              "@type": "Offer",
+              "price": "4495.00",
+              "priceCurrency": "AUD",
+              "availability": "https://schema.org/InStock",
+              "priceValidUntil": "2026-12-31",
+              "url": "https://expeditionoz.netlify.app/expeditions/millenium",
+              "shippingDetails": {
+                "@type": "OfferShippingDetails",
+                "shippingRate": {
+                  "@type": "MonetaryAmount",
+                  "value": "0",
+                  "currency": "AUD"
+                },
+                "shippingDestination": {
+                  "@type": "DefinedRegion",
+                  "addressCountry": "AU"
+                }
               },
-              "shippingDestination": {
-                "@type": "DefinedRegion",
-                "addressCountry": "AU"
+              "hasMerchantReturnPolicy": {
+                "@type": "MerchantReturnPolicy",
+                "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
               }
             },
-            "hasMerchantReturnPolicy": {
-              "@type": "MerchantReturnPolicy",
-              "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.9",
+              "reviewCount": "127"
             }
-          },
-          "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.8",
-            "reviewCount": "93"
           }
         }
-      }
-    ]
-  }
+      ]
+    },
+    buildBreadcrumbSchema([
+      { name: 'Home', url: 'https://expeditionoz.netlify.app/' },
+      { name: 'Expeditions', url: 'https://expeditionoz.netlify.app/expeditions' },
+    ])
+  ]
 })
 
-// Define the missing CheckIcon component so it renders in the table
 const CheckIcon = defineComponent({
   props: {
     color: {
@@ -133,7 +138,6 @@ const CheckIcon = defineComponent({
   }
 })
 
-// Define the missing XIcon component
 const XIcon = defineComponent({
   setup() {
     return () => h('svg', {
@@ -182,7 +186,6 @@ const compareRows = [
 
 <template>
   <div>
-    <!-- Floating Hover Image - Fixed position above cursor -->
     <Transition name="fade-scale">
       <div 
         v-if="hoveredVessel"
@@ -225,11 +228,9 @@ const compareRows = [
           </h2>
         </div>
 
-        <!-- Desktop Table with Hover -->
         <div class="hidden md:block comparison-grid section-reveal">
           <div class="comparison-header">
             <div></div>
-            <!-- Sylvia Header with Hover -->
             <div 
               class="vessel-header sylvia-header"
               @mousemove="(e) => handleMouseMove(e, 'sylvia')"
@@ -239,7 +240,6 @@ const compareRows = [
               <p class="font-display text-3xl font-light vessel-title">Sylvia</p>
               <p class="font-heading text-xs mt-1 opacity-60">4 DAY EXPEDITION</p>
             </div>
-            <!-- Millenium Header with Hover -->
             <div 
               class="vessel-header millenium-header"
               @mousemove="(e) => handleMouseMove(e, 'millenium')"
@@ -255,15 +255,12 @@ const compareRows = [
             <div class="compare-label">
               <p>{{ row.label }}</p>
             </div>
-            <!-- Sylvia Column -->
             <div class="compare-cell">
               <span v-if="row.sylvia === true"><CheckIcon /></span>
               <span v-else-if="row.sylvia === false" class="opacity-30"><XIcon /></span>
               <span v-else>{{ row.sylvia }}</span>
             </div>
-            <!-- Millenium Column -->
             <div class="compare-cell">
-              <!-- Pass blue color for Millenium checks -->
               <span v-if="row.millenium === true"><CheckIcon color="#4ea8c9" /></span>
               <span v-else-if="row.millenium === false" class="opacity-30"><XIcon /></span>
               <span v-else>{{ row.millenium }}</span>
@@ -281,9 +278,7 @@ const compareRows = [
           </div>
         </div>
 
-        <!-- Mobile Cards -->
         <div class="md:hidden space-y-3 section-reveal">
-          <!-- Sylvia Card -->
           <div class="mobile-vessel-card" style="background: rgba(201, 168, 76, 0.08); border: 1px solid rgba(201, 168, 76, 0.2);">
             <div class="text-center py-3 px-3 border-b border-[rgba(201,168,76,0.2)]">
               <p class="overline-text mb-1 text-[0.6rem]">Live-Aboard</p>
@@ -305,7 +300,6 @@ const compareRows = [
             </div>
           </div>
 
-          <!-- Millenium Card -->
           <div class="mobile-vessel-card" style="background: rgba(13, 110, 122, 0.08); border: 1px solid rgba(78, 168, 201, 0.3);">
             <div class="text-center py-3 px-3 border-b border-[rgba(78,168,201,0.3)]">
               <p class="overline-text mb-1 text-[0.6rem]" style="color: #4ea8c9 !important;">Premium Live-Aboard</p>
@@ -335,7 +329,6 @@ const compareRows = [
 </template>
 
 <style scoped>
-/* Floating Hover Image */
 .vessel-hover-image {
   position: fixed;
   width: 280px;
@@ -368,7 +361,6 @@ const compareRows = [
   text-align: center;
 }
 
-/* Fade transition */
 .fade-scale-enter-active,
 .fade-scale-leave-active {
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -380,7 +372,6 @@ const compareRows = [
   transform: translateX(-50%) scale(0.9) translateY(10px);
 }
 
-/* Vessel Headers - Hover targets */
 .vessel-header {
   text-align: center;
   padding: 24px 16px;
@@ -419,7 +410,6 @@ const compareRows = [
   color: #4ea8c9 !important;
 }
 
-/* Comparison Grid Styles */
 .comparison-grid {
   border: 1px solid rgba(201, 168, 76, 0.15);
 }
