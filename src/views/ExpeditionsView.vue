@@ -1,16 +1,34 @@
 <script setup lang="ts">
 import { useSEO, buildBreadcrumbSchema } from '@/composables/useSEO'
 import { ref, defineComponent, h } from 'vue'
+// Import useHead to manually set the canonical tag
+// Note: Depending on your setup, this might be from 'vue-head' or '@unhead/vue'
+import { useHead } from '@unhead/vue' 
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import PageHero from '@/components/PageHero.vue'
 import CtaSection from '@/components/home/CtaSection.vue'
 
 useScrollReveal()
 
+// Define the canonical URL explicitly
+const canonicalUrl = 'https://expeditionoz.netlify.app/expeditions'
+
+useHead({
+  link: [
+    {
+      rel: 'canonical',
+      href: canonicalUrl
+    }
+  ]
+})
+
 useSEO({
   title: 'Our Expeditions — Luxury Live-Aboard Ningaloo Reef',
   description: 'Choose your luxury live-aboard adventure in Ningaloo Reef. Sylvia offers 4-day intimate reef exploration, while Millenium delivers 7-day ultimate wilderness immersion.',
   path: '/expeditions',
+  // It is also good practice to pass the full URL here if your composable supports it, 
+  // but the useHead block above is the critical fix for GSC.
+  canonical: canonicalUrl, 
   type: 'website',
   jsonLd: [
     {
@@ -110,11 +128,12 @@ useSEO({
     },
     buildBreadcrumbSchema([
       { name: 'Home', url: 'https://expeditionoz.netlify.app/' },
-      { name: 'Expeditions', url: 'https://expeditionoz.netlify.app/expeditions' },
+      { name: 'Expeditions', url: canonicalUrl },
     ])
   ]
 })
 
+// ... Rest of the component logic remains exactly the same ...
 const CheckIcon = defineComponent({
   props: {
     color: {
@@ -186,6 +205,7 @@ const compareRows = [
 
 <template>
   <div>
+    <!-- ... Template content remains the same ... -->
     <Transition name="fade-scale">
       <div 
         v-if="hoveredVessel"
@@ -329,6 +349,7 @@ const compareRows = [
 </template>
 
 <style scoped>
+/* ... Styles remain the same ... */
 .vessel-hover-image {
   position: fixed;
   width: 280px;
