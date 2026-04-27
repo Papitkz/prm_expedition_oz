@@ -12,60 +12,61 @@ useSEO({
   path: '/expeditions/sylvia',
   type: 'product',
   jsonLd: {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    "name": "Sylvia 4-Day Northern Reef Expedition",
-    "description": "Intimate luxury live-aboard in the northern Ningaloo Reef",
-    "image": "https://expeditionoz.netlify.app/images/sylvia-hero.jpg",
-    "brand": {
-      "@type": "Brand",
-      "name": "Expedition OZ"
-    },
+   "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "Sylvia 4-Day Northern Reef Expedition",
+  "description": "Intimate luxury live-aboard in the northern Ningaloo Reef",
+  "image": "https://expeditionoz.netlify.app/images/sylvia-hero.jpg",
+  "brand": {
+    "@type": "Brand",
+    "name": "Expedition OZ"
+  },
+  "url": "https://expeditionoz.netlify.app/expeditions/sylvia",
+  "offers": {
+    "@type": "Offer",
+    "price": "2495.00",
+    "priceCurrency": "AUD",
+    "availability": "https://schema.org/InStock",
+    "priceValidUntil": "2026-12-31",
     "url": "https://expeditionoz.netlify.app/expeditions/sylvia",
-    "offers": {
-      "@type": "Offer",
-      "price": "2495.00",
-      "priceCurrency": "AUD",
-      "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-12-31",
-      "url": "https://expeditionoz.netlify.app/expeditions/sylvia",
-      "shippingDetails": {
-        "@type": "OfferShippingDetails",
-        "shippingRate": {
-          "@type": "MonetaryAmount",
-          "value": "0",
-          "currency": "AUD"
-        },
-        "shippingDestination": {
-          "@type": "DefinedRegion",
-          "addressCountry": "AU"
-        },
-        "deliveryTime": {
-          "@type": "ShippingDeliveryTime",
-          "handlingTime": {
-            "@type": "QuantitativeValue",
-            "minValue": 0,
-            "maxValue": 1,
-            "unitCode": "DAY"
-          },
-          "transitTime": {
-            "@type": "QuantitativeValue",
-            "minValue": 0,
-            "maxValue": 0,
-            "unitCode": "DAY"
-          }
-        }
+    "shippingDetails": {
+      "@type": "OfferShippingDetails",
+      "shippingRate": {
+        "@type": "MonetaryAmount",
+        "value": "0",
+        "currency": "AUD"
       },
-      "hasMerchantReturnPolicy": {
-        "@type": "MerchantReturnPolicy",
-        "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
+      "shippingDestination": {
+        "@type": "DefinedRegion",
+        "addressCountry": "AU"
+      },
+      "deliveryTime": {
+        "@type": "ShippingDeliveryTime",
+        "handlingTime": {
+          "@type": "QuantitativeValue",
+          "minValue": 0,
+          "maxValue": 1,
+          "unitCode": "DAY"
+        },
+        "transitTime": {
+          "@type": "QuantitativeValue",
+          "minValue": 0,
+          "maxValue": 0,
+          "unitCode": "DAY"
+        }
       }
     },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.8",
-      "reviewCount": "93"
+    "hasMerchantReturnPolicy": {
+      "@type": "MerchantReturnPolicy",
+      "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted",
+      "applicableCountry": "AU"
     }
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "reviewCount": "93"
+  }
   }
 })
 

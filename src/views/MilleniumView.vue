@@ -6,75 +6,79 @@ import CtaSection from '@/components/home/CtaSection.vue'
 
 useScrollReveal()
 
-useSEO({
+useSEO(
+  {
   title: 'Millenium – 7-Day Ultimate Expedition',
   description: 'Millenium: The ultimate 7-day Ningaloo Reef live-aboard adventure. Full reef coverage, whale sharks, manta rays, humpback whales, night snorkeling, and premium cabin suites.',
   path: '/expeditions/millenium',
   type: 'product',
   jsonLd: [
-    {
-      "@context": "https://schema.org",
-      "@type": "Product",
-      "name": "Millenium 7-Day Ultimate Reef Expedition",
-      "description": "Seven transformative days encompassing the full length of Ningaloo Reef aboard our premium vessel",
-      "image": "https://expeditionoz.netlify.app/images/millenium-hero.jpg",
-      "brand": {
-        "@type": "Brand",
-        "name": "Expedition OZ"
-      },
+   {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Millenium 7-Day Ultimate Reef Expedition",
+    "description": "Seven transformative days encompassing the full length of Ningaloo Reef aboard our premium vessel",
+    "image": "https://expeditionoz.netlify.app/images/millenium-hero.jpg",
+    "brand": {
+      "@type": "Brand",
+      "name": "Expedition OZ"
+    },
+    "url": "https://expeditionoz.netlify.app/expeditions/millenium",
+    "offers": {
+      "@type": "Offer",
+      "price": "4495.00",
+      "priceCurrency": "AUD",
+      "availability": "https://schema.org/InStock",
+      "priceValidUntil": "2026-12-31",
       "url": "https://expeditionoz.netlify.app/expeditions/millenium",
-      "offers": {
-        "@type": "Offer",
-        "price": "4495.00",
-        "priceCurrency": "AUD",
-        "availability": "https://schema.org/InStock",
-        "priceValidUntil": "2026-12-31",
-        "url": "https://expeditionoz.netlify.app/expeditions/millenium",
-        "shippingDetails": {
-          "@type": "OfferShippingDetails",
-          "shippingRate": {
-            "@type": "MonetaryAmount",
-            "value": "0",
-            "currency": "AUD"
-          },
-          "shippingDestination": {
-            "@type": "DefinedRegion",
-            "addressCountry": "AU"
-          },
-          "deliveryTime": {
-            "@type": "ShippingDeliveryTime",
-            "handlingTime": {
-              "@type": "QuantitativeValue",
-              "minValue": 0,
-              "maxValue": 1,
-              "unitCode": "DAY"
-            },
-            "transitTime": {
-              "@type": "QuantitativeValue",
-              "minValue": 0,
-              "maxValue": 0,
-              "unitCode": "DAY"
-            }
-          }
+      "shippingDetails": {
+        "@type": "OfferShippingDetails",
+        "shippingRate": {
+          "@type": "MonetaryAmount",
+          "value": "0",
+          "currency": "AUD"
         },
-        "hasMerchantReturnPolicy": {
-          "@type": "MerchantReturnPolicy",
-          "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"
+        "shippingDestination": {
+          "@type": "DefinedRegion",
+          "addressCountry": "AU"
+        },
+        "deliveryTime": {
+          "@type": "ShippingDeliveryTime",
+          "handlingTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 0,
+            "maxValue": 1,
+            "unitCode": "DAY"
+          },
+          "transitTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 0,
+            "maxValue": 0,
+            "unitCode": "DAY"
+          }
         }
       },
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "4.9",
-        "reviewCount": "127"
+      "hasMerchantReturnPolicy": {
+        "@type": "MerchantReturnPolicy",
+        "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted",
+        "applicableCountry": "AU"
       }
     },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "127"
+    }
+  },
     buildBreadcrumbSchema([
       { name: 'Home', url: 'https://expeditionoz.netlify.app/' },
       { name: 'Expeditions', url: 'https://expeditionoz.netlify.app/expeditions' },
       { name: 'Millenium', url: 'https://expeditionoz.netlify.app/expeditions/millenium' },
     ])
   ]
-})
+
+}
+)
 
 const isVideoLoaded = ref(false)
 const showVideo = ref(true)
