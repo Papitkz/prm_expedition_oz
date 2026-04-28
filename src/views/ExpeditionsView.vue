@@ -28,7 +28,7 @@ useSEO({
   path: '/expeditions',
   // It is also good practice to pass the full URL here if your composable supports it, 
   // but the useHead block above is the critical fix for GSC.
-  canonical: canonicalUrl, 
+  // canonical handled via useHead() above 
   type: 'website',
   jsonLd: [
     {
