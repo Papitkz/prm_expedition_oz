@@ -1,5 +1,4 @@
 <template>
-  <!-- Added 'pa-0' to remove default V-Main padding -->
   <v-main class="error-page pa-0">
     <!-- Animated Ocean Background -->
     <div class="ocean-bg">
@@ -14,11 +13,11 @@
     <!-- Vignette & Depth Overlay -->
     <div class="depth-overlay" />
 
-    <!-- Main Hero -->
+    <!-- Main Hero - PERFECTLY CENTERED -->
     <section class="hero-section">
-      <v-container class="hero-content fill-height">
-        <v-row justify="center" align="center" class="fill-height">
-          <v-col cols="12" md="10" lg="8" class="text-center hero-col">
+      <v-container class="pa-0 fill-height">
+        <v-row class="fill-height no-gutters" justify="center" align="center">
+          <v-col cols="12" md="10" lg="8" class="text-center hero-col pa-4 pa-md-8">
             <!-- Status Badge -->
             <div class="status-badge mb-6 mt-5">
               <span class="status-badge__pulse" />
@@ -57,7 +56,6 @@
             </p>
 
             <!-- Action Buttons -->
-            <!-- Added wrapper class to control margin if needed, but d-flex handles spacing -->
             <div class="d-flex flex-column flex-sm-row justify-center ga-5">
               <v-btn
                 to="/"
@@ -98,7 +96,8 @@
     <!-- Navigation Cards -->
     <section class="navigation-cards">
       <div class="section-divider" />
-      
+<center>
+        
       <v-container>
         <div class="text-center mb-12">
           <span class="overline-text">Alternative Routes</span>
@@ -146,6 +145,7 @@
           </v-col>
         </v-row>
       </v-container>
+</center>
     </section>
 
     <!-- Footer Marquee -->
@@ -295,7 +295,6 @@ onMounted(() => {
 /* ============================================
    LAYOUT & BACKGROUND
    ============================================ */
-/* Force V-Main wrap to have 0 padding to ignore App Bars */
 .error-page :deep(.v-main__wrap) {
   padding: 0 !important;
 }
@@ -304,7 +303,6 @@ onMounted(() => {
   position: relative;
   background-color: var(--ocean-950);
   overflow-x: hidden;
-  /* Ensure no margins on the root component */
   margin: 0;
 }
 
@@ -369,14 +367,15 @@ onMounted(() => {
 }
 
 /* ============================================
-   HERO SECTION
+   HERO SECTION - PERFECT CENTERING
    ============================================ */
 .hero-section {
   position: relative;
   z-index: 3;
-  min-height: 100vh;
+  height: 100vh; /* Full viewport height */
   display: flex;
   align-items: center;
+  justify-content: center; /* KEY: Perfect centering */
   padding: 2rem 0;
 }
 
@@ -384,6 +383,8 @@ onMounted(() => {
   animation: heroEnter 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   opacity: 0;
   transform: translateY(30px);
+  max-width: 800px; /* Prevent stretching */
+  width: 100%;
 }
 
 @keyframes heroEnter {
@@ -477,7 +478,6 @@ onMounted(() => {
 }
 
 /* Typography */
-/* IMPORTANT: Reset margin-top to remove browser default gaps */
 h1, h2, h3, p, .hero-title, .section-title, .hero-subtitle, .nav-card__title, .nav-card__desc {
   margin-top: 0 !important;
 }
@@ -518,21 +518,22 @@ h1, h2, h3, p, .hero-title, .section-title, .hero-subtitle, .nav-card__title, .n
   letter-spacing: 0.02em;
 }
 
-/* Buttons */
+/* Buttons - GOLDEN PERFECTION */
 .btn-luxury-primary {
-  background: linear-gradient(135deg, var(--gold-400), var(--gold-500)) !important;
-  color: var(--ocean-950) !important;
+  background: linear-gradient(135deg, #E8C547 0%, #D4AF37 50%, #AA8C2C 100%) !important;
+  color: #030c1a !important; 
   border: none !important;
   font-family: var(--font-body);
   text-transform: uppercase;
   letter-spacing: 0.15em;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   padding: 0 2.5rem !important;
   height: 56px !important;
   position: relative;
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
 }
 
 .btn-luxury-primary::before {
@@ -542,7 +543,7 @@ h1, h2, h3, p, .hero-title, .section-title, .hero-subtitle, .nav-card__title, .n
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
   transition: left 0.6s;
 }
 
@@ -552,26 +553,28 @@ h1, h2, h3, p, .hero-title, .section-title, .hero-subtitle, .nav-card__title, .n
 
 .btn-luxury-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(201, 168, 76, 0.3);
+  box-shadow: 0 10px 25px rgba(212, 175, 55, 0.5); 
 }
 
 .btn-luxury-outline {
-  color: var(--gold-400) !important;
-  border: 1px solid rgba(201, 168, 76, 0.4) !important;
+  color: #D4AF37 !important; 
+  border: 1px solid #D4AF37 !important; 
   font-family: var(--font-body);
   text-transform: uppercase;
   letter-spacing: 0.15em;
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: 600;
   padding: 0 2.5rem !important;
   height: 56px !important;
   transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  background: transparent !important;
 }
 
 .btn-luxury-outline:hover {
-  background: rgba(201, 168, 76, 0.1) !important;
-  border-color: var(--gold-400) !important;
+  background: rgba(212, 175, 55, 0.1) !important; 
+  border-color: #FFD700 !important;
   transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
 }
 
 /* Depth Indicator */
@@ -626,9 +629,7 @@ h1, h2, h3, p, .hero-title, .section-title, .hero-subtitle, .nav-card__title, .n
   50% { width: 70%; opacity: 0.6; }
 }
 
-/* ============================================
-   NAVIGATION CARDS
-   ============================================ */
+/* Navigation Cards */
 .section-divider {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.3), transparent);
@@ -665,7 +666,6 @@ h1, h2, h3, p, .hero-title, .section-title, .hero-subtitle, .nav-card__title, .n
   background: var(--gold-400);
 }
 
-/* Card Design */
 .nav-card {
   background: rgba(255, 255, 255, 0.02) !important;
   border: 1px solid rgba(201, 168, 76, 0.15) !important;
@@ -674,7 +674,6 @@ h1, h2, h3, p, .hero-title, .section-title, .hero-subtitle, .nav-card__title, .n
   transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   cursor: pointer;
   text-decoration: none;
-  /* Ensure height is consistent for the flex column */
   display: flex;
   flex-direction: column;
 }
@@ -698,7 +697,6 @@ h1, h2, h3, p, .hero-title, .section-title, .hero-subtitle, .nav-card__title, .n
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
-/* Shine Effect */
 .nav-card__shine {
   position: absolute;
   top: -50%;
@@ -720,7 +718,6 @@ h1, h2, h3, p, .hero-title, .section-title, .hero-subtitle, .nav-card__title, .n
   transform: rotate(30deg) translate(20%, 20%);
 }
 
-/* Icon with Orbit */
 .nav-card__icon-wrapper {
   position: relative;
   width: 80px;
@@ -775,6 +772,7 @@ h1, h2, h3, p, .hero-title, .section-title, .hero-subtitle, .nav-card__title, .n
   line-height: 1.6;
   opacity: 0.8;
 }
+
 
 .nav-card__cta {
   display: inline-flex;
