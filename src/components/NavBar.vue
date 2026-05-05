@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAdminAuth } from '@/composables/useAdminAuth'
 
 const router = useRouter()
+const { user, isAdmin } = useAdminAuth()
 const scrolled = ref(false)
 const mobileOpen = ref(false)
 
@@ -141,6 +143,31 @@ onUnmounted(() => {
           >
             {{ link.label }}
           </router-link>
+          <router-link
+            v-if="user && isAdmin"
+            to="/admin/dashboard"
+            class="nav-link font-heading text-xs font-500 tracking-wider uppercase flex items-center gap-1.5"
+            style="font-family: var(--font-heading); font-size: 0.65rem; letter-spacing: 0.18em; font-weight: 500; color: var(--color-gold-400);"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            Admin
+          </router-link>
+          <router-link
+            v-else
+            to="/admin"
+            class="nav-link font-heading text-xs font-500 tracking-wider uppercase flex items-center gap-1.5"
+            style="font-family: var(--font-heading); font-size: 0.65rem; letter-spacing: 0.18em; font-weight: 500;"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+              <polyline points="10 17 15 12 10 7"/>
+              <line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+            Login
+          </router-link>
           <router-link to="/contact" class="btn-primary ml-4" style="padding: 10px 24px; font-size: 0.62rem;">
             Check Availability
           </router-link>
@@ -182,6 +209,33 @@ onUnmounted(() => {
       <button class="btn-primary mt-4" @click="navigate('/contact')">
         Check Availability
       </button>
+      <router-link
+        v-if="user && isAdmin"
+        to="/admin/dashboard"
+        class="font-display text-2xl font-light mobile-nav-link flex items-center gap-2"
+        style="font-family: var(--font-display); color: var(--color-gold-400);"
+        @click="navigate('/admin/dashboard')"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        Admin
+      </router-link>
+      <router-link
+        v-else
+        to="/admin"
+        class="font-display text-2xl font-light mobile-nav-link flex items-center gap-2"
+        style="font-family: var(--font-display); color: var(--color-sand-100);"
+        @click="navigate('/admin')"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+          <polyline points="10 17 15 12 10 7"/>
+          <line x1="15" y1="12" x2="3" y2="12"/>
+        </svg>
+        Login
+      </router-link>
     </div>
   </div>
 

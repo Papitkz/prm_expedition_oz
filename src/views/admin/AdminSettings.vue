@@ -26,33 +26,44 @@ function showMessage(text: string, type: 'success' | 'error') {
 
 async function loadSettings() {
   loading.value = true
-  const db = getFirebaseDb()
+  try {
+    const db = getFirebaseDb()
 
-  for (const key of Object.keys(settings.value)) {
-    const snap = await getDoc(doc(db, 'cms_settings', key))
-    if (snap.exists()) settings.value[key] = snap.data().value as string
+    for (const key of Object.keys(settings.value)) {
+      const snap = await getDoc(doc(db, 'cms_settings', key))
+      if (snap.exists()) settings.value[key] = snap.data().value as string
+    }
+  } catch (e) {
+    console.warn('Firestore unavailable, using default settings:', e)
   }
-
   loading.value = false
 }
 
 async function saveAllRezdy() {
   saving.value = true
-  const db = getFirebaseDb()
-  for (const key of ['rezdy_company_code', 'rezdy_sylvia_product_id', 'rezdy_millenium_product_id']) {
-    await setDoc(doc(db, 'cms_settings', key), { value: settings.value[key] })
+  try {
+    const db = getFirebaseDb()
+    for (const key of ['rezdy_company_code', 'rezdy_sylvia_product_id', 'rezdy_millenium_product_id']) {
+      await setDoc(doc(db, 'cms_settings', key), { value: settings.value[key] })
+    }
+    showMessage('Rezdy settings saved', 'success')
+  } catch (e) {
+    showMessage('Failed to save: Firestore unavailable', 'error')
   }
-  showMessage('Rezdy settings saved', 'success')
   saving.value = false
 }
 
 async function saveSiteSettings() {
   saving.value = true
-  const db = getFirebaseDb()
-  for (const key of ['site_phone', 'site_email']) {
-    await setDoc(doc(db, 'cms_settings', key), { value: settings.value[key] })
+  try {
+    const db = getFirebaseDb()
+    for (const key of ['site_phone', 'site_email']) {
+      await setDoc(doc(db, 'cms_settings', key), { value: settings.value[key] })
+    }
+    showMessage('Site settings saved', 'success')
+  } catch (e) {
+    showMessage('Failed to save: Firestore unavailable', 'error')
   }
-  showMessage('Site settings saved', 'success')
   saving.value = false
 }
 

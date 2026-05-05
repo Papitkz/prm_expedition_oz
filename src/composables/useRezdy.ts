@@ -26,7 +26,9 @@ export function useRezdy() {
           if (key === 'rezdy_millenium_product_id') milleniumProductId.value = val
         }
       }
-    } catch { /* ignore */ }
+    } catch (e) {
+      console.warn('Firestore unavailable, Rezdy config will be empty:', e)
+    }
 
     loaded.value = true
   }

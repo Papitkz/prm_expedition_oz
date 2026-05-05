@@ -49,9 +49,14 @@ function generateSlug(title: string): string {
 async function loadBlogs() {
   initFirebase()
   loading.value = true
-  const db = getFirebaseDb()
-  const snap = await getDocs(query(collection(db, 'cms_blogs'), orderBy('createdAt', 'desc')))
-  blogs.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Blog))
+  try {
+    const db = getFirebaseDb()
+    const snap = await getDocs(query(collection(db, 'cms_blogs'), orderBy('createdAt', 'desc')))
+    blogs.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Blog))
+  } catch (e) {
+    console.warn('Firestore unavailable, cannot load blogs:', e)
+    blogs.value = []
+  }
   loading.value = false
 }
 

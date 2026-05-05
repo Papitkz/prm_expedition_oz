@@ -28,18 +28,21 @@ export function useAdminAuth() {
   const isLoggedIn = computed(() => !!user.value && isAdmin.value)
 
   async function ensureAdminDoc(currentUser: User) {
-    const db = getFirebaseDb()
-    const ref = doc(db, 'admin_users', currentUser.uid)
-    const snap = await getDoc(ref)
+    try {
+      const db = getFirebaseDb()
+      const ref = doc(db, 'admin_users', currentUser.uid)
+      const snap = await getDoc(ref)
 
-    if (!snap.exists()) {
-      // Auto-create admin doc for any user who signs in
-      await setDoc(ref, {
-        email: currentUser.email,
-        displayName: currentUser.displayName || currentUser.email?.split('@')[0] || '',
-        role: 'admin',
-        createdAt: new Date().toISOString(),
-      })
+      if (!snap.exists()) {
+        await setDoc(ref, {
+          email: currentUser.email,
+          displayName: currentUser.displayName || currentUser.email?.split('@')[0] || '',
+          role: 'admin',
+          createdAt: new Date().toISOString(),
+        })
+      }
+    } catch (e) {
+      console.warn('Firestore unavailable, skipping admin doc:', e)
     }
     isAdmin.value = true
   }
@@ -66,13 +69,17 @@ export function useAdminAuth() {
     const cred = await createUserWithEmailAndPassword(auth, email, password)
     await updateProfile(cred.user, { displayName })
 
-    const db = getFirebaseDb()
-    await setDoc(doc(db, 'admin_users', cred.user.uid), {
-      email: cred.user.email,
-      displayName,
-      role: 'admin',
-      createdAt: new Date().toISOString(),
-    })
+    try {
+      const db = getFirebaseDb()
+      await setDoc(doc(db, 'admin_users', cred.user.uid), {
+        email: cred.user.email,
+        displayName,
+        role: 'admin',
+        createdAt: new Date().toISOString(),
+      })
+    } catch (e) {
+      console.warn('Firestore unavailable, skipping admin doc on signup:', e)
+    }
 
     user.value = cred.user
     isAdmin.value = true

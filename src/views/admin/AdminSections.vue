@@ -84,18 +84,22 @@ function showMessage(text: string, type: 'success' | 'error') {
 async function loadSections() {
   initFirebase()
   loading.value = true
-  const db = getFirebaseDb()
+  try {
+    const db = getFirebaseDb()
 
-  const snap = await getDocs(collection(db, 'cms_sections'))
-  if (snap.empty) {
-    // Seed default sections
-    for (const s of DEFAULT_SECTIONS) {
-      await addDoc(collection(db, 'cms_sections'), s)
+    const snap = await getDocs(collection(db, 'cms_sections'))
+    if (snap.empty) {
+      for (const s of DEFAULT_SECTIONS) {
+        await addDoc(collection(db, 'cms_sections'), s)
+      }
+      const reSnap = await getDocs(collection(db, 'cms_sections'))
+      sections.value = reSnap.docs.map(d => ({ id: d.id, ...d.data() } as Section))
+    } else {
+      sections.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Section))
     }
-    const reSnap = await getDocs(collection(db, 'cms_sections'))
-    sections.value = reSnap.docs.map(d => ({ id: d.id, ...d.data() } as Section))
-  } else {
-    sections.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Section))
+  } catch (e) {
+    console.warn('Firestore unavailable, using default sections:', e)
+    sections.value = DEFAULT_SECTIONS.map((s, i) => ({ id: `local-${i}`, ...s }))
   }
   loading.value = false
 }
@@ -107,11 +111,16 @@ async function selectSection(section: Section) {
 
 async function loadSectionImages(sectionId: string) {
   initFirebase()
-  const db = getFirebaseDb()
-  const snap = await getDocs(
-    query(collection(db, 'cms_section_images'), where('sectionId', '==', sectionId), orderBy('sortOrder'))
-  )
-  sectionImages.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as SectionImage))
+  try {
+    const db = getFirebaseDb()
+    const snap = await getDocs(
+      query(collection(db, 'cms_section_images'), where('sectionId', '==', sectionId), orderBy('sortOrder'))
+    )
+    sectionImages.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as SectionImage))
+  } catch (e) {
+    console.warn('Firestore unavailable, cannot load section images:', e)
+    sectionImages.value = []
+  }
 }
 
 async function handleFileUpload(event: Event) {

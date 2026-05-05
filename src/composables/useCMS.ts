@@ -52,7 +52,8 @@ export function useCMS() {
 
       cacheLoaded = true
     } catch (e) {
-      console.warn('Failed to load section cache:', e)
+      console.warn('Firestore unavailable, section cache will use fallbacks:', e)
+      cacheLoaded = true
     }
 
     loading.value = false
@@ -63,47 +64,82 @@ export function useCMS() {
   }
 
   async function getTrips() {
-    const db = getFirebaseDb()
-    const snap = await getDocs(query(collection(db, 'cms_trips'), where('isPublished', '==', true), orderBy('sortOrder')))
-    return snap.docs.map(d => ({ id: d.id, ...d.data() } as any))
+    try {
+      const db = getFirebaseDb()
+      const snap = await getDocs(query(collection(db, 'cms_trips'), where('isPublished', '==', true), orderBy('sortOrder')))
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as any))
+    } catch (e) {
+      console.warn('Firestore unavailable, returning empty trips:', e)
+      return []
+    }
   }
 
   async function getTripBySlug(slug: string) {
-    const db = getFirebaseDb()
-    const snap = await getDocs(query(collection(db, 'cms_trips'), where('slug', '==', slug), where('isPublished', '==', true)))
-    if (snap.empty) return null
-    return { id: snap.docs[0].id, ...snap.docs[0].data() } as any
+    try {
+      const db = getFirebaseDb()
+      const snap = await getDocs(query(collection(db, 'cms_trips'), where('slug', '==', slug), where('isPublished', '==', true)))
+      if (snap.empty) return null
+      return { id: snap.docs[0].id, ...snap.docs[0].data() } as any
+    } catch (e) {
+      console.warn('Firestore unavailable, cannot load trip:', e)
+      return null
+    }
   }
 
   async function getTripFeatures(tripId: string) {
-    const db = getFirebaseDb()
-    const snap = await getDocs(query(collection(db, 'cms_trip_features'), where('tripId', '==', tripId), orderBy('sortOrder')))
-    return snap.docs.map(d => d.data().featureText as string)
+    try {
+      const db = getFirebaseDb()
+      const snap = await getDocs(query(collection(db, 'cms_trip_features'), where('tripId', '==', tripId), orderBy('sortOrder')))
+      return snap.docs.map(d => d.data().featureText as string)
+    } catch (e) {
+      console.warn('Firestore unavailable, cannot load features:', e)
+      return []
+    }
   }
 
   async function getTripItinerary(tripId: string) {
-    const db = getFirebaseDb()
-    const snap = await getDocs(query(collection(db, 'cms_trip_itinerary'), where('tripId', '==', tripId), orderBy('dayNumber')))
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    try {
+      const db = getFirebaseDb()
+      const snap = await getDocs(query(collection(db, 'cms_trip_itinerary'), where('tripId', '==', tripId), orderBy('dayNumber')))
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    } catch (e) {
+      console.warn('Firestore unavailable, cannot load itinerary:', e)
+      return []
+    }
   }
 
   async function getBlogs() {
-    const db = getFirebaseDb()
-    const snap = await getDocs(query(collection(db, 'cms_blogs'), where('isPublished', '==', true), orderBy('publishedAt', 'desc')))
-    return snap.docs.map(d => ({ id: d.id, ...d.data() } as any))
+    try {
+      const db = getFirebaseDb()
+      const snap = await getDocs(query(collection(db, 'cms_blogs'), where('isPublished', '==', true), orderBy('publishedAt', 'desc')))
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as any))
+    } catch (e) {
+      console.warn('Firestore unavailable, returning empty blogs:', e)
+      return []
+    }
   }
 
   async function getBlogBySlug(slug: string) {
-    const db = getFirebaseDb()
-    const snap = await getDocs(query(collection(db, 'cms_blogs'), where('slug', '==', slug), where('isPublished', '==', true)))
-    if (snap.empty) return null
-    return { id: snap.docs[0].id, ...snap.docs[0].data() } as any
+    try {
+      const db = getFirebaseDb()
+      const snap = await getDocs(query(collection(db, 'cms_blogs'), where('slug', '==', slug), where('isPublished', '==', true)))
+      if (snap.empty) return null
+      return { id: snap.docs[0].id, ...snap.docs[0].data() } as any
+    } catch (e) {
+      console.warn('Firestore unavailable, cannot load blog:', e)
+      return null
+    }
   }
 
   async function getSetting(key: string): Promise<string> {
-    const db = getFirebaseDb()
-    const snap = await getDoc(doc(db, 'cms_settings', key))
-    return snap.exists() ? (snap.data().value as string) : ''
+    try {
+      const db = getFirebaseDb()
+      const snap = await getDoc(doc(db, 'cms_settings', key))
+      return snap.exists() ? (snap.data().value as string) : ''
+    } catch (e) {
+      console.warn('Firestore unavailable, cannot load setting:', e)
+      return ''
+    }
   }
 
   onMounted(loadSectionCache)

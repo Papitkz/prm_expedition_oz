@@ -91,15 +91,20 @@ function showMessage(text: string, type: 'success' | 'error') {
 async function loadTrips() {
   initFirebase()
   loading.value = true
-  const db = getFirebaseDb()
+  try {
+    const db = getFirebaseDb()
 
-  const snap = await getDocs(query(collection(db, 'cms_trips'), orderBy('sortOrder')))
-  if (snap.empty) {
-    for (const t of DEFAULT_TRIPS) await addDoc(collection(db, 'cms_trips'), t)
-    const reSnap = await getDocs(query(collection(db, 'cms_trips'), orderBy('sortOrder')))
-    trips.value = reSnap.docs.map(d => ({ id: d.id, ...d.data() } as Trip))
-  } else {
-    trips.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Trip))
+    const snap = await getDocs(query(collection(db, 'cms_trips'), orderBy('sortOrder')))
+    if (snap.empty) {
+      for (const t of DEFAULT_TRIPS) await addDoc(collection(db, 'cms_trips'), t)
+      const reSnap = await getDocs(query(collection(db, 'cms_trips'), orderBy('sortOrder')))
+      trips.value = reSnap.docs.map(d => ({ id: d.id, ...d.data() } as Trip))
+    } else {
+      trips.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Trip))
+    }
+  } catch (e) {
+    console.warn('Firestore unavailable, using default trips:', e)
+    trips.value = DEFAULT_TRIPS.map((t, i) => ({ id: `local-${i}`, ...t } as Trip))
   }
   loading.value = false
 }
@@ -111,15 +116,25 @@ async function selectTrip(trip: Trip) {
 }
 
 async function loadFeatures(tripId: string) {
-  const db = getFirebaseDb()
-  const snap = await getDocs(query(collection(db, 'cms_trip_features'), where('tripId', '==', tripId), orderBy('sortOrder')))
-  features.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Feature))
+  try {
+    const db = getFirebaseDb()
+    const snap = await getDocs(query(collection(db, 'cms_trip_features'), where('tripId', '==', tripId), orderBy('sortOrder')))
+    features.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Feature))
+  } catch (e) {
+    console.warn('Firestore unavailable, cannot load features:', e)
+    features.value = []
+  }
 }
 
 async function loadItinerary(tripId: string) {
-  const db = getFirebaseDb()
-  const snap = await getDocs(query(collection(db, 'cms_trip_itinerary'), where('tripId', '==', tripId), orderBy('dayNumber')))
-  itinerary.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as ItineraryDay))
+  try {
+    const db = getFirebaseDb()
+    const snap = await getDocs(query(collection(db, 'cms_trip_itinerary'), where('tripId', '==', tripId), orderBy('dayNumber')))
+    itinerary.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as ItineraryDay))
+  } catch (e) {
+    console.warn('Firestore unavailable, cannot load itinerary:', e)
+    itinerary.value = []
+  }
 }
 
 import { where } from 'firebase/firestore'

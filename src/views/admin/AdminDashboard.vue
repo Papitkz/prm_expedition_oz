@@ -15,22 +15,26 @@ const recentActivity = ref<any[]>([])
 onMounted(async () => {
   initFirebase()
 
-  const db = getFirebaseDb()
+  try {
+    const db = getFirebaseDb()
 
-  const [sectionsSnap, tripsSnap, blogsSnap, imagesSnap] = await Promise.all([
-    getDocs(collection(db, 'cms_sections')),
-    getDocs(collection(db, 'cms_trips')),
-    getDocs(query(collection(db, 'cms_blogs'), where('isPublished', '==', true))),
-    getDocs(collection(db, 'cms_section_images')),
-  ])
+    const [sectionsSnap, tripsSnap, blogsSnap, imagesSnap] = await Promise.all([
+      getDocs(collection(db, 'cms_sections')),
+      getDocs(collection(db, 'cms_trips')),
+      getDocs(query(collection(db, 'cms_blogs'), where('isPublished', '==', true))),
+      getDocs(collection(db, 'cms_section_images')),
+    ])
 
-  stats.value[0].value = sectionsSnap.size
-  stats.value[1].value = tripsSnap.size
-  stats.value[2].value = blogsSnap.size
-  stats.value[3].value = imagesSnap.size
+    stats.value[0].value = sectionsSnap.size
+    stats.value[1].value = tripsSnap.size
+    stats.value[2].value = blogsSnap.size
+    stats.value[3].value = imagesSnap.size
 
-  const recentSnap = await getDocs(query(collection(db, 'cms_section_images'), orderBy('createdAt', 'desc'), limit(5)))
-  recentActivity.value = recentSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+    const recentSnap = await getDocs(query(collection(db, 'cms_section_images'), orderBy('createdAt', 'desc'), limit(5)))
+    recentActivity.value = recentSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+  } catch (e) {
+    console.warn('Firestore unavailable, dashboard stats will show 0:', e)
+  }
 })
 
 import { where } from 'firebase/firestore'
