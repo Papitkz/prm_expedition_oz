@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAdminAuth } from '@/composables/useAdminAuth'
 
 const router = useRouter()
-const { signInWithEmail, signInWithGoogle, signUp, loading, isAdmin } = useAdminAuth()
+const { signInWithEmail, signInWithGoogle, signUp, loading, isAdmin, userRole, user } = useAdminAuth()
 
 const email = ref('')
 const password = ref('')
@@ -13,22 +13,31 @@ const isRegistering = ref(false)
 const error = ref('')
 const successMsg = ref('')
 
+watch(isAdmin, (val) => {
+  if (val) router.push('/admin/dashboard')
+})
+
 async function handleEmailAuth() {
   error.value = ''
   successMsg.value = ''
   try {
     if (isRegistering.value) {
       await signUp(email.value, password.value, displayName.value)
-      successMsg.value = 'Account created! You are now logged in.'
+      if (isAdmin.value) {
+        successMsg.value = 'Admin account created! Redirecting...'
+      } else {
+        successMsg.value = 'Account created! You are logged in as a user. Admin access requires approval from the owner.'
+      }
       isRegistering.value = false
-      if (isAdmin.value) router.push('/admin/dashboard')
     } else {
       await signInWithEmail(email.value, password.value)
-      if (isAdmin.value) router.push('/admin/dashboard')
-      else error.value = 'Login failed. Please try again.'
+      if (isAdmin.value) {
+        // Will redirect via watch
+      } else {
+        error.value = 'You do not have admin access. Contact the site owner to request admin privileges.'
+      }
     }
   } catch (e: any) {
-    // Clean up Firebase error messages
     const msg = e.code || e.message || 'Authentication failed'
     const friendlyErrors: Record<string, string> = {
       'auth/user-not-found': 'No account found with this email.',
@@ -48,10 +57,12 @@ async function handleGoogleAuth() {
   error.value = ''
   try {
     await signInWithGoogle()
-    if (isAdmin.value) router.push('/admin/dashboard')
+    if (!isAdmin.value) {
+      error.value = 'You do not have admin access. Contact the site owner to request admin privileges.'
+    }
   } catch (e: any) {
     const msg = e.code || e.message || 'Google sign-in failed'
-    if (msg === 'auth/popup-closed-by-user') return // User cancelled, no error needed
+    if (msg === 'auth/popup-closed-by-user') return
     error.value = msg
   }
 }
@@ -119,6 +130,10 @@ async function handleGoogleAuth() {
           {{ isRegistering ? 'Sign In' : 'Register' }}
         </button>
       </p>
+
+      <p class="info-text">
+        Only authorized users can access the admin panel. New accounts require admin approval.
+      </p>
     </div>
   </div>
 </template>
@@ -172,6 +187,7 @@ async function handleGoogleAuth() {
   font-size: 0.8rem;
   margin-bottom: 1rem;
   border: 1px solid;
+  line-height: 1.5;
 }
 
 .alert-error {
@@ -288,5 +304,13 @@ async function handleGoogleAuth() {
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+.info-text {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.7rem;
+  color: rgba(248, 245, 239, 0.3);
+  line-height: 1.5;
 }
 </style>

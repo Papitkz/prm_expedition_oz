@@ -24,6 +24,7 @@ export const routes: RouteRecordRaw[] = [
       { path: 'trips', name: 'admin-trips', component: () => import('@/views/admin/AdminTrips.vue') },
       { path: 'blogs', name: 'admin-blogs', component: () => import('@/views/admin/AdminBlogs.vue') },
       { path: 'settings', name: 'admin-settings', component: () => import('@/views/admin/AdminSettings.vue') },
+      { path: 'users', name: 'admin-users', component: () => import('@/views/admin/AdminUsers.vue') },
     ],
   },
   { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue') },
