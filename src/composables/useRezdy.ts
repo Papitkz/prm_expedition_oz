@@ -1,5 +1,11 @@
 import { ref, onMounted } from 'vue'
-import { supabase } from '@/lib/supabase'
+import {
+  getFirebaseDb,
+  isFirebaseInitialized,
+  initFirebase,
+  type FirebaseConfig,
+} from '@/lib/firebase'
+import { doc, getDoc } from 'firebase/firestore'
 
 const companyCode = ref('')
 const sylviaProductId = ref('')
@@ -9,18 +15,29 @@ const loaded = ref(false)
 export function useRezdy() {
   async function loadRezdyConfig() {
     if (loaded.value) return
-    const { data } = await supabase
-      .from('cms_settings')
-      .select('setting_key, setting_value')
-      .in('setting_key', ['rezdy_company_code', 'rezdy_sylvia_product_id', 'rezdy_millenium_product_id'])
-
-    if (data) {
-      for (const row of data) {
-        if (row.setting_key === 'rezdy_company_code') companyCode.value = row.setting_value
-        if (row.setting_key === 'rezdy_sylvia_product_id') sylviaProductId.value = row.setting_value
-        if (row.setting_key === 'rezdy_millenium_product_id') milleniumProductId.value = row.setting_value
-      }
+    if (!isFirebaseInitialized()) {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const saved = localStorage.getItem('firebase_config')
+        if (saved) {
+          try { initFirebase(JSON.parse(saved) as FirebaseConfig) } catch { return }
+        } else return
+      } else return
     }
+
+    try {
+      const db = getFirebaseDb()
+      const keys = ['rezdy_company_code', 'rezdy_sylvia_product_id', 'rezdy_millenium_product_id']
+      for (const key of keys) {
+        const snap = await getDoc(doc(db, 'cms_settings', key))
+        if (snap.exists()) {
+          const val = snap.data().value as string
+          if (key === 'rezdy_company_code') companyCode.value = val
+          if (key === 'rezdy_sylvia_product_id') sylviaProductId.value = val
+          if (key === 'rezdy_millenium_product_id') milleniumProductId.value = val
+        }
+      }
+    } catch { /* ignore */ }
+
     loaded.value = true
   }
 

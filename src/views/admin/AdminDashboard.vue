@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { supabase } from '@/lib/supabase'
+import { getFirebaseDb, isFirebaseInitialized } from '@/lib/firebase'
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore'
 
 const stats = ref([
   { label: 'Sections', value: 0, icon: 'images' },
@@ -12,26 +13,27 @@ const stats = ref([
 const recentActivity = ref<any[]>([])
 
 onMounted(async () => {
-  const [sections, trips, blogs, images] = await Promise.all([
-    supabase.from('cms_sections').select('id', { count: 'exact', head: true }),
-    supabase.from('cms_trips').select('id', { count: 'exact', head: true }),
-    supabase.from('cms_blogs').select('id', { count: 'exact', head: true }),
-    supabase.from('cms_section_images').select('id', { count: 'exact', head: true }),
+  if (!isFirebaseInitialized()) return
+
+  const db = getFirebaseDb()
+
+  const [sectionsSnap, tripsSnap, blogsSnap, imagesSnap] = await Promise.all([
+    getDocs(collection(db, 'cms_sections')),
+    getDocs(collection(db, 'cms_trips')),
+    getDocs(query(collection(db, 'cms_blogs'), where('isPublished', '==', true))),
+    getDocs(collection(db, 'cms_section_images')),
   ])
 
-  stats.value[0].value = sections.count || 0
-  stats.value[1].value = trips.count || 0
-  stats.value[2].value = blogs.count || 0
-  stats.value[3].value = images.count || 0
+  stats.value[0].value = sectionsSnap.size
+  stats.value[1].value = tripsSnap.size
+  stats.value[2].value = blogsSnap.size
+  stats.value[3].value = imagesSnap.size
 
-  const { data: recentImages } = await supabase
-    .from('cms_section_images')
-    .select('id, image_url, alt_text, created_at, cms_sections(label)')
-    .order('created_at', { ascending: false })
-    .limit(5)
-
-  recentActivity.value = recentImages || []
+  const recentSnap = await getDocs(query(collection(db, 'cms_section_images'), orderBy('createdAt', 'desc'), limit(5)))
+  recentActivity.value = recentSnap.docs.map(d => ({ id: d.id, ...d.data() }))
 })
+
+import { where } from 'firebase/firestore'
 
 const iconPaths: Record<string, string> = {
   images: 'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z',
@@ -94,10 +96,10 @@ const iconPaths: Record<string, string> = {
       </div>
       <div v-else class="recent-grid">
         <div v-for="item in recentActivity" :key="item.id" class="recent-item">
-          <img :src="item.image_url" :alt="item.alt_text" class="recent-thumb" />
+          <img :src="item.imageUrl" :alt="item.altText" class="recent-thumb" />
           <div class="recent-info">
-            <p class="recent-label">{{ (item.cms_sections as any)?.label || 'Unknown' }}</p>
-            <p class="recent-date">{{ new Date(item.created_at).toLocaleDateString() }}</p>
+            <p class="recent-label">{{ item.sectionLabel || 'Unknown' }}</p>
+            <p class="recent-date">{{ item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '' }}</p>
           </div>
         </div>
       </div>
@@ -156,9 +158,7 @@ const iconPaths: Record<string, string> = {
   margin-bottom: 1rem;
 }
 
-.quick-actions {
-  margin-bottom: 2rem;
-}
+.quick-actions { margin-bottom: 2rem; }
 
 .actions-grid {
   display: grid;
@@ -187,9 +187,7 @@ const iconPaths: Record<string, string> = {
   color: #c9a84c;
 }
 
-.recent-section {
-  margin-bottom: 2rem;
-}
+.recent-section { margin-bottom: 2rem; }
 
 .empty-state {
   padding: 2rem;
@@ -221,13 +219,6 @@ const iconPaths: Record<string, string> = {
   flex-shrink: 0;
 }
 
-.recent-label {
-  font-size: 0.75rem;
-  color: rgba(248, 245, 239, 0.8);
-}
-
-.recent-date {
-  font-size: 0.6rem;
-  color: rgba(248, 245, 239, 0.35);
-}
+.recent-label { font-size: 0.75rem; color: rgba(248, 245, 239, 0.8); }
+.recent-date { font-size: 0.6rem; color: rgba(248, 245, 239, 0.35); }
 </style>

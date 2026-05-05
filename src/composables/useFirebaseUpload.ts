@@ -1,4 +1,4 @@
-import { ref, type Ref } from 'vue'
+import { ref } from 'vue'
 import { getFirebaseStorage } from '@/lib/firebase'
 import {
   ref as storageRef,
@@ -15,7 +15,7 @@ interface UploadResult {
 export function useFirebaseUpload() {
   const uploading = ref(false)
   const progress = ref(0)
-  const error: Ref<string | null> = ref(null)
+  const error = ref<string | null>(null)
 
   async function uploadImage(
     file: File,
@@ -41,7 +41,6 @@ export function useFirebaseUpload() {
       onProgress?.(100)
 
       const url = await getDownloadURL(fileRef)
-
       uploading.value = false
       return { url, path: filePath }
     } catch (err: any) {
@@ -62,11 +61,5 @@ export function useFirebaseUpload() {
     }
   }
 
-  return {
-    uploading,
-    progress,
-    error,
-    uploadImage,
-    deleteImage,
-  }
+  return { uploading, progress, error, uploadImage, deleteImage }
 }

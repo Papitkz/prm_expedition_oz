@@ -1,6 +1,16 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { supabase } from '@/lib/supabase'
+import { getFirebaseDb, isFirebaseInitialized } from '@/lib/firebase'
+import {
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  addDoc,
+  deleteDoc,
+  query,
+  orderBy,
+} from 'firebase/firestore'
 
 interface Blog {
   id: string
@@ -8,12 +18,11 @@ interface Blog {
   title: string
   excerpt: string
   content: string
-  cover_image_url: string
-  author_name: string
-  is_published: boolean
-  published_at: string | null
-  created_at: string
-  updated_at: string
+  coverImageUrl: string
+  authorName: string
+  isPublished: boolean
+  publishedAt: string | null
+  createdAt: string
 }
 
 const blogs = ref<Blog[]>([])
@@ -25,7 +34,7 @@ const creating = ref(false)
 const message = ref('')
 const messageType = ref<'success' | 'error'>('success')
 
-const newBlog = ref({ title: '', slug: '', excerpt: '', content: '', cover_image_url: '', author_name: 'Expedition OZ' })
+const newBlog = ref({ title: '', slug: '', excerpt: '', content: '', coverImageUrl: '', authorName: 'Expedition OZ' })
 
 function showMessage(text: string, type: 'success' | 'error') {
   message.value = text
@@ -38,9 +47,11 @@ function generateSlug(title: string): string {
 }
 
 async function loadBlogs() {
+  if (!isFirebaseInitialized()) { loading.value = false; return }
   loading.value = true
-  const { data, error } = await supabase.from('cms_blogs').select('*').order('created_at', { ascending: false })
-  if (!error && data) blogs.value = data as Blog[]
+  const db = getFirebaseDb()
+  const snap = await getDocs(query(collection(db, 'cms_blogs'), orderBy('createdAt', 'desc')))
+  blogs.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Blog))
   loading.value = false
 }
 
@@ -53,63 +64,59 @@ async function selectBlog(blog: Blog) {
 async function createBlog() {
   if (!newBlog.value.title.trim()) return
   saving.value = true
-
+  const db = getFirebaseDb()
   const slug = newBlog.value.slug || generateSlug(newBlog.value.title)
-  const { data, error } = await supabase.from('cms_blogs').insert({
+
+  const ref = await addDoc(collection(db, 'cms_blogs'), {
     slug,
     title: newBlog.value.title,
     excerpt: newBlog.value.excerpt,
     content: newBlog.value.content,
-    cover_image_url: newBlog.value.cover_image_url,
-    author_name: newBlog.value.author_name,
-    is_published: false,
-  }).select().single()
+    coverImageUrl: newBlog.value.coverImageUrl,
+    authorName: newBlog.value.authorName,
+    isPublished: false,
+    publishedAt: null,
+    createdAt: new Date().toISOString(),
+  })
 
-  if (!error && data) {
-    blogs.value.unshift(data as Blog)
-    selectedBlog.value = data as Blog
-    creating.value = false
-    newBlog.value = { title: '', slug: '', excerpt: '', content: '', cover_image_url: '', author_name: 'Expedition OZ' }
-    showMessage('Blog post created', 'success')
-  } else {
-    showMessage('Failed to create: ' + (error?.message || 'Unknown error'), 'error')
-  }
+  blogs.value.unshift({ id: ref.id, slug, title: newBlog.value.title, excerpt: newBlog.value.excerpt, content: newBlog.value.content, coverImageUrl: newBlog.value.coverImageUrl, authorName: newBlog.value.authorName, isPublished: false, publishedAt: null, createdAt: new Date().toISOString() })
+  selectedBlog.value = blogs.value[0]
+  creating.value = false
+  newBlog.value = { title: '', slug: '', excerpt: '', content: '', coverImageUrl: '', authorName: 'Expedition OZ' }
+  showMessage('Blog post created', 'success')
   saving.value = false
 }
 
 async function saveBlog() {
   if (!selectedBlog.value) return
   saving.value = true
-
+  const db = getFirebaseDb()
   const { id, ...updates } = selectedBlog.value
-  const { error } = await supabase.from('cms_blogs').update(updates).eq('id', id)
-
-  if (!error) {
-    showMessage('Blog saved', 'success')
-    editing.value = false
-    await loadBlogs()
-  } else {
-    showMessage('Failed to save: ' + error.message, 'error')
-  }
+  await updateDoc(doc(db, 'cms_blogs', id), updates)
+  showMessage('Blog saved', 'success')
+  editing.value = false
+  await loadBlogs()
   saving.value = false
 }
 
 async function togglePublished() {
   if (!selectedBlog.value) return
-  const newVal = !selectedBlog.value.is_published
-  const updates: any = { is_published: newVal }
-  if (newVal && !selectedBlog.value.published_at) updates.published_at = new Date().toISOString()
+  const db = getFirebaseDb()
+  const newVal = !selectedBlog.value.isPublished
+  const updates: any = { isPublished: newVal }
+  if (newVal && !selectedBlog.value.publishedAt) updates.publishedAt = new Date().toISOString()
 
-  await supabase.from('cms_blogs').update(updates).eq('id', selectedBlog.value.id)
-  selectedBlog.value.is_published = newVal
-  if (newVal) selectedBlog.value.published_at = updates.published_at
+  await updateDoc(doc(db, 'cms_blogs', selectedBlog.value.id), updates)
+  selectedBlog.value.isPublished = newVal
+  if (newVal) selectedBlog.value.publishedAt = updates.publishedAt
   showMessage(newVal ? 'Published' : 'Unpublished', 'success')
   await loadBlogs()
 }
 
 async function deleteBlog() {
   if (!selectedBlog.value || !confirm('Delete this blog post?')) return
-  await supabase.from('cms_blogs').delete().eq('id', selectedBlog.value.id)
+  const db = getFirebaseDb()
+  await deleteDoc(doc(db, 'cms_blogs', selectedBlog.value.id))
   blogs.value = blogs.value.filter(b => b.id !== selectedBlog.value!.id)
   selectedBlog.value = null
   showMessage('Blog deleted', 'success')
@@ -129,7 +136,6 @@ onMounted(loadBlogs)
     <div v-if="message" class="alert" :class="`alert-${messageType}`">{{ message }}</div>
 
     <div class="manager-grid">
-      <!-- Blog List -->
       <div class="blog-list">
         <div class="list-header">
           <h3 class="list-title">Blog Posts</h3>
@@ -144,23 +150,21 @@ onMounted(loadBlogs)
             class="blog-item"
             :class="{ 'blog-selected': selectedBlog?.id === blog.id }"
           >
-            <div class="blog-thumb" v-if="blog.cover_image_url">
-              <img :src="blog.cover_image_url" :alt="blog.title" />
+            <div class="blog-thumb" v-if="blog.coverImageUrl">
+              <img :src="blog.coverImageUrl" :alt="blog.title" />
             </div>
             <div class="blog-meta">
               <p class="blog-title-text">{{ blog.title }}</p>
-              <p class="blog-date">{{ new Date(blog.created_at).toLocaleDateString() }}</p>
-              <span class="blog-status" :class="blog.is_published ? 'status-published' : 'status-draft'">
-                {{ blog.is_published ? 'Published' : 'Draft' }}
+              <p class="blog-date">{{ new Date(blog.createdAt).toLocaleDateString() }}</p>
+              <span class="blog-status" :class="blog.isPublished ? 'status-published' : 'status-draft'">
+                {{ blog.isPublished ? 'Published' : 'Draft' }}
               </span>
             </div>
           </button>
         </div>
       </div>
 
-      <!-- Blog Editor -->
       <div class="blog-editor">
-        <!-- Create Form -->
         <div v-if="creating" class="editor-content">
           <h3 class="editor-title">New Blog Post</h3>
           <div class="form-grid">
@@ -182,11 +186,11 @@ onMounted(loadBlogs)
             </div>
             <div class="form-group">
               <label class="form-label">Cover Image URL</label>
-              <input v-model="newBlog.cover_image_url" class="form-input" placeholder="https://..." />
+              <input v-model="newBlog.coverImageUrl" class="form-input" placeholder="https://..." />
             </div>
             <div class="form-group">
               <label class="form-label">Author</label>
-              <input v-model="newBlog.author_name" class="form-input" />
+              <input v-model="newBlog.authorName" class="form-input" />
             </div>
           </div>
           <div class="form-actions">
@@ -195,13 +199,12 @@ onMounted(loadBlogs)
           </div>
         </div>
 
-        <!-- Edit/View Blog -->
         <div v-else-if="selectedBlog" class="editor-content">
           <div class="editor-header">
             <h3 class="editor-title">{{ selectedBlog.title }}</h3>
             <div class="header-actions">
-              <button @click="togglePublished" class="pub-btn" :class="selectedBlog.is_published ? 'pub-active' : 'pub-inactive'">
-                {{ selectedBlog.is_published ? 'Published' : 'Draft' }}
+              <button @click="togglePublished" class="pub-btn" :class="selectedBlog.isPublished ? 'pub-active' : 'pub-inactive'">
+                {{ selectedBlog.isPublished ? 'Published' : 'Draft' }}
               </button>
               <button @click="editing = !editing" class="edit-btn">{{ editing ? 'Cancel' : 'Edit' }}</button>
               <button v-if="editing" @click="saveBlog" class="save-btn" :disabled="saving">{{ saving ? 'Saving...' : 'Save' }}</button>
@@ -228,17 +231,17 @@ onMounted(loadBlogs)
             </div>
             <div class="form-group">
               <label class="form-label">Cover Image URL</label>
-              <input v-model="selectedBlog.cover_image_url" :readonly="!editing" class="form-input" />
+              <input v-model="selectedBlog.coverImageUrl" :readonly="!editing" class="form-input" />
             </div>
             <div class="form-group">
               <label class="form-label">Author</label>
-              <input v-model="selectedBlog.author_name" :readonly="!editing" class="form-input" />
+              <input v-model="selectedBlog.authorName" :readonly="!editing" class="form-input" />
             </div>
           </div>
 
-          <div v-if="selectedBlog.cover_image_url" class="cover-preview">
+          <div v-if="selectedBlog.coverImageUrl" class="cover-preview">
             <p class="sub-label">Cover Preview</p>
-            <img :src="selectedBlog.cover_image_url" :alt="selectedBlog.title" class="cover-img" />
+            <img :src="selectedBlog.coverImageUrl" :alt="selectedBlog.title" class="cover-img" />
           </div>
         </div>
 

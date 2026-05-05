@@ -1,41 +1,19 @@
 import { ref, onMounted } from 'vue'
-import { supabase } from '@/lib/supabase'
-
-interface SectionImage {
-  image_url: string
-  alt_text: string
-  is_active: boolean
-}
-
-interface CMSTrip {
-  id: string
-  slug: string
-  vessel_name: string
-  title: string
-  subtitle: string
-  duration_days: number
-  max_guests: number
-  price_aud: number
-  price_label: string
-  description: string
-  short_description: string
-  hero_image_url: string
-  hero_video_url: string
-  is_published: boolean
-  rezdy_product_id: string
-}
-
-interface CMSBlog {
-  id: string
-  slug: string
-  title: string
-  excerpt: string
-  content: string
-  cover_image_url: string
-  author_name: string
-  is_published: boolean
-  published_at: string | null
-}
+import {
+  getFirebaseDb,
+  isFirebaseInitialized,
+  initFirebase,
+  type FirebaseConfig,
+} from '@/lib/firebase'
+import {
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  query,
+  where,
+  orderBy,
+} from 'firebase/firestore'
 
 const sectionCache = new Map<string, string>()
 let cacheLoaded = false
@@ -43,31 +21,57 @@ let cacheLoaded = false
 export function useCMS() {
   const loading = ref(false)
 
-  async function loadSectionCache() {
-    if (cacheLoaded) return
-    loading.value = true
-
-    const { data: sections } = await supabase
-      .from('cms_sections')
-      .select('id, section_key, default_image_url')
-
-    const { data: images } = await supabase
-      .from('cms_section_images')
-      .select('section_id, image_url, is_active')
-      .eq('is_active', true)
-
-    if (sections && images) {
-      for (const section of sections) {
-        const activeImage = images.find(img => img.section_id === section.id)
-        sectionCache.set(section.section_key, activeImage?.image_url || section.default_image_url)
-      }
-    } else if (sections) {
-      for (const section of sections) {
-        sectionCache.set(section.section_key, section.default_image_url)
+  async function ensureFirebase() {
+    if (isFirebaseInitialized()) return
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = localStorage.getItem('firebase_config')
+      if (saved) {
+        try {
+          initFirebase(JSON.parse(saved) as FirebaseConfig)
+        } catch { /* ignore */ }
       }
     }
+  }
 
-    cacheLoaded = true
+  async function loadSectionCache() {
+    if (cacheLoaded || !isFirebaseInitialized()) return
+    loading.value = true
+
+    try {
+      const db = getFirebaseDb()
+
+      // Load sections
+      const sectionsSnap = await getDocs(collection(db, 'cms_sections'))
+      const sections: Record<string, { id: string; defaultImageUrl: string }> = {}
+      for (const docSnap of sectionsSnap.docs) {
+        const d = docSnap.data()
+        sections[docSnap.id] = {
+          id: docSnap.id,
+          defaultImageUrl: d.defaultImageUrl || '',
+        }
+      }
+
+      // Load active images
+      const imagesSnap = await getDocs(
+        query(collection(db, 'cms_section_images'), where('isActive', '==', true))
+      )
+
+      const activeImages: Record<string, string> = {}
+      for (const docSnap of imagesSnap.docs) {
+        const d = docSnap.data()
+        activeImages[d.sectionId] = d.imageUrl
+      }
+
+      // Build cache
+      for (const [key, section] of Object.entries(sections)) {
+        sectionCache.set(key, activeImages[section.id] || section.defaultImageUrl)
+      }
+
+      cacheLoaded = true
+    } catch (e) {
+      console.warn('Failed to load section cache:', e)
+    }
+
     loading.value = false
   }
 
@@ -75,69 +79,55 @@ export function useCMS() {
     return sectionCache.get(sectionKey) || fallbackUrl
   }
 
-  async function getTrips(): Promise<CMSTrip[]> {
-    const { data } = await supabase
-      .from('cms_trips')
-      .select('*')
-      .eq('is_published', true)
-      .order('sort_order')
-    return (data as CMSTrip[]) || []
+  async function getTrips() {
+    if (!isFirebaseInitialized()) return []
+    const db = getFirebaseDb()
+    const snap = await getDocs(query(collection(db, 'cms_trips'), where('isPublished', '==', true), orderBy('sortOrder')))
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as any))
   }
 
-  async function getTripBySlug(slug: string): Promise<CMSTrip | null> {
-    const { data } = await supabase
-      .from('cms_trips')
-      .select('*')
-      .eq('slug', slug)
-      .eq('is_published', true)
-      .maybeSingle()
-    return data as CMSTrip | null
+  async function getTripBySlug(slug: string) {
+    if (!isFirebaseInitialized()) return null
+    const db = getFirebaseDb()
+    const snap = await getDocs(query(collection(db, 'cms_trips'), where('slug', '==', slug), where('isPublished', '==', true)))
+    if (snap.empty) return null
+    return { id: snap.docs[0].id, ...snap.docs[0].data() } as any
   }
 
-  async function getTripFeatures(tripId: string): Promise<string[]> {
-    const { data } = await supabase
-      .from('cms_trip_features')
-      .select('feature_text')
-      .eq('trip_id', tripId)
-      .order('sort_order')
-    return data?.map(f => f.feature_text) || []
+  async function getTripFeatures(tripId: string) {
+    if (!isFirebaseInitialized()) return []
+    const db = getFirebaseDb()
+    const snap = await getDocs(query(collection(db, 'cms_trip_features'), where('tripId', '==', tripId), orderBy('sortOrder')))
+    return snap.docs.map(d => d.data().featureText as string)
   }
 
   async function getTripItinerary(tripId: string) {
-    const { data } = await supabase
-      .from('cms_trip_itinerary')
-      .select('*')
-      .eq('trip_id', tripId)
-      .order('day_number')
-    return data || []
+    if (!isFirebaseInitialized()) return []
+    const db = getFirebaseDb()
+    const snap = await getDocs(query(collection(db, 'cms_trip_itinerary'), where('tripId', '==', tripId), orderBy('dayNumber')))
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }))
   }
 
-  async function getBlogs(): Promise<CMSBlog[]> {
-    const { data } = await supabase
-      .from('cms_blogs')
-      .select('*')
-      .eq('is_published', true)
-      .order('published_at', { ascending: false })
-    return (data as CMSBlog[]) || []
+  async function getBlogs() {
+    if (!isFirebaseInitialized()) return []
+    const db = getFirebaseDb()
+    const snap = await getDocs(query(collection(db, 'cms_blogs'), where('isPublished', '==', true), orderBy('publishedAt', 'desc')))
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as any))
   }
 
-  async function getBlogBySlug(slug: string): Promise<CMSBlog | null> {
-    const { data } = await supabase
-      .from('cms_blogs')
-      .select('*')
-      .eq('slug', slug)
-      .eq('is_published', true)
-      .maybeSingle()
-    return data as CMSBlog | null
+  async function getBlogBySlug(slug: string) {
+    if (!isFirebaseInitialized()) return null
+    const db = getFirebaseDb()
+    const snap = await getDocs(query(collection(db, 'cms_blogs'), where('slug', '==', slug), where('isPublished', '==', true)))
+    if (snap.empty) return null
+    return { id: snap.docs[0].id, ...snap.docs[0].data() } as any
   }
 
   async function getSetting(key: string): Promise<string> {
-    const { data } = await supabase
-      .from('cms_settings')
-      .select('setting_value')
-      .eq('setting_key', key)
-      .maybeSingle()
-    return data?.setting_value || ''
+    if (!isFirebaseInitialized()) return ''
+    const db = getFirebaseDb()
+    const snap = await getDoc(doc(db, 'cms_settings', key))
+    return snap.exists() ? (snap.data().value as string) : ''
   }
 
   onMounted(loadSectionCache)
