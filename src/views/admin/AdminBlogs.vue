@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getFirebaseDb, isFirebaseInitialized } from '@/lib/firebase'
+import { getFirebaseDb, initFirebase } from '@/lib/firebase'
 import {
   collection,
   getDocs,
@@ -47,7 +47,7 @@ function generateSlug(title: string): string {
 }
 
 async function loadBlogs() {
-  if (!isFirebaseInitialized()) { loading.value = false; return }
+  initFirebase()
   loading.value = true
   const db = getFirebaseDb()
   const snap = await getDocs(query(collection(db, 'cms_blogs'), orderBy('createdAt', 'desc')))

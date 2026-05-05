@@ -1,11 +1,9 @@
 import { ref, onMounted } from 'vue'
-import {
-  getFirebaseDb,
-  isFirebaseInitialized,
-  initFirebase,
-  type FirebaseConfig,
-} from '@/lib/firebase'
+import { getFirebaseDb, initFirebase } from '@/lib/firebase'
 import { doc, getDoc } from 'firebase/firestore'
+
+// Ensure Firebase is initialized
+initFirebase()
 
 const companyCode = ref('')
 const sylviaProductId = ref('')
@@ -15,14 +13,6 @@ const loaded = ref(false)
 export function useRezdy() {
   async function loadRezdyConfig() {
     if (loaded.value) return
-    if (!isFirebaseInitialized()) {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const saved = localStorage.getItem('firebase_config')
-        if (saved) {
-          try { initFirebase(JSON.parse(saved) as FirebaseConfig) } catch { return }
-        } else return
-      } else return
-    }
 
     try {
       const db = getFirebaseDb()

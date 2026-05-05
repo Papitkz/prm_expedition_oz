@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getFirebaseDb, isFirebaseInitialized } from '@/lib/firebase'
+import { getFirebaseDb, initFirebase } from '@/lib/firebase'
 import {
   collection,
   getDocs,
@@ -89,7 +89,7 @@ function showMessage(text: string, type: 'success' | 'error') {
 }
 
 async function loadTrips() {
-  if (!isFirebaseInitialized()) { loading.value = false; return }
+  initFirebase()
   loading.value = true
   const db = getFirebaseDb()
 

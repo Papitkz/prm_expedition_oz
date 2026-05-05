@@ -1,21 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getFirebaseDb, isFirebaseInitialized, initFirebase, type FirebaseConfig } from '@/lib/firebase'
+import { getFirebaseDb, initFirebase } from '@/lib/firebase'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
+
+initFirebase()
 
 const loading = ref(true)
 const saving = ref(false)
 const message = ref('')
 const messageType = ref<'success' | 'error'>('success')
-
-const firebaseConfig = ref({
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
-})
 
 const settings = ref<Record<string, string>>({
   rezdy_company_code: '',
@@ -32,20 +25,9 @@ function showMessage(text: string, type: 'success' | 'error') {
 }
 
 async function loadSettings() {
-  if (!isFirebaseInitialized()) { loading.value = false; return }
   loading.value = true
   const db = getFirebaseDb()
 
-  // Load Firebase config from localStorage (saved by admin)
-  const savedConfig = localStorage.getItem('firebase_config')
-  if (savedConfig) {
-    try {
-      const parsed = JSON.parse(savedConfig)
-      firebaseConfig.value = { ...firebaseConfig.value, ...parsed }
-    } catch { /* ignore */ }
-  }
-
-  // Load all settings from Firestore
   for (const key of Object.keys(settings.value)) {
     const snap = await getDoc(doc(db, 'cms_settings', key))
     if (snap.exists()) settings.value[key] = snap.data().value as string
@@ -54,40 +36,7 @@ async function loadSettings() {
   loading.value = false
 }
 
-async function saveFirebaseConfig() {
-  saving.value = true
-  const configJson = JSON.stringify(firebaseConfig.value)
-
-  // Save to localStorage for client-side init
-  localStorage.setItem('firebase_config', configJson)
-
-  // Also save to Firestore if available
-  if (isFirebaseInitialized()) {
-    const db = getFirebaseDb()
-    await setDoc(doc(db, 'cms_settings', 'firebase_config'), { value: configJson, description: 'Firebase configuration JSON' })
-  }
-
-  // Re-initialize Firebase
-  try {
-    initFirebase(firebaseConfig.value as FirebaseConfig)
-    showMessage('Firebase config saved and initialized', 'success')
-  } catch (e: any) {
-    showMessage('Firebase init failed: ' + e.message, 'error')
-  }
-  saving.value = false
-}
-
-async function saveSetting(key: string) {
-  if (!isFirebaseInitialized()) { showMessage('Firebase not initialized', 'error'); return }
-  saving.value = true
-  const db = getFirebaseDb()
-  await setDoc(doc(db, 'cms_settings', key), { value: settings.value[key] })
-  showMessage('Setting saved', 'success')
-  saving.value = false
-}
-
 async function saveAllRezdy() {
-  if (!isFirebaseInitialized()) { showMessage('Firebase not initialized', 'error'); return }
   saving.value = true
   const db = getFirebaseDb()
   for (const key of ['rezdy_company_code', 'rezdy_sylvia_product_id', 'rezdy_millenium_product_id']) {
@@ -98,7 +47,6 @@ async function saveAllRezdy() {
 }
 
 async function saveSiteSettings() {
-  if (!isFirebaseInitialized()) { showMessage('Firebase not initialized', 'error'); return }
   saving.value = true
   const db = getFirebaseDb()
   for (const key of ['site_phone', 'site_email']) {
@@ -115,41 +63,14 @@ onMounted(loadSettings)
   <div class="settings-page">
     <div v-if="message" class="alert" :class="`alert-${messageType}`">{{ message }}</div>
 
-    <!-- Firebase Configuration -->
+    <!-- Firebase Status -->
     <div class="settings-card">
-      <h3 class="card-title">Firebase Configuration</h3>
-      <p class="card-desc">Your Firebase project credentials. These are also saved to localStorage for client-side initialization.</p>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label">API Key</label>
-          <input v-model="firebaseConfig.apiKey" class="form-input" placeholder="AIzaSy..." />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Auth Domain</label>
-          <input v-model="firebaseConfig.authDomain" class="form-input" placeholder="your-project.firebaseapp.com" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Project ID</label>
-          <input v-model="firebaseConfig.projectId" class="form-input" placeholder="your-project-id" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Storage Bucket</label>
-          <input v-model="firebaseConfig.storageBucket" class="form-input" placeholder="your-project.appspot.com" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Messaging Sender ID</label>
-          <input v-model="firebaseConfig.messagingSenderId" class="form-input" placeholder="123456789" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">App ID</label>
-          <input v-model="firebaseConfig.appId" class="form-input" placeholder="1:123456:web:abc123" />
-        </div>
+      <h3 class="card-title">Firebase Connection</h3>
+      <p class="card-desc">Firebase is configured and connected to your Expedition OZ project.</p>
+      <div class="status-row">
+        <span class="status-dot active"></span>
+        <span class="status-text">Connected to expeditionoz</span>
       </div>
-
-      <button @click="saveFirebaseConfig" class="save-btn" :disabled="saving">
-        {{ saving ? 'Saving...' : 'Save Firebase Config' }}
-      </button>
     </div>
 
     <!-- Rezdy Integration -->
@@ -210,6 +131,11 @@ onMounted(loadSettings)
 .settings-card { background: rgba(10,46,74,0.3); border: 1px solid rgba(201,168,76,0.1); padding: 1.5rem; margin-bottom: 1.5rem; }
 .card-title { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 300; color: #f8f5ef; margin-bottom: 0.25rem; }
 .card-desc { font-size: 0.8rem; color: rgba(248,245,239,0.5); margin-bottom: 1.5rem; line-height: 1.6; }
+
+.status-row { display: flex; align-items: center; gap: 0.75rem; }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; }
+.status-dot.active { background: #4caf50; box-shadow: 0 0 8px rgba(76,175,80,0.4); }
+.status-text { font-family: 'Montserrat', sans-serif; font-size: 0.7rem; color: rgba(248,245,239,0.7); letter-spacing: 0.05em; }
 
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
 .form-group { display: flex; flex-direction: column; gap: 0.375rem; }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { getFirebaseDb, isFirebaseInitialized } from '@/lib/firebase'
+import { getFirebaseDb, initFirebase } from '@/lib/firebase'
 import { useFirebaseUpload } from '@/composables/useFirebaseUpload'
 import {
   collection,
@@ -82,7 +82,7 @@ function showMessage(text: string, type: 'success' | 'error') {
 }
 
 async function loadSections() {
-  if (!isFirebaseInitialized()) { loading.value = false; return }
+  initFirebase()
   loading.value = true
   const db = getFirebaseDb()
 
@@ -106,7 +106,7 @@ async function selectSection(section: Section) {
 }
 
 async function loadSectionImages(sectionId: string) {
-  if (!isFirebaseInitialized()) { sectionImages.value = []; return }
+  initFirebase()
   const db = getFirebaseDb()
   const snap = await getDocs(
     query(collection(db, 'cms_section_images'), where('sectionId', '==', sectionId), orderBy('sortOrder'))

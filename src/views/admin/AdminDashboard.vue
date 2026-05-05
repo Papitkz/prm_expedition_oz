@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getFirebaseDb, isFirebaseInitialized } from '@/lib/firebase'
+import { getFirebaseDb, initFirebase } from '@/lib/firebase'
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore'
 
 const stats = ref([
@@ -13,7 +13,7 @@ const stats = ref([
 const recentActivity = ref<any[]>([])
 
 onMounted(async () => {
-  if (!isFirebaseInitialized()) return
+  initFirebase()
 
   const db = getFirebaseDb()
 
