@@ -11,6 +11,21 @@ export const routes: RouteRecordRaw[] = [
   { path: '/about', name: 'about', component: () => import('@/views/AboutView.vue') },
   { path: '/contact', name: 'contact', component: () => import('@/views/ContactView.vue') },
   { path: '/faq', name: 'faq', component: () => import('@/views/FaqView.vue') },
+  { path: '/blog', name: 'blog-list', component: () => import('@/views/BlogListView.vue') },
+  { path: '/blog/:slug', name: 'blog-post', component: () => import('@/views/BlogPostView.vue') },
+  // Admin routes
+  { path: '/admin', name: 'admin-login', component: () => import('@/views/admin/AdminLogin.vue') },
+  {
+    path: '/admin',
+    component: () => import('@/views/admin/AdminLayout.vue'),
+    children: [
+      { path: 'dashboard', name: 'admin-dashboard', component: () => import('@/views/admin/AdminDashboard.vue') },
+      { path: 'sections', name: 'admin-sections', component: () => import('@/views/admin/AdminSections.vue') },
+      { path: 'trips', name: 'admin-trips', component: () => import('@/views/admin/AdminTrips.vue') },
+      { path: 'blogs', name: 'admin-blogs', component: () => import('@/views/admin/AdminBlogs.vue') },
+      { path: 'settings', name: 'admin-settings', component: () => import('@/views/admin/AdminSettings.vue') },
+    ],
+  },
   { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue') },
 ]
 

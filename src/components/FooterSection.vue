@@ -6,6 +6,7 @@ const quickLinks = [
   { label: 'Sylvia – 4 Day', to: '/expeditions/sylvia' },
   { label: 'Millenium – 7 Day', to: '/expeditions/millenium' },
   { label: 'About Us', to: '/about' },
+  { label: 'Blog', to: '/blog' },
   { label: 'FAQ', to: '/faq' },
   { label: 'Contact', to: '/contact' },
 ]

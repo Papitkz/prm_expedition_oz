@@ -6,6 +6,7 @@ const routes = [
   { path: '/expeditions/sylvia', priority: '0.8', changefreq: 'weekly' },
   { path: '/expeditions/millenium', priority: '0.8', changefreq: 'weekly' },
   { path: '/about', priority: '0.6', changefreq: 'monthly' },
+  { path: '/blog', priority: '0.7', changefreq: 'weekly' },
   { path: '/faq', priority: '0.6', changefreq: 'monthly' },
   { path: '/contact', priority: '0.5', changefreq: 'monthly' },
 ]
