@@ -239,7 +239,7 @@ onMounted(() => {
           class="w-full h-full object-cover"
           @loadeddata="isVideoLoaded = true"
         >
-          <source src="https://videos.pexels.com/video-files/30351567/30351567-uhd_2560_1440_25fps.mp4" type="video/mp4">
+          <source src="https://videos.pexels.com/video-files/28268195/12345243_2560_1440_25fps.mp4" type="video/mp4">
         </video>
         <div 
           v-if="!showVideo" 

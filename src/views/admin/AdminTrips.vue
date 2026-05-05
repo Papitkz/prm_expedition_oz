@@ -55,7 +55,7 @@ const DEFAULT_TRIPS = [
     durationDays: 4, maxGuests: 12, priceAud: 2495, priceLabel: 'From $2,495 AUD',
     description: 'Four extraordinary days exploring the untouched northern reaches of Ningaloo Reef aboard our elegant vessel.',
     shortDescription: 'An intimate four-day voyage exploring the northern reaches of Ningaloo Reef.',
-    heroImageUrl: 'https://images.unsplash.com/photo-1582967788606-a171f1080ca8?auto=format&fit=crop&w=1920&q=80',
+    heroImageUrl: 'https://images.pexels.com/photos/6530412/pexels-photo-6530412.jpegw',
     heroVideoUrl: 'https://cdn.pixabay.com/video/2021/02/18/65560-515098344_large.mp4',
     isPublished: true, sortOrder: 1, rezdyProductId: '',
   },

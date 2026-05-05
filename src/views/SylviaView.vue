@@ -174,7 +174,7 @@ onMounted(() => {
           muted
           loop
           playsinline
-          poster="https://images.unsplash.com/photo-1582967788606-a171f1080ca8?auto=format&fit=crop&w=1920&q=80"
+          poster="https://images.pexels.com/photos/6530412/pexels-photo-6530412.jpegw"
           class="w-full h-full object-cover"
           @loadeddata="isVideoLoaded = true"
         >
@@ -183,7 +183,7 @@ onMounted(() => {
         <div 
           v-else 
           class="w-full h-full bg-cover bg-center"
-          style="background-image: url('https://images.unsplash.com/photo-1582967788606-a171f1080ca8?auto=format&fit=crop&w=1920&q=80')"
+          style="background-image: url('https://images.pexels.com/photos/6530412/pexels-photo-6530412.jpegw')"
         />
         <div class="absolute inset-0 bg-[#0A2E4A]/70" />
         <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
