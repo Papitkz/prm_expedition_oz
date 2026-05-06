@@ -4,10 +4,12 @@ import type { User } from '@supabase/supabase-js'
 
 const OWNER_EMAIL = 'johnfritzizar35@gmail.com'
 
+// Shared state across all instances
 const user = ref<User | null>(null)
 const loading = ref(true)
 const isAdmin = ref(false)
 const userRole = ref<'owner' | 'admin' | 'user' | null>(null)
+const initialized = ref(false)
 
 export function useAdminAuth() {
   const isLoggedIn = computed(() => !!user.value && isAdmin.value)
@@ -43,31 +45,29 @@ export function useAdminAuth() {
     userRole.value = 'user'
   }
 
-async function ensureUserDoc(currentUser: User, role: string) {
-  try {
-    const { data: existing } = await supabase
-      .from('admin_users')
-      .select('id, role')
-      .eq('uid', currentUser.id)
-      .maybeSingle()
-
-    if (!existing) {
-      // Trigger should have created it, but if not (e.g. old user before trigger),
-      // we can't insert due to RLS. Log warning.
-      console.warn('admin_users row missing for user:', currentUser.id)
-      return
-    }
-
-    if (existing.role !== role) {
-      await supabase
+  async function ensureUserDoc(currentUser: User, role: string) {
+    try {
+      const { data: existing } = await supabase
         .from('admin_users')
-        .update({ role })
+        .select('id, role')
         .eq('uid', currentUser.id)
+        .maybeSingle()
+
+      if (!existing) {
+        console.warn('admin_users row missing for user:', currentUser.id)
+        return
+      }
+
+      if (existing.role !== role) {
+        await supabase
+          .from('admin_users')
+          .update({ role })
+          .eq('uid', currentUser.id)
+      }
+    } catch (e) {
+      console.warn('Supabase unavailable, skipping user doc:', e)
     }
-  } catch (e) {
-    console.warn('Supabase unavailable, skipping user doc:', e)
   }
-}
 
   async function grantAdminAccess(targetEmail: string): Promise<boolean> {
     if (!isOwner.value) return false
@@ -130,72 +130,111 @@ async function ensureUserDoc(currentUser: User, role: string) {
     return data.user
   }
 
-async function signUp(email: string, password: string, displayName: string) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { data: { display_name: displayName } },
-  })
-  if (error) throw error
+  async function signUp(email: string, password: string, displayName: string) {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { display_name: displayName } },
+    })
+    if (error) throw error
 
-  const newUser = data.user!
-  const isOwnerSignup = newUser.email?.toLowerCase() === OWNER_EMAIL
-  const role = isOwnerSignup ? 'owner' : 'user'
+    const newUser = data.user!
+    const isOwnerSignup = newUser.email?.toLowerCase() === OWNER_EMAIL
+    const role = isOwnerSignup ? 'owner' : 'user'
 
-  // 1. Ensure user doc exists first
-  await ensureUserDoc(newUser, role)
+    await ensureUserDoc(newUser, role)
 
-  let finalRole: 'owner' | 'admin' | 'user' = role
+    let finalRole: 'owner' | 'admin' | 'user' = role
 
-  // 2. Check if they were pre-approved in admin_grants
-  if (!isOwnerSignup && newUser.email) {
-    try {
-      const { data: grant } = await supabase
-        .from('admin_grants')
-        .select('role')
-        .eq('email', newUser.email.toLowerCase())
-        .maybeSingle()
-
-      if (grant) {
-        // Upgrade them to admin immediately
-        await supabase
-          .from('admin_users')
-          .update({ role: grant.role })
-          .eq('uid', newUser.id)
-        
-        await supabase
+    if (!isOwnerSignup && newUser.email) {
+      try {
+        const { data: grant } = await supabase
           .from('admin_grants')
-          .delete()
+          .select('role')
           .eq('email', newUser.email.toLowerCase())
-        
-        finalRole = grant.role as 'admin'
-      }
-    } catch { /* ignore */ }
+          .maybeSingle()
+
+        if (grant) {
+          await supabase
+            .from('admin_users')
+            .update({ role: grant.role })
+            .eq('uid', newUser.id)
+          
+          await supabase
+            .from('admin_grants')
+            .delete()
+            .eq('email', newUser.email.toLowerCase())
+          
+          finalRole = grant.role as 'admin'
+        }
+      } catch { /* ignore */ }
+    }
+
+    user.value = newUser
+    isAdmin.value = finalRole === 'admin' || finalRole === 'owner'
+    userRole.value = finalRole
+
+    return newUser
   }
 
-  // 3. NOW set reactive state with the CORRECT role
-  user.value = newUser
-  isAdmin.value = finalRole === 'admin' || finalRole === 'owner'
-  userRole.value = finalRole
-
-  return newUser
-}
-
   async function signOut() {
-    await supabase.auth.signOut()
-    user.value = null
-    isAdmin.value = false
-    userRole.value = null
+    try {
+      // Clear local state first for immediate UI feedback
+      user.value = null
+      isAdmin.value = false
+      userRole.value = null
+      
+      // Then sign out from Supabase
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        console.warn('Sign out error:', error)
+      }
+    } catch (e) {
+      console.warn('Sign out failed:', e)
+    }
   }
 
   let authSubscription: { subscription: { unsubscribe: () => void } } | null = null
 
-  onMounted(() => {
-    const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      user.value = session?.user ?? null
+  // Initialize auth state - only runs once globally
+  async function initAuth() {
+    if (initialized.value) return
+    
+    try {
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession()
+      
       if (session?.user) {
+        user.value = session.user
+        await resolveRole(session.user)
+      }
+    } catch (e) {
+      console.warn('Failed to get session:', e)
+    } finally {
+      loading.value = false
+      initialized.value = true
+    }
+  }
+
+  onMounted(() => {
+    // Initialize auth on first mount
+    initAuth()
+    
+    // Listen for auth changes
+    const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        user.value = null
+        isAdmin.value = false
+        userRole.value = null
+        loading.value = false
+        return
+      }
+      
+      if (session?.user) {
+        user.value = session.user
         await resolveRole(session.user)
       } else {
+        user.value = null
         isAdmin.value = false
         userRole.value = null
       }

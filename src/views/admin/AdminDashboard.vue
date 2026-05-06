@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { supabase } from '@/lib/supabase'
 
+const isLoading = ref(true)
 const stats = ref([
   { label: 'Sections', value: 0, icon: 'images' },
   { label: 'Trips', value: 0, icon: 'trips' },
@@ -13,12 +14,18 @@ const recentActivity = ref<any[]>([])
 
 onMounted(async () => {
   try {
+    // Fetch all stats in parallel with timeout
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000) // 5s timeout
+    
     const [sectionsRes, tripsRes, blogsRes, imagesRes] = await Promise.all([
       supabase.from('cms_sections').select('id', { count: 'exact', head: true }),
       supabase.from('cms_trips').select('id', { count: 'exact', head: true }),
       supabase.from('cms_blogs').select('id', { count: 'exact', head: true }).eq('is_published', true),
       supabase.from('cms_section_images').select('id', { count: 'exact', head: true }),
     ])
+    
+    clearTimeout(timeout)
 
     stats.value[0].value = sectionsRes.count || 0
     stats.value[1].value = tripsRes.count || 0
@@ -39,7 +46,9 @@ onMounted(async () => {
       createdAt: img.created_at,
     }))
   } catch (e) {
-    console.warn('Supabase unavailable, dashboard stats will show 0:', e)
+    console.warn('Dashboard data fetch failed:', e)
+  } finally {
+    isLoading.value = false
   }
 })
 
@@ -53,20 +62,33 @@ const iconPaths: Record<string, string> = {
 
 <template>
   <div class="dashboard">
+    <!-- Stats Grid with Skeleton -->
     <div class="stats-grid">
-      <div v-for="stat in stats" :key="stat.label" class="stat-card">
-        <div class="stat-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="#c9a84c">
-            <path :d="iconPaths[stat.icon]"/>
-          </svg>
+      <template v-if="isLoading">
+        <div v-for="i in 4" :key="i" class="stat-card skeleton-card">
+          <div class="skeleton-icon"></div>
+          <div class="skeleton-text">
+            <div class="skeleton-value"></div>
+            <div class="skeleton-label"></div>
+          </div>
         </div>
-        <div class="stat-info">
-          <p class="stat-value">{{ stat.value }}</p>
-          <p class="stat-label">{{ stat.label }}</p>
+      </template>
+      <template v-else>
+        <div v-for="stat in stats" :key="stat.label" class="stat-card">
+          <div class="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#c9a84c">
+              <path :d="iconPaths[stat.icon]"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <p class="stat-value">{{ stat.value }}</p>
+            <p class="stat-label">{{ stat.label }}</p>
+          </div>
         </div>
-      </div>
+      </template>
     </div>
 
+    <!-- Quick Actions -->
     <div class="quick-actions">
       <h2 class="section-title">Quick Actions</h2>
       <div class="actions-grid">
@@ -92,25 +114,39 @@ const iconPaths: Record<string, string> = {
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.5">
             <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
-          <span>Settings & Rezdy</span>
+          <span>Settings &amp; Rezdy</span>
         </router-link>
       </div>
     </div>
 
+    <!-- Recent Uploads -->
     <div class="recent-section">
       <h2 class="section-title">Recent Uploads</h2>
-      <div v-if="recentActivity.length === 0" class="empty-state">
-        <p>No images uploaded yet. Go to Section Images to start.</p>
-      </div>
-      <div v-else class="recent-grid">
-        <div v-for="item in recentActivity" :key="item.id" class="recent-item">
-          <img :src="item.imageUrl" :alt="item.altText" class="recent-thumb" />
-          <div class="recent-info">
-            <p class="recent-label">{{ item.sectionLabel || 'Unknown' }}</p>
-            <p class="recent-date">{{ item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '' }}</p>
+      <template v-if="isLoading">
+        <div class="recent-grid">
+          <div v-for="i in 5" :key="i" class="recent-item skeleton-item">
+            <div class="skeleton-thumb"></div>
+            <div class="skeleton-info">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
+            </div>
           </div>
         </div>
-      </div>
+      </template>
+      <template v-else>
+        <div v-if="recentActivity.length === 0" class="empty-state">
+          <p>No images uploaded yet. Go to Section Images to start.</p>
+        </div>
+        <div v-else class="recent-grid">
+          <div v-for="item in recentActivity" :key="item.id" class="recent-item">
+            <img :src="item.imageUrl" :alt="item.altText" class="recent-thumb" />
+            <div class="recent-info">
+              <p class="recent-label">{{ item.sectionLabel || 'Unknown' }}</p>
+              <p class="recent-date">{{ item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '' }}</p>
+            </div>
+          </div>
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -229,4 +265,78 @@ const iconPaths: Record<string, string> = {
 
 .recent-label { font-size: 0.75rem; color: rgba(248, 245, 239, 0.8); }
 .recent-date { font-size: 0.6rem; color: rgba(248, 245, 239, 0.35); }
+
+/* Skeleton Loading Styles */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-card {
+  background: rgba(10, 46, 74, 0.4);
+}
+
+.skeleton-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(90deg, rgba(201, 168, 76, 0.05) 25%, rgba(201, 168, 76, 0.1) 50%, rgba(201, 168, 76, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  flex-shrink: 0;
+}
+
+.skeleton-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.skeleton-value {
+  height: 28px;
+  width: 60px;
+  background: linear-gradient(90deg, rgba(201, 168, 76, 0.05) 25%, rgba(201, 168, 76, 0.15) 50%, rgba(201, 168, 76, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-label {
+  height: 12px;
+  width: 80px;
+  background: linear-gradient(90deg, rgba(248, 245, 239, 0.03) 25%, rgba(248, 245, 239, 0.08) 50%, rgba(248, 245, 239, 0.03) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-item {
+  background: rgba(10, 46, 74, 0.3);
+}
+
+.skeleton-thumb {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(90deg, rgba(201, 168, 76, 0.05) 25%, rgba(201, 168, 76, 0.1) 50%, rgba(201, 168, 76, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  flex-shrink: 0;
+}
+
+.skeleton-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.skeleton-line {
+  height: 12px;
+  width: 100%;
+  background: linear-gradient(90deg, rgba(248, 245, 239, 0.03) 25%, rgba(248, 245, 239, 0.08) 50%, rgba(248, 245, 239, 0.03) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-line.short {
+  width: 60%;
+}
 </style>

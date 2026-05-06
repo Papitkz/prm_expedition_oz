@@ -1,27 +1,39 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAdminAuth } from '@/composables/useAdminAuth'
 
 const router = useRouter()
 const route = useRoute()
-const { user, signOut, isOwner, userRole } = useAdminAuth()
+const { user, signOut, isOwner, userRole, isAdmin, loading } = useAdminAuth()
 const sidebarOpen = ref(false)
+const isSigningOut = ref(false)
 
-const navItems = [
-  { label: 'Dashboard', icon: 'dashboard', to: '/admin/dashboard' },
-  { label: 'Section Images', icon: 'images', to: '/admin/sections' },
-  { label: 'Trips & Pricing', icon: 'trips', to: '/admin/trips' },
-  { label: 'Blog Posts', icon: 'blog', to: '/admin/blogs' },
-  { label: 'Settings', icon: 'settings', to: '/admin/settings' },
-]
+// Redirect to login if not authenticated after loading
+watch([loading, isAdmin], ([loadingVal, adminVal]) => {
+  if (!loadingVal && !adminVal) {
+    router.push('/admin')
+  }
+})
 
-if (isOwner.value) {
-  navItems.push({ label: 'User Access', icon: 'users', to: '/admin/users' })
-}
+const navItems = computed(() => {
+  const items = [
+    { label: 'Dashboard', icon: 'dashboard', to: '/admin/dashboard' },
+    { label: 'Section Images', icon: 'images', to: '/admin/sections' },
+    { label: 'Trips & Pricing', icon: 'trips', to: '/admin/trips' },
+    { label: 'Blog Posts', icon: 'blog', to: '/admin/blogs' },
+    { label: 'Settings', icon: 'settings', to: '/admin/settings' },
+  ]
+  
+  if (isOwner.value) {
+    items.push({ label: 'User Access', icon: 'users', to: '/admin/users' })
+  }
+  
+  return items
+})
 
 const currentPage = computed(() => {
-  const item = navItems.find(n => n.to === route.path)
+  const item = navItems.value.find(n => n.to === route.path)
   return item?.label || 'Dashboard'
 })
 
@@ -32,8 +44,13 @@ const roleLabel = computed(() => {
 })
 
 async function handleSignOut() {
-  await signOut()
-  router.push('/admin')
+  isSigningOut.value = true
+  try {
+    await signOut()
+    router.push('/admin')
+  } finally {
+    isSigningOut.value = false
+  }
 }
 
 function navigate(to: string) {
@@ -52,7 +69,23 @@ const iconPaths: Record<string, string> = {
 </script>
 
 <template>
-  <div class="admin-layout">
+  <!-- Loading State -->
+  <div v-if="loading" class="admin-loading">
+    <div class="loading-content">
+      <div class="loading-compass">
+        <svg width="48" height="48" viewBox="0 0 80 80" fill="none" class="compass-spin">
+          <circle cx="40" cy="40" r="38" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>
+          <polygon points="40,16 37,36 40,40 43,36" fill="#c9a84c"/>
+          <polygon points="40,64 37,44 40,40 43,44" fill="rgba(201,168,76,0.4)"/>
+          <circle cx="40" cy="40" r="3" fill="#c9a84c"/>
+        </svg>
+      </div>
+      <p class="loading-text">Loading dashboard...</p>
+    </div>
+  </div>
+
+  <!-- Main Layout -->
+  <div v-else class="admin-layout">
     <!-- Mobile Header -->
     <header class="mobile-header">
       <button @click="sidebarOpen = !sidebarOpen" class="menu-btn" aria-label="Toggle menu">
@@ -61,10 +94,11 @@ const iconPaths: Record<string, string> = {
         </svg>
       </button>
       <span class="mobile-title">Expedition OZ Admin</span>
-      <button @click="handleSignOut" class="signout-btn-mobile" aria-label="Sign out">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <button @click="handleSignOut" class="signout-btn-mobile" aria-label="Sign out" :disabled="isSigningOut">
+        <svg v-if="!isSigningOut" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
         </svg>
+        <span v-else class="btn-spinner"></span>
       </button>
     </header>
 
@@ -111,11 +145,17 @@ const iconPaths: Record<string, string> = {
             <p class="user-role">{{ roleLabel }}</p>
           </div>
         </div>
-        <button @click="handleSignOut" class="signout-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-          Sign Out
+        <button @click="handleSignOut" class="signout-btn" :disabled="isSigningOut">
+          <template v-if="!isSigningOut">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Sign Out
+          </template>
+          <template v-else>
+            <span class="btn-spinner"></span>
+            Signing out...
+          </template>
         </button>
       </div>
     </aside>
@@ -138,6 +178,54 @@ const iconPaths: Record<string, string> = {
 </template>
 
 <style scoped>
+/* Loading State */
+.admin-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #071a2b;
+}
+
+.loading-content {
+  text-align: center;
+}
+
+.loading-compass {
+  margin-bottom: 1rem;
+}
+
+@keyframes compass-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.compass-spin {
+  animation: compass-spin 2s linear infinite;
+}
+
+.loading-text {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  color: rgba(248, 245, 239, 0.5);
+}
+
+/* Button Spinner */
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(224, 123, 90, 0.3);
+  border-top-color: #e07b5a;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .admin-layout {
   display: flex;
   min-height: 100vh;
@@ -166,6 +254,11 @@ const iconPaths: Record<string, string> = {
   color: rgba(248, 245, 239, 0.7);
   cursor: pointer;
   padding: 0.5rem;
+}
+
+.signout-btn-mobile:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .mobile-title {
@@ -326,10 +419,15 @@ const iconPaths: Record<string, string> = {
   justify-content: center;
 }
 
-.signout-btn:hover {
+.signout-btn:hover:not(:disabled) {
   background: rgba(224, 123, 90, 0.1);
   border-color: rgba(224, 123, 90, 0.4);
   color: #e07b5a;
+}
+
+.signout-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 /* Main Content */
