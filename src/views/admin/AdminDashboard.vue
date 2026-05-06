@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getFirebaseDb, initFirebase } from '@/lib/firebase'
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 
 const stats = ref([
   { label: 'Sections', value: 0, icon: 'images' },
@@ -13,31 +12,36 @@ const stats = ref([
 const recentActivity = ref<any[]>([])
 
 onMounted(async () => {
-  initFirebase()
-
   try {
-    const db = getFirebaseDb()
-
-    const [sectionsSnap, tripsSnap, blogsSnap, imagesSnap] = await Promise.all([
-      getDocs(collection(db, 'cms_sections')),
-      getDocs(collection(db, 'cms_trips')),
-      getDocs(query(collection(db, 'cms_blogs'), where('isPublished', '==', true))),
-      getDocs(collection(db, 'cms_section_images')),
+    const [sectionsRes, tripsRes, blogsRes, imagesRes] = await Promise.all([
+      supabase.from('cms_sections').select('id', { count: 'exact', head: true }),
+      supabase.from('cms_trips').select('id', { count: 'exact', head: true }),
+      supabase.from('cms_blogs').select('id', { count: 'exact', head: true }).eq('is_published', true),
+      supabase.from('cms_section_images').select('id', { count: 'exact', head: true }),
     ])
 
-    stats.value[0].value = sectionsSnap.size
-    stats.value[1].value = tripsSnap.size
-    stats.value[2].value = blogsSnap.size
-    stats.value[3].value = imagesSnap.size
+    stats.value[0].value = sectionsRes.count || 0
+    stats.value[1].value = tripsRes.count || 0
+    stats.value[2].value = blogsRes.count || 0
+    stats.value[3].value = imagesRes.count || 0
 
-    const recentSnap = await getDocs(query(collection(db, 'cms_section_images'), orderBy('createdAt', 'desc'), limit(5)))
-    recentActivity.value = recentSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+    const { data: recentImages } = await supabase
+      .from('cms_section_images')
+      .select('id, image_url, alt_text, created_at, cms_sections(label)')
+      .order('created_at', { ascending: false })
+      .limit(5)
+
+    recentActivity.value = (recentImages || []).map((img: any) => ({
+      id: img.id,
+      imageUrl: img.image_url,
+      altText: img.alt_text,
+      sectionLabel: img.cms_sections?.label || 'Unknown',
+      createdAt: img.created_at,
+    }))
   } catch (e) {
-    console.warn('Firestore unavailable, dashboard stats will show 0:', e)
+    console.warn('Supabase unavailable, dashboard stats will show 0:', e)
   }
 })
-
-import { where } from 'firebase/firestore'
 
 const iconPaths: Record<string, string> = {
   images: 'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z',

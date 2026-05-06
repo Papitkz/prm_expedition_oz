@@ -1,16 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getFirebaseDb, initFirebase } from '@/lib/firebase'
-import {
-  collection,
-  getDocs,
-  doc,
-  updateDoc,
-  addDoc,
-  deleteDoc,
-  query,
-  orderBy,
-} from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 
 interface Blog {
   id: string
@@ -18,11 +8,11 @@ interface Blog {
   title: string
   excerpt: string
   content: string
-  coverImageUrl: string
-  authorName: string
-  isPublished: boolean
-  publishedAt: string | null
-  createdAt: string
+  cover_image_url: string
+  author_name: string
+  is_published: boolean
+  published_at: string | null
+  created_at: string
 }
 
 const blogs = ref<Blog[]>([])
@@ -34,7 +24,7 @@ const creating = ref(false)
 const message = ref('')
 const messageType = ref<'success' | 'error'>('success')
 
-const newBlog = ref({ title: '', slug: '', excerpt: '', content: '', coverImageUrl: '', authorName: 'Expedition OZ' })
+const newBlog = ref({ title: '', slug: '', excerpt: '', content: '', cover_image_url: '', author_name: 'Expedition OZ' })
 
 function showMessage(text: string, type: 'success' | 'error') {
   message.value = text
@@ -47,14 +37,17 @@ function generateSlug(title: string): string {
 }
 
 async function loadBlogs() {
-  initFirebase()
   loading.value = true
   try {
-    const db = getFirebaseDb()
-    const snap = await getDocs(query(collection(db, 'cms_blogs'), orderBy('createdAt', 'desc')))
-    blogs.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Blog))
+    const { data, error } = await supabase
+      .from('cms_blogs')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    blogs.value = (data || []) as Blog[]
   } catch (e) {
-    console.warn('Firestore unavailable, cannot load blogs:', e)
+    console.warn('Supabase unavailable, cannot load blogs:', e)
     blogs.value = []
   }
   loading.value = false
@@ -69,62 +62,91 @@ async function selectBlog(blog: Blog) {
 async function createBlog() {
   if (!newBlog.value.title.trim()) return
   saving.value = true
-  const db = getFirebaseDb()
+
   const slug = newBlog.value.slug || generateSlug(newBlog.value.title)
 
-  const ref = await addDoc(collection(db, 'cms_blogs'), {
-    slug,
-    title: newBlog.value.title,
-    excerpt: newBlog.value.excerpt,
-    content: newBlog.value.content,
-    coverImageUrl: newBlog.value.coverImageUrl,
-    authorName: newBlog.value.authorName,
-    isPublished: false,
-    publishedAt: null,
-    createdAt: new Date().toISOString(),
-  })
+  const { data, error } = await supabase
+    .from('cms_blogs')
+    .insert({
+      slug,
+      title: newBlog.value.title,
+      excerpt: newBlog.value.excerpt,
+      content: newBlog.value.content,
+      cover_image_url: newBlog.value.cover_image_url,
+      author_name: newBlog.value.author_name,
+      is_published: false,
+      published_at: null,
+    })
+    .select()
+    .single()
 
-  blogs.value.unshift({ id: ref.id, slug, title: newBlog.value.title, excerpt: newBlog.value.excerpt, content: newBlog.value.content, coverImageUrl: newBlog.value.coverImageUrl, authorName: newBlog.value.authorName, isPublished: false, publishedAt: null, createdAt: new Date().toISOString() })
-  selectedBlog.value = blogs.value[0]
-  creating.value = false
-  newBlog.value = { title: '', slug: '', excerpt: '', content: '', coverImageUrl: '', authorName: 'Expedition OZ' }
-  showMessage('Blog post created', 'success')
+  if (!error && data) {
+    blogs.value.unshift(data as Blog)
+    selectedBlog.value = data as Blog
+    creating.value = false
+    newBlog.value = { title: '', slug: '', excerpt: '', content: '', cover_image_url: '', author_name: 'Expedition OZ' }
+    showMessage('Blog post created', 'success')
+  } else {
+    showMessage('Failed to create blog', 'error')
+  }
   saving.value = false
 }
 
 async function saveBlog() {
   if (!selectedBlog.value) return
   saving.value = true
-  const db = getFirebaseDb()
+
   const { id, ...updates } = selectedBlog.value
-  await updateDoc(doc(db, 'cms_blogs', id), updates)
-  showMessage('Blog saved', 'success')
-  editing.value = false
-  await loadBlogs()
+  const { error } = await supabase
+    .from('cms_blogs')
+    .update(updates)
+    .eq('id', id)
+
+  if (error) {
+    showMessage('Failed to save blog', 'error')
+  } else {
+    showMessage('Blog saved', 'success')
+    editing.value = false
+    await loadBlogs()
+  }
   saving.value = false
 }
 
 async function togglePublished() {
   if (!selectedBlog.value) return
-  const db = getFirebaseDb()
-  const newVal = !selectedBlog.value.isPublished
-  const updates: any = { isPublished: newVal }
-  if (newVal && !selectedBlog.value.publishedAt) updates.publishedAt = new Date().toISOString()
 
-  await updateDoc(doc(db, 'cms_blogs', selectedBlog.value.id), updates)
-  selectedBlog.value.isPublished = newVal
-  if (newVal) selectedBlog.value.publishedAt = updates.publishedAt
-  showMessage(newVal ? 'Published' : 'Unpublished', 'success')
-  await loadBlogs()
+  const newVal = !selectedBlog.value.is_published
+  const updates: any = { is_published: newVal }
+  if (newVal && !selectedBlog.value.published_at) {
+    updates.published_at = new Date().toISOString()
+  }
+
+  const { error } = await supabase
+    .from('cms_blogs')
+    .update(updates)
+    .eq('id', selectedBlog.value.id)
+
+  if (!error) {
+    selectedBlog.value.is_published = newVal
+    if (newVal) selectedBlog.value.published_at = updates.published_at
+    showMessage(newVal ? 'Published' : 'Unpublished', 'success')
+    await loadBlogs()
+  }
 }
 
 async function deleteBlog() {
   if (!selectedBlog.value || !confirm('Delete this blog post?')) return
-  const db = getFirebaseDb()
-  await deleteDoc(doc(db, 'cms_blogs', selectedBlog.value.id))
-  blogs.value = blogs.value.filter(b => b.id !== selectedBlog.value!.id)
-  selectedBlog.value = null
-  showMessage('Blog deleted', 'success')
+
+  const { error } = await supabase
+    .from('cms_blogs')
+    .delete()
+    .eq('id', selectedBlog.value.id)
+
+  if (!error) {
+    blogs.value = blogs.value.filter(b => b.id !== selectedBlog.value!.id)
+    selectedBlog.value = null
+    showMessage('Blog deleted', 'success')
+  }
 }
 
 function startCreating() {
@@ -155,14 +177,14 @@ onMounted(loadBlogs)
             class="blog-item"
             :class="{ 'blog-selected': selectedBlog?.id === blog.id }"
           >
-            <div class="blog-thumb" v-if="blog.coverImageUrl">
-              <img :src="blog.coverImageUrl" :alt="blog.title" />
+            <div class="blog-thumb" v-if="blog.cover_image_url">
+              <img :src="blog.cover_image_url" :alt="blog.title" />
             </div>
             <div class="blog-meta">
               <p class="blog-title-text">{{ blog.title }}</p>
-              <p class="blog-date">{{ new Date(blog.createdAt).toLocaleDateString() }}</p>
-              <span class="blog-status" :class="blog.isPublished ? 'status-published' : 'status-draft'">
-                {{ blog.isPublished ? 'Published' : 'Draft' }}
+              <p class="blog-date">{{ new Date(blog.created_at).toLocaleDateString() }}</p>
+              <span class="blog-status" :class="blog.is_published ? 'status-published' : 'status-draft'">
+                {{ blog.is_published ? 'Published' : 'Draft' }}
               </span>
             </div>
           </button>
@@ -191,11 +213,11 @@ onMounted(loadBlogs)
             </div>
             <div class="form-group">
               <label class="form-label">Cover Image URL</label>
-              <input v-model="newBlog.coverImageUrl" class="form-input" placeholder="https://..." />
+              <input v-model="newBlog.cover_image_url" class="form-input" placeholder="https://..." />
             </div>
             <div class="form-group">
               <label class="form-label">Author</label>
-              <input v-model="newBlog.authorName" class="form-input" />
+              <input v-model="newBlog.author_name" class="form-input" />
             </div>
           </div>
           <div class="form-actions">
@@ -208,8 +230,8 @@ onMounted(loadBlogs)
           <div class="editor-header">
             <h3 class="editor-title">{{ selectedBlog.title }}</h3>
             <div class="header-actions">
-              <button @click="togglePublished" class="pub-btn" :class="selectedBlog.isPublished ? 'pub-active' : 'pub-inactive'">
-                {{ selectedBlog.isPublished ? 'Published' : 'Draft' }}
+              <button @click="togglePublished" class="pub-btn" :class="selectedBlog.is_published ? 'pub-active' : 'pub-inactive'">
+                {{ selectedBlog.is_published ? 'Published' : 'Draft' }}
               </button>
               <button @click="editing = !editing" class="edit-btn">{{ editing ? 'Cancel' : 'Edit' }}</button>
               <button v-if="editing" @click="saveBlog" class="save-btn" :disabled="saving">{{ saving ? 'Saving...' : 'Save' }}</button>
@@ -236,17 +258,17 @@ onMounted(loadBlogs)
             </div>
             <div class="form-group">
               <label class="form-label">Cover Image URL</label>
-              <input v-model="selectedBlog.coverImageUrl" :readonly="!editing" class="form-input" />
+              <input v-model="selectedBlog.cover_image_url" :readonly="!editing" class="form-input" />
             </div>
             <div class="form-group">
               <label class="form-label">Author</label>
-              <input v-model="selectedBlog.authorName" :readonly="!editing" class="form-input" />
+              <input v-model="selectedBlog.author_name" :readonly="!editing" class="form-input" />
             </div>
           </div>
 
-          <div v-if="selectedBlog.coverImageUrl" class="cover-preview">
+          <div v-if="selectedBlog.cover_image_url" class="cover-preview">
             <p class="sub-label">Cover Preview</p>
-            <img :src="selectedBlog.coverImageUrl" :alt="selectedBlog.title" class="cover-img" />
+            <img :src="selectedBlog.cover_image_url" :alt="selectedBlog.title" class="cover-img" />
           </div>
         </div>
 
@@ -270,6 +292,7 @@ onMounted(loadBlogs)
 .list-title { font-family: 'Montserrat', sans-serif; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(248,245,239,0.5); }
 .new-btn { background: rgba(201,168,76,0.15); border: 1px solid rgba(201,168,76,0.3); color: #c9a84c; font-family: 'Montserrat', sans-serif; font-size: 0.6rem; font-weight: 600; padding: 0.25rem 0.75rem; cursor: pointer; }
 .blogs-scroll { overflow-y: auto; max-height: 600px; }
+.loading-state { padding: 2rem; text-align: center; color: rgba(248,245,239,0.4); }
 
 .blog-item { display: flex; gap: 0.75rem; padding: 0.75rem 1rem; background: none; border: none; border-bottom: 1px solid rgba(201,168,76,0.05); color: rgba(248,245,239,0.7); cursor: pointer; transition: all 0.2s; text-align: left; width: 100%; }
 .blog-item:hover { background: rgba(201,168,76,0.05); }
@@ -312,8 +335,6 @@ onMounted(loadBlogs)
 .sub-label { font-family: 'Montserrat', sans-serif; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(248,245,239,0.4); margin-bottom: 0.5rem; }
 .cover-preview { margin-top: 1rem; }
 .cover-img { max-width: 100%; max-height: 200px; object-fit: cover; border: 1px solid rgba(201,168,76,0.15); }
-
-.loading-state { padding: 2rem; text-align: center; color: rgba(248,245,239,0.4); }
 
 @media (max-width: 768px) {
   .manager-grid { grid-template-columns: 1fr; }

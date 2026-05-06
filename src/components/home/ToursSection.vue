@@ -11,7 +11,6 @@
         <h2 class="font-display text-5xl lg:text-6xl font-light" style="font-family: var(--font-display); color: var(--color-sand-100);">
           Two Vessels, <span class="italic" style="color: var(--color-gold-400);">One Ocean</span>
         </h2>
-        <!-- TWEAK: Add comparison helper text -->
         <p class="mt-6 max-w-2xl mx-auto text-base opacity-75" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.8;">
           Whether you have four days or seven, Expedition OZ has the perfect live-aboard experience for you.
           <span class="block mt-2 text-sm" style="color: var(--color-gold-400); opacity: 0.6;">
@@ -20,10 +19,15 @@
         </p>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Loading state -->
+      <div v-if="loading" class="text-center py-12">
+        <p class="overline-text">Loading expeditions...</p>
+      </div>
+
+      <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div 
           v-for="(tour, i) in tours" 
-          :key="tour.name" 
+          :key="tour.id" 
           class="tour-card group" 
           :class="[i === 0 ? 'section-reveal-left' : 'section-reveal-right', tour.featured ? 'tour-featured' : '']"
         >
@@ -33,7 +37,6 @@
               <span class="duration-badge" :class="tour.featured ? 'badge-featured' : ''">
                 {{ tour.duration }}
               </span>
-              <!-- ADD: Featured tag -->
               <span v-if="tour.featured" class="featured-tag">Most Popular</span>
             </div>
           </div>
@@ -72,10 +75,31 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useCMS } from '@/composables/useCMS'
 
-const tours = [
+interface TourDisplay {
+  id: string
+  name: string
+  vessel: string
+  duration: string
+  link: string
+  image: string
+  alt: string
+  featured: boolean
+  description: string
+  features: string[]
+}
+
+const { getTrips, getTripFeatures } = useCMS()
+
+const tours = ref<TourDisplay[]>([])
+const loading = ref(true)
+
+// Fallback data if Supabase is unavailable
+const fallbackTours: TourDisplay[] = [
   {
+    id: 'fallback-1',
     name: 'Sylvia',
     vessel: 'Live-Aboard Vessel',
     duration: '4 Day Expedition',
@@ -93,13 +117,14 @@ const tours = [
     ]
   },
   {
+    id: 'fallback-2',
     name: 'Millenium',
     vessel: 'Premium Live-Aboard',
     duration: '7 Day Expedition',
     link: '/expeditions/millenium',
     image: 'https://r4.wallpaperflare.com/wallpaper/639/878/552/microsoft-surface-hub-great-barrier-reef-4k-wallpaper-78262d48f010bc78d0acd10e38b214ba.jpg',
     alt: 'Premium 7-day liveaboard Millenium at anchor in turquoise Ningaloo waters',
-    featured: true,  // ADD THIS
+    featured: true,
     description: 'The ultimate seven-day immersion aboard Millenium. A comprehensive journey along the full length of the reef — encountering manta rays, dugongs, turtles, and humpback whales.',
     features: [
       'Full reef exploration',
@@ -111,9 +136,46 @@ const tours = [
   }
 ]
 
+async function loadTrips() {
+  loading.value = true
+  try {
+    const tripsData = await getTrips()
+    
+    if (tripsData && tripsData.length > 0) {
+      // Load features for each trip in parallel
+      const toursWithFeatures = await Promise.all(
+        tripsData.map(async (trip: any) => {
+          const features = await getTripFeatures(trip.id)
+          return {
+            id: trip.id,
+            name: trip.title || trip.vessel_name,
+            vessel: trip.subtitle || 'Live-Aboard Vessel',
+            duration: `${trip.duration_days} Day Expedition`,
+            link: `/expeditions/${trip.slug}`,
+            image: trip.hero_image_url || fallbackTours[0].image,
+            alt: `${trip.title} - ${trip.duration_days} day diving expedition`,
+            featured: trip.duration_days >= 7,
+            description: trip.short_description || trip.description,
+            features: features.length > 0 ? features : fallbackTours[0].features,
+          }
+        })
+      )
+      tours.value = toursWithFeatures
+    } else {
+      tours.value = fallbackTours
+    }
+  } catch (e) {
+    console.warn('Could not load trips from Supabase, using fallback data:', e)
+    tours.value = fallbackTours
+  }
+  loading.value = false
+}
+
 let observer: IntersectionObserver | null = null
 
-onMounted(() => {
+onMounted(async () => {
+  await loadTrips()
+  
   observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
@@ -126,8 +188,11 @@ onMounted(() => {
     rootMargin: '0px 0px -50px 0px'
   })
 
-  const revealElements = document.querySelectorAll('.section-reveal, .section-reveal-left, .section-reveal-right')
-  revealElements.forEach((el) => observer?.observe(el))
+  // Delay observer attachment to ensure elements are rendered
+  setTimeout(() => {
+    const revealElements = document.querySelectorAll('.section-reveal, .section-reveal-left, .section-reveal-right')
+    revealElements.forEach((el) => observer?.observe(el))
+  }, 100)
 })
 
 onUnmounted(() => {

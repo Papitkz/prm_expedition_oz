@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getFirebaseDb, initFirebase } from '@/lib/firebase'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
-
-initFirebase()
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 const loading = ref(true)
 const saving = ref(false)
@@ -27,14 +24,17 @@ function showMessage(text: string, type: 'success' | 'error') {
 async function loadSettings() {
   loading.value = true
   try {
-    const db = getFirebaseDb()
-
     for (const key of Object.keys(settings.value)) {
-      const snap = await getDoc(doc(db, 'cms_settings', key))
-      if (snap.exists()) settings.value[key] = snap.data().value as string
+      const { data } = await supabase
+        .from('cms_settings')
+        .select('value')
+        .eq('key', key)
+        .maybeSingle()
+
+      if (data?.value) settings.value[key] = data.value
     }
   } catch (e) {
-    console.warn('Firestore unavailable, using default settings:', e)
+    console.warn('Supabase unavailable, using default settings:', e)
   }
   loading.value = false
 }
@@ -42,13 +42,14 @@ async function loadSettings() {
 async function saveAllRezdy() {
   saving.value = true
   try {
-    const db = getFirebaseDb()
     for (const key of ['rezdy_company_code', 'rezdy_sylvia_product_id', 'rezdy_millenium_product_id']) {
-      await setDoc(doc(db, 'cms_settings', key), { value: settings.value[key] })
+      await supabase
+        .from('cms_settings')
+        .upsert({ key, value: settings.value[key] }, { onConflict: 'key' })
     }
     showMessage('Rezdy settings saved', 'success')
   } catch (e) {
-    showMessage('Failed to save: Firestore unavailable', 'error')
+    showMessage('Failed to save: Supabase unavailable', 'error')
   }
   saving.value = false
 }
@@ -56,13 +57,14 @@ async function saveAllRezdy() {
 async function saveSiteSettings() {
   saving.value = true
   try {
-    const db = getFirebaseDb()
     for (const key of ['site_phone', 'site_email']) {
-      await setDoc(doc(db, 'cms_settings', key), { value: settings.value[key] })
+      await supabase
+        .from('cms_settings')
+        .upsert({ key, value: settings.value[key] }, { onConflict: 'key' })
     }
     showMessage('Site settings saved', 'success')
   } catch (e) {
-    showMessage('Failed to save: Firestore unavailable', 'error')
+    showMessage('Failed to save: Supabase unavailable', 'error')
   }
   saving.value = false
 }
@@ -74,13 +76,13 @@ onMounted(loadSettings)
   <div class="settings-page">
     <div v-if="message" class="alert" :class="`alert-${messageType}`">{{ message }}</div>
 
-    <!-- Firebase Status -->
+    <!-- Supabase Status -->
     <div class="settings-card">
-      <h3 class="card-title">Firebase Connection</h3>
-      <p class="card-desc">Firebase is configured and connected to your Expedition OZ project.</p>
+      <h3 class="card-title">Supabase Connection</h3>
+      <p class="card-desc">Database and authentication powered by Supabase.</p>
       <div class="status-row">
-        <span class="status-dot active"></span>
-        <span class="status-text">Connected to expeditionoz</span>
+        <span class="status-dot" :class="isSupabaseConfigured() ? 'active' : 'inactive'"></span>
+        <span class="status-text">{{ isSupabaseConfigured() ? 'Connected to Supabase' : 'Not connected - check environment variables' }}</span>
       </div>
     </div>
 
@@ -146,6 +148,7 @@ onMounted(loadSettings)
 .status-row { display: flex; align-items: center; gap: 0.75rem; }
 .status-dot { width: 10px; height: 10px; border-radius: 50%; }
 .status-dot.active { background: #4caf50; box-shadow: 0 0 8px rgba(76,175,80,0.4); }
+.status-dot.inactive { background: #e07b5a; box-shadow: 0 0 8px rgba(224,123,90,0.4); }
 .status-text { font-family: 'Montserrat', sans-serif; font-size: 0.7rem; color: rgba(248,245,239,0.7); letter-spacing: 0.05em; }
 
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
