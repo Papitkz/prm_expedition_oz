@@ -1,20 +1,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import {
-  getFirebaseAuth,
-  getFirebaseDb,
-  initFirebase,
-} from '@/lib/firebase'
-import {
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  GoogleAuthProvider,
-  signInWithPopup,
-  updateProfile,
-  type User,
-} from 'firebase/auth'
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
+import type { User } from '@supabase/supabase-js'
 
 const OWNER_EMAIL = 'johnfritzizar35@gmail.com'
 
@@ -23,8 +9,6 @@ const loading = ref(true)
 const isAdmin = ref(false)
 const userRole = ref<'owner' | 'admin' | 'user' | null>(null)
 
-initFirebase()
-
 export function useAdminAuth() {
   const isLoggedIn = computed(() => !!user.value && isAdmin.value)
   const isOwner = computed(() => user.value?.email === OWNER_EMAIL)
@@ -32,7 +16,6 @@ export function useAdminAuth() {
   async function resolveRole(currentUser: User) {
     const email = currentUser.email?.toLowerCase() || ''
 
-    // Owner gets admin access unconditionally
     if (email === OWNER_EMAIL) {
       isAdmin.value = true
       userRole.value = 'owner'
@@ -40,47 +23,49 @@ export function useAdminAuth() {
       return
     }
 
-    // Check Firestore for admin role granted by owner
     try {
-      const db = getFirebaseDb()
-      const ref = doc(db, 'admin_users', currentUser.uid)
-      const snap = await getDoc(ref)
+      const { data } = await supabase
+        .from('admin_users')
+        .select('role')
+        .eq('uid', currentUser.id)
+        .maybeSingle()
 
-      if (snap.exists()) {
-        const data = snap.data()
-        if (data.role === 'admin') {
-          isAdmin.value = true
-          userRole.value = 'admin'
-          return
-        }
+      if (data && (data.role === 'admin' || data.role === 'owner')) {
+        isAdmin.value = true
+        userRole.value = data.role as 'owner' | 'admin'
+        return
       }
     } catch (e) {
-      console.warn('Firestore unavailable, cannot verify admin role:', e)
+      console.warn('Supabase unavailable, cannot verify admin role:', e)
     }
 
-    // Regular user - no admin access
     isAdmin.value = false
     userRole.value = 'user'
   }
 
   async function ensureUserDoc(currentUser: User, role: string) {
     try {
-      const db = getFirebaseDb()
-      const ref = doc(db, 'admin_users', currentUser.uid)
-      const snap = await getDoc(ref)
+      const { data: existing } = await supabase
+        .from('admin_users')
+        .select('id, role')
+        .eq('uid', currentUser.id)
+        .maybeSingle()
 
-      if (!snap.exists()) {
-        await setDoc(ref, {
+      if (!existing) {
+        await supabase.from('admin_users').insert({
+          uid: currentUser.id,
           email: currentUser.email,
-          displayName: currentUser.displayName || currentUser.email?.split('@')[0] || '',
+          display_name: currentUser.user_metadata?.display_name || currentUser.email?.split('@')[0] || '',
           role,
-          createdAt: new Date().toISOString(),
         })
-      } else if (snap.data().role !== role) {
-        await updateDoc(ref, { role })
+      } else if (existing.role !== role) {
+        await supabase
+          .from('admin_users')
+          .update({ role })
+          .eq('uid', currentUser.id)
       }
     } catch (e) {
-      console.warn('Firestore unavailable, skipping user doc:', e)
+      console.warn('Supabase unavailable, skipping user doc:', e)
     }
   }
 
@@ -88,22 +73,28 @@ export function useAdminAuth() {
     if (!isOwner.value) return false
 
     try {
-      const db = getFirebaseDb()
-      const snap = await getDoc(doc(db, 'admin_users_by_email', targetEmail))
-      if (snap.exists()) {
-        const data = snap.data()
-        await updateDoc(doc(db, 'admin_users', data.uid), { role: 'admin' })
+      const { data: existingUser } = await supabase
+        .from('admin_users')
+        .select('uid')
+        .eq('email', targetEmail.toLowerCase())
+        .maybeSingle()
+
+      if (existingUser) {
+        await supabase
+          .from('admin_users')
+          .update({ role: 'admin' })
+          .eq('uid', existingUser.uid)
         return true
       }
-      // User hasn't signed in yet, store pending grant
-      await setDoc(doc(db, 'admin_grants', targetEmail), {
-        grantedBy: user.value?.uid,
-        grantedAt: new Date().toISOString(),
+
+      await supabase.from('admin_grants').insert({
+        email: targetEmail.toLowerCase(),
+        granted_by: user.value?.id,
         role: 'admin',
       })
       return true
     } catch (e) {
-      console.warn('Firestore unavailable, cannot grant admin:', e)
+      console.warn('Supabase unavailable, cannot grant admin:', e)
       return false
     }
   }
@@ -112,80 +103,88 @@ export function useAdminAuth() {
     if (!isOwner.value) return false
 
     try {
-      const db = getFirebaseDb()
-      const snap = await getDoc(doc(db, 'admin_users_by_email', targetEmail))
-      if (snap.exists()) {
-        const data = snap.data()
-        await updateDoc(doc(db, 'admin_users', data.uid), { role: 'user' })
+      const { data: existingUser } = await supabase
+        .from('admin_users')
+        .select('uid')
+        .eq('email', targetEmail.toLowerCase())
+        .maybeSingle()
+
+      if (existingUser) {
+        await supabase
+          .from('admin_users')
+          .update({ role: 'user' })
+          .eq('uid', existingUser.uid)
       }
       return true
     } catch (e) {
-      console.warn('Firestore unavailable, cannot revoke admin:', e)
+      console.warn('Supabase unavailable, cannot revoke admin:', e)
       return false
     }
   }
 
   async function signInWithEmail(email: string, password: string) {
-    const auth = getFirebaseAuth()
-    const cred = await signInWithEmailAndPassword(auth, email, password)
-    user.value = cred.user
-    await resolveRole(cred.user)
-    return cred.user
-  }
-
-  async function signInWithGoogle() {
-    const auth = getFirebaseAuth()
-    const provider = new GoogleAuthProvider()
-    const cred = await signInWithPopup(auth, provider)
-    user.value = cred.user
-    await resolveRole(cred.user)
-    return cred.user
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw error
+    user.value = data.user
+    await resolveRole(data.user)
+    return data.user
   }
 
   async function signUp(email: string, password: string, displayName: string) {
-    const auth = getFirebaseAuth()
-    const cred = await createUserWithEmailAndPassword(auth, email, password)
-    await updateProfile(cred.user, { displayName })
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { display_name: displayName } },
+    })
+    if (error) throw error
 
-    // New signups are always regular users unless they're the owner
-    const isOwnerSignup = cred.user.email?.toLowerCase() === OWNER_EMAIL
+    const newUser = data.user!
+    const isOwnerSignup = newUser.email?.toLowerCase() === OWNER_EMAIL
     const role = isOwnerSignup ? 'owner' : 'user'
 
-    await ensureUserDoc(cred.user, role)
+    await ensureUserDoc(newUser, role)
 
-    // Check for pending admin grants
-    if (!isOwnerSignup) {
+    if (!isOwnerSignup && newUser.email) {
       try {
-        const db = getFirebaseDb()
-        const grantSnap = await getDoc(doc(db, 'admin_grants', cred.user.email!))
-        if (grantSnap.exists()) {
-          await updateDoc(doc(db, 'admin_users', cred.user.uid), { role: 'admin' })
+        const { data: grant } = await supabase
+          .from('admin_grants')
+          .select('role')
+          .eq('email', newUser.email.toLowerCase())
+          .maybeSingle()
+
+        if (grant) {
+          await supabase
+            .from('admin_users')
+            .update({ role: grant.role })
+            .eq('uid', newUser.id)
+          await supabase
+            .from('admin_grants')
+            .delete()
+            .eq('email', newUser.email.toLowerCase())
         }
       } catch { /* ignore */ }
     }
 
-    user.value = cred.user
+    user.value = newUser
     isAdmin.value = isOwnerSignup
     userRole.value = isOwnerSignup ? 'owner' : 'user'
-    return cred.user
+    return newUser
   }
 
   async function signOut() {
-    const auth = getFirebaseAuth()
-    await firebaseSignOut(auth)
+    await supabase.auth.signOut()
     user.value = null
     isAdmin.value = false
     userRole.value = null
   }
 
-  let unsubscribe: (() => void) | null = null
+  let authSubscription: { subscription: { unsubscribe: () => void } } | null = null
 
   onMounted(() => {
-    const auth = getFirebaseAuth()
-    unsubscribe = onAuthStateChanged(auth, async (u) => {
-      user.value = u
-      if (u) {
-        await resolveRole(u)
+    authSubscription = supabase.auth.onAuthStateChange(async (_event, session) => {
+      user.value = session?.user ?? null
+      if (session?.user) {
+        await resolveRole(session.user)
       } else {
         isAdmin.value = false
         userRole.value = null
@@ -195,7 +194,7 @@ export function useAdminAuth() {
   })
 
   onUnmounted(() => {
-    unsubscribe?.()
+    authSubscription?.subscription.unsubscribe()
   })
 
   return {
@@ -206,7 +205,6 @@ export function useAdminAuth() {
     userRole,
     isLoggedIn,
     signInWithEmail,
-    signInWithGoogle,
     signUp,
     signOut,
     grantAdminAccess,

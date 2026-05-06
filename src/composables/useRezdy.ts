@@ -1,9 +1,5 @@
 import { ref, onMounted } from 'vue'
-import { getFirebaseDb, initFirebase } from '@/lib/firebase'
-import { doc, getDoc } from 'firebase/firestore'
-
-// Ensure Firebase is initialized
-initFirebase()
+import { supabase } from '@/lib/supabase'
 
 const companyCode = ref('')
 const sylviaProductId = ref('')
@@ -15,19 +11,23 @@ export function useRezdy() {
     if (loaded.value) return
 
     try {
-      const db = getFirebaseDb()
       const keys = ['rezdy_company_code', 'rezdy_sylvia_product_id', 'rezdy_millenium_product_id']
       for (const key of keys) {
-        const snap = await getDoc(doc(db, 'cms_settings', key))
-        if (snap.exists()) {
-          const val = snap.data().value as string
+        const { data } = await supabase
+          .from('cms_settings')
+          .select('value')
+          .eq('key', key)
+          .maybeSingle()
+
+        if (data?.value) {
+          const val = data.value as string
           if (key === 'rezdy_company_code') companyCode.value = val
           if (key === 'rezdy_sylvia_product_id') sylviaProductId.value = val
           if (key === 'rezdy_millenium_product_id') milleniumProductId.value = val
         }
       }
     } catch (e) {
-      console.warn('Firestore unavailable, Rezdy config will be empty:', e)
+      console.warn('Supabase unavailable, Rezdy config will be empty:', e)
     }
 
     loaded.value = true

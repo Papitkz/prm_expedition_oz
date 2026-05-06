@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
+    "@supabase/supabase-js": "^2.105.3",
     "@unhead/addons": "^3.0.4",
     "@unhead/vue": "1.9.16",
     "@vueuse/core": "^14.2.1",

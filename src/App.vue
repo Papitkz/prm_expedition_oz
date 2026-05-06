@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useLenis } from '@/composables/useLenis'
 import NavBar from '@/components/NavBar.vue'
@@ -15,6 +15,8 @@ const isLoading = ref(false)
 const showContent = ref(true)
 const initialLoadDone = ref(false)
 const showScrollTop = ref(false)
+
+const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 
 // --- DevTools Detection State ---
 const devToolsOpen = ref(false)
@@ -463,9 +465,9 @@ const animateRipples = () => {
     </Transition>
 
     <!-- Ripple Canvas -->
-    <canvas 
-      v-show="cursorEffectsEnabled && !devToolsWarning"
-      ref="canvasRef" 
+    <canvas
+      v-show="cursorEffectsEnabled && !devToolsWarning && !isAdminRoute"
+      ref="canvasRef"
       class="ripple-canvas"
       :style="{ filter: `blur(${canvasSettings.blur}px)` }"
     ></canvas>
@@ -479,7 +481,12 @@ const animateRipples = () => {
       </div>
     </Transition>
 
-    <div v-show="showContent && !devToolsWarning" class="content-wrapper">
+    <!-- Admin routes get a clean layout without nav/footer -->
+    <div v-if="isAdminRoute" class="admin-wrapper">
+      <router-view />
+    </div>
+
+    <div v-show="showContent && !devToolsWarning && !isAdminRoute" class="content-wrapper">
       <NavBar />
       <main class="main-content">
         <router-view />
@@ -589,6 +596,13 @@ const animateRipples = () => {
 .warning-fade-enter-from,
 .warning-fade-leave-to {
   opacity: 0;
+}
+
+/* --- Admin Wrapper --- */
+.admin-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--color-ocean-950, #071a2b);
 }
 
 /* --- Ripple Canvas Styles --- */

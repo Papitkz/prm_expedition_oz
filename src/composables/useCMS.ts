@@ -1,20 +1,8 @@
 import { ref, onMounted } from 'vue'
-import { getFirebaseDb, isFirebaseInitialized, initFirebase } from '@/lib/firebase'
-import {
-  collection,
-  getDocs,
-  doc,
-  getDoc,
-  query,
-  where,
-  orderBy,
-} from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 
 const sectionCache = new Map<string, string>()
 let cacheLoaded = false
-
-// Ensure Firebase is initialized
-initFirebase()
 
 export function useCMS() {
   const loading = ref(false)
@@ -24,35 +12,31 @@ export function useCMS() {
     loading.value = true
 
     try {
-      const db = getFirebaseDb()
+      const { data: sections } = await supabase
+        .from('cms_sections')
+        .select('id, section_key, default_image_url')
 
-      const sectionsSnap = await getDocs(collection(db, 'cms_sections'))
-      const sections: Record<string, { id: string; defaultImageUrl: string }> = {}
-      for (const docSnap of sectionsSnap.docs) {
-        const d = docSnap.data()
-        sections[docSnap.id] = {
-          id: docSnap.id,
-          defaultImageUrl: d.defaultImageUrl || '',
+      const { data: images } = await supabase
+        .from('cms_section_images')
+        .select('section_id, image_url')
+        .eq('is_active', true)
+
+      const activeImages: Record<string, string> = {}
+      if (images) {
+        for (const img of images) {
+          activeImages[img.section_id] = img.image_url
         }
       }
 
-      const imagesSnap = await getDocs(
-        query(collection(db, 'cms_section_images'), where('isActive', '==', true))
-      )
-
-      const activeImages: Record<string, string> = {}
-      for (const docSnap of imagesSnap.docs) {
-        const d = docSnap.data()
-        activeImages[d.sectionId] = d.imageUrl
-      }
-
-      for (const [key, section] of Object.entries(sections)) {
-        sectionCache.set(key, activeImages[section.id] || section.defaultImageUrl)
+      if (sections) {
+        for (const sec of sections) {
+          sectionCache.set(sec.section_key, activeImages[sec.id] || sec.default_image_url || '')
+        }
       }
 
       cacheLoaded = true
     } catch (e) {
-      console.warn('Firestore unavailable, section cache will use fallbacks:', e)
+      console.warn('Supabase unavailable, section cache will use fallbacks:', e)
       cacheLoaded = true
     }
 
@@ -65,79 +49,100 @@ export function useCMS() {
 
   async function getTrips() {
     try {
-      const db = getFirebaseDb()
-      const snap = await getDocs(query(collection(db, 'cms_trips'), where('isPublished', '==', true), orderBy('sortOrder')))
-      return snap.docs.map(d => ({ id: d.id, ...d.data() } as any))
+      const { data } = await supabase
+        .from('cms_trips')
+        .select('*')
+        .eq('is_published', true)
+        .order('sort_order')
+      return data || []
     } catch (e) {
-      console.warn('Firestore unavailable, returning empty trips:', e)
+      console.warn('Supabase unavailable, returning empty trips:', e)
       return []
     }
   }
 
   async function getTripBySlug(slug: string) {
     try {
-      const db = getFirebaseDb()
-      const snap = await getDocs(query(collection(db, 'cms_trips'), where('slug', '==', slug), where('isPublished', '==', true)))
-      if (snap.empty) return null
-      return { id: snap.docs[0].id, ...snap.docs[0].data() } as any
+      const { data } = await supabase
+        .from('cms_trips')
+        .select('*')
+        .eq('slug', slug)
+        .eq('is_published', true)
+        .maybeSingle()
+      return data
     } catch (e) {
-      console.warn('Firestore unavailable, cannot load trip:', e)
+      console.warn('Supabase unavailable, cannot load trip:', e)
       return null
     }
   }
 
   async function getTripFeatures(tripId: string) {
     try {
-      const db = getFirebaseDb()
-      const snap = await getDocs(query(collection(db, 'cms_trip_features'), where('tripId', '==', tripId), orderBy('sortOrder')))
-      return snap.docs.map(d => d.data().featureText as string)
+      const { data } = await supabase
+        .from('cms_trip_features')
+        .select('feature_text')
+        .eq('trip_id', tripId)
+        .order('sort_order')
+      return data?.map(d => d.feature_text) || []
     } catch (e) {
-      console.warn('Firestore unavailable, cannot load features:', e)
+      console.warn('Supabase unavailable, cannot load features:', e)
       return []
     }
   }
 
   async function getTripItinerary(tripId: string) {
     try {
-      const db = getFirebaseDb()
-      const snap = await getDocs(query(collection(db, 'cms_trip_itinerary'), where('tripId', '==', tripId), orderBy('dayNumber')))
-      return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      const { data } = await supabase
+        .from('cms_trip_itinerary')
+        .select('*')
+        .eq('trip_id', tripId)
+        .order('day_number')
+      return data || []
     } catch (e) {
-      console.warn('Firestore unavailable, cannot load itinerary:', e)
+      console.warn('Supabase unavailable, cannot load itinerary:', e)
       return []
     }
   }
 
   async function getBlogs() {
     try {
-      const db = getFirebaseDb()
-      const snap = await getDocs(query(collection(db, 'cms_blogs'), where('isPublished', '==', true), orderBy('publishedAt', 'desc')))
-      return snap.docs.map(d => ({ id: d.id, ...d.data() } as any))
+      const { data } = await supabase
+        .from('cms_blogs')
+        .select('*')
+        .eq('is_published', true)
+        .order('published_at', { ascending: false })
+      return data || []
     } catch (e) {
-      console.warn('Firestore unavailable, returning empty blogs:', e)
+      console.warn('Supabase unavailable, returning empty blogs:', e)
       return []
     }
   }
 
   async function getBlogBySlug(slug: string) {
     try {
-      const db = getFirebaseDb()
-      const snap = await getDocs(query(collection(db, 'cms_blogs'), where('slug', '==', slug), where('isPublished', '==', true)))
-      if (snap.empty) return null
-      return { id: snap.docs[0].id, ...snap.docs[0].data() } as any
+      const { data } = await supabase
+        .from('cms_blogs')
+        .select('*')
+        .eq('slug', slug)
+        .eq('is_published', true)
+        .maybeSingle()
+      return data
     } catch (e) {
-      console.warn('Firestore unavailable, cannot load blog:', e)
+      console.warn('Supabase unavailable, cannot load blog:', e)
       return null
     }
   }
 
   async function getSetting(key: string): Promise<string> {
     try {
-      const db = getFirebaseDb()
-      const snap = await getDoc(doc(db, 'cms_settings', key))
-      return snap.exists() ? (snap.data().value as string) : ''
+      const { data } = await supabase
+        .from('cms_settings')
+        .select('value')
+        .eq('key', key)
+        .maybeSingle()
+      return data?.value || ''
     } catch (e) {
-      console.warn('Firestore unavailable, cannot load setting:', e)
+      console.warn('Supabase unavailable, cannot load setting:', e)
       return ''
     }
   }
