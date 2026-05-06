@@ -2,6 +2,7 @@ import { ref, onMounted } from 'vue'
 import { supabase } from '@/lib/supabase'
 
 const sectionCache = new Map<string, string>()
+const sectionVideoCache = new Map<string, string>()
 let cacheLoaded = false
 
 export function useCMS() {
@@ -14,7 +15,7 @@ export function useCMS() {
     try {
       const { data: sections } = await supabase
         .from('cms_sections')
-        .select('id, section_key, default_image_url')
+        .select('id, section_key, default_image_url, default_video_url')
 
       const { data: images } = await supabase
         .from('cms_section_images')
@@ -31,6 +32,7 @@ export function useCMS() {
       if (sections) {
         for (const sec of sections) {
           sectionCache.set(sec.section_key, activeImages[sec.id] || sec.default_image_url || '')
+          sectionVideoCache.set(sec.section_key, sec.default_video_url || '')
         }
       }
 
@@ -45,6 +47,10 @@ export function useCMS() {
 
   function getSectionImage(sectionKey: string, fallbackUrl: string): string {
     return sectionCache.get(sectionKey) || fallbackUrl
+  }
+
+  function getSectionVideo(sectionKey: string, fallbackUrl: string): string {
+    return sectionVideoCache.get(sectionKey) || fallbackUrl
   }
 
   async function getTrips() {
@@ -153,6 +159,7 @@ export function useCMS() {
     loading,
     loadSectionCache,
     getSectionImage,
+    getSectionVideo,
     getTrips,
     getTripBySlug,
     getTripFeatures,

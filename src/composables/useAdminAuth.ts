@@ -181,7 +181,7 @@ export function useAdminAuth() {
   let authSubscription: { subscription: { unsubscribe: () => void } } | null = null
 
   onMounted(() => {
-    authSubscription = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
       user.value = session?.user ?? null
       if (session?.user) {
         await resolveRole(session.user)
@@ -191,6 +191,7 @@ export function useAdminAuth() {
       }
       loading.value = false
     })
+    authSubscription = data
   })
 
   onUnmounted(() => {

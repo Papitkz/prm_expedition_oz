@@ -113,6 +113,8 @@ async function handleEmailAuth() {
   justify-content: center;
   background: #071a2b;
   padding: 1.5rem;
+  position: relative;
+  z-index: 1;
 }
 
 .login-card {
@@ -121,15 +123,18 @@ async function handleEmailAuth() {
   background: rgba(10, 46, 74, 0.6);
   border: 1px solid rgba(201, 168, 76, 0.2);
   padding: 2.5rem;
+  position: relative;
 }
 
 .login-header {
   text-align: center;
   margin-bottom: 2rem;
+  padding-top: 0.5rem;
 }
 
 .login-compass {
   margin: 0 auto 1rem;
+  display: block;
 }
 
 .login-title {
@@ -138,6 +143,7 @@ async function handleEmailAuth() {
   font-weight: 300;
   color: #c9a84c;
   letter-spacing: 0.05em;
+  line-height: 1.2;
 }
 
 .login-subtitle {
@@ -146,7 +152,7 @@ async function handleEmailAuth() {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: rgba(248, 245, 239, 0.5);
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
 }
 
 .alert {

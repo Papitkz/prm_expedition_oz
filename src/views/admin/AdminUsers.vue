@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAdminAuth } from '@/composables/useAdminAuth'
-import { getFirebaseDb, initFirebase } from '@/lib/firebase'
-import { collection, getDocs, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore'
+import { supabase } from '@/lib/supabase'
 
 const { isOwner, user } = useAdminAuth()
 
 interface AdminUser {
+  id: string
   uid: string
   email: string
-  displayName: string
+  display_name: string
   role: string
-  createdAt: string
+  created_at: string
 }
 
 const users = ref<AdminUser[]>([])
@@ -29,12 +29,15 @@ function showMessage(text: string, type: 'success' | 'error') {
 async function loadUsers() {
   loading.value = true
   try {
-    initFirebase()
-    const db = getFirebaseDb()
-    const snap = await getDocs(collection(db, 'admin_users'))
-    users.value = snap.docs.map(d => ({ uid: d.id, ...d.data() } as AdminUser))
+    const { data, error } = await supabase
+      .from('admin_users')
+      .select('*')
+      .order('created_at', { ascending: true })
+
+    if (error) throw error
+    users.value = (data || []) as AdminUser[]
   } catch (e) {
-    console.warn('Firestore unavailable, cannot load users:', e)
+    console.warn('Supabase unavailable, cannot load users:', e)
     users.value = []
   }
   loading.value = false
@@ -45,22 +48,25 @@ async function grantAccess() {
   const email = grantEmail.value.trim().toLowerCase()
 
   try {
-    const db = getFirebaseDb()
-
-    // Find existing user by email
     const existingUser = users.value.find(u => u.email?.toLowerCase() === email)
 
     if (existingUser) {
-      await updateDoc(doc(db, 'admin_users', existingUser.uid), { role: 'admin' })
+      const { error } = await supabase
+        .from('admin_users')
+        .update({ role: 'admin' })
+        .eq('uid', existingUser.uid)
+      if (error) throw error
       existingUser.role = 'admin'
       showMessage(`Admin access granted to ${email}`, 'success')
     } else {
-      // Store pending grant for when user signs up
-      await setDoc(doc(db, 'admin_grants', email), {
-        grantedBy: user.value?.uid,
-        grantedAt: new Date().toISOString(),
-        role: 'admin',
-      })
+      const { error } = await supabase
+        .from('admin_grants')
+        .upsert({
+          email,
+          granted_by: user.value?.id,
+          role: 'admin',
+        })
+      if (error) throw error
       showMessage(`Pending grant created for ${email}. They will get admin access when they sign up.`, 'success')
     }
 
@@ -68,7 +74,7 @@ async function grantAccess() {
     await loadUsers()
   } catch (e) {
     console.warn('Failed to grant access:', e)
-    showMessage('Failed to grant access. Firestore may be unavailable.', 'error')
+    showMessage('Failed to grant access. Supabase may be unavailable.', 'error')
   }
 }
 
@@ -79,27 +85,33 @@ async function revokeAccess(u: AdminUser) {
   }
 
   try {
-    const db = getFirebaseDb()
-    await updateDoc(doc(db, 'admin_users', u.uid), { role: 'user' })
+    const { error } = await supabase
+      .from('admin_users')
+      .update({ role: 'user' })
+      .eq('uid', u.uid)
+    if (error) throw error
     u.role = 'user'
     showMessage(`Admin access revoked for ${u.email}`, 'success')
     await loadUsers()
   } catch (e) {
     console.warn('Failed to revoke access:', e)
-    showMessage('Failed to revoke access. Firestore may be unavailable.', 'error')
+    showMessage('Failed to revoke access. Supabase may be unavailable.', 'error')
   }
 }
 
 async function promoteAccess(u: AdminUser) {
   try {
-    const db = getFirebaseDb()
-    await updateDoc(doc(db, 'admin_users', u.uid), { role: 'admin' })
+    const { error } = await supabase
+      .from('admin_users')
+      .update({ role: 'admin' })
+      .eq('uid', u.uid)
+    if (error) throw error
     u.role = 'admin'
     showMessage(`Admin access granted to ${u.email}`, 'success')
     await loadUsers()
   } catch (e) {
     console.warn('Failed to promote:', e)
-    showMessage('Failed to grant access. Firestore may be unavailable.', 'error')
+    showMessage('Failed to grant access. Supabase may be unavailable.', 'error')
   }
 }
 
@@ -158,7 +170,7 @@ onMounted(loadUsers)
             <div class="user-row-avatar">{{ u.email?.charAt(0).toUpperCase() || '?' }}</div>
             <div class="user-row-info">
               <p class="user-row-email">{{ u.email }}</p>
-              <p class="user-row-name">{{ u.displayName || 'No name set' }}</p>
+              <p class="user-row-name">{{ u.display_name || 'No name set' }}</p>
             </div>
             <div class="user-row-role">
               <span class="role-badge" :class="`role-${u.role}`">
