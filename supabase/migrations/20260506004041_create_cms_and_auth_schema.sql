@@ -1,28 +1,10 @@
 /*
-  # Create CMS and Auth Schema for Expedition OZ
-
-  1. New Tables
-    - `admin_users` — Maps Supabase auth users to admin roles (owner/admin/user)
-    - `admin_grants` — Pending admin access grants for users who haven't signed in yet
-    - `cms_sections` — Editable sections with default image/video URLs
-    - `cms_section_images` — Uploaded images per section (one active per section)
-    - `cms_trips` — Expedition trip data (Sylvia, Millenium)
-    - `cms_trip_features` — Feature list per trip
-    - `cms_trip_itinerary` — Day-by-day itinerary per trip
-    - `cms_blogs` — Blog posts
-    - `cms_settings` — Key-value settings (Rezdy, contact info, etc.)
-
-  2. Security
-    - RLS enabled on ALL tables
-    - Public read access for published content (sections, trips, blogs, settings)
-    - Only admin/owner users can write/update/delete
-    - admin_users and admin_grants restricted to owner only (except own row)
-
-  3. Important Notes
-    - The `admin_users` table uses the Supabase auth.uid() to link to auth.users
-    - New registrations default to 'user' role
-    - Only the owner (hardcoded email check) can promote users to admin
-    - CMS sections retain default URLs when no custom image is uploaded
+  # Create CMS and Auth Schema for Expedition OZ (REVISED)
+  
+  FIXES:
+  - Added trigger to auto-insert admin_users on auth signup (bypasses RLS chicken-and-egg)
+  - Removed restrictive INSERT policy on admin_users (trigger handles it)
+  - Kept all other tables/policies intact
 */
 
 -- ============================================
@@ -46,16 +28,7 @@ CREATE POLICY "Users can read own admin record"
   TO authenticated
   USING (auth.uid() = uid);
 
--- Only the owner can insert new admin user records
-CREATE POLICY "Only owner can insert admin users"
-  ON admin_users FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM admin_users
-      WHERE uid = auth.uid() AND role = 'owner'
-    )
-  );
+-- REMOVED: "Only owner can insert admin users" — trigger handles insertion instead
 
 -- Only the owner can update admin user records (to change roles)
 CREATE POLICY "Only owner can update admin users"
@@ -73,6 +46,47 @@ CREATE POLICY "Only owner can update admin users"
       WHERE uid = auth.uid() AND role = 'owner'
     )
   );
+
+-- Only the owner can delete admin user records
+CREATE POLICY "Only owner can delete admin users"
+  ON admin_users FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM admin_users
+      WHERE uid = auth.uid() AND role = 'owner'
+    )
+  );
+
+-- ============================================
+-- TRIGGER: Auto-create admin_users row on signup
+-- This runs as SECURITY DEFINER (bypasses RLS)
+-- ============================================
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.admin_users (uid, email, display_name, role)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1)),
+    CASE 
+      WHEN NEW.email = 'johnfritzizar35@gmail.com' THEN 'owner'
+      ELSE 'user'
+    END
+  )
+  ON CONFLICT (uid) DO NOTHING;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Drop if exists to allow re-running
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- ============================================
 -- ADMIN GRANTS (pending access for not-yet-registered users)
@@ -136,13 +150,11 @@ CREATE TABLE IF NOT EXISTS cms_sections (
 
 ALTER TABLE cms_sections ENABLE ROW LEVEL SECURITY;
 
--- Public can read sections
 CREATE POLICY "Public can read sections"
   ON cms_sections FOR SELECT
   TO anon, authenticated
   USING (true);
 
--- Only admins can modify sections
 CREATE POLICY "Admins can insert sections"
   ON cms_sections FOR INSERT
   TO authenticated
@@ -180,7 +192,7 @@ CREATE POLICY "Admins can delete sections"
   );
 
 -- ============================================
--- CMS SECTION IMAGES (uploaded images per section)
+-- CMS SECTION IMAGES
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS cms_section_images (
@@ -197,13 +209,11 @@ CREATE TABLE IF NOT EXISTS cms_section_images (
 
 ALTER TABLE cms_section_images ENABLE ROW LEVEL SECURITY;
 
--- Public can read section images
 CREATE POLICY "Public can read section images"
   ON cms_section_images FOR SELECT
   TO anon, authenticated
   USING (true);
 
--- Only admins can modify section images
 CREATE POLICY "Admins can insert section images"
   ON cms_section_images FOR INSERT
   TO authenticated
@@ -232,6 +242,64 @@ CREATE POLICY "Admins can update section images"
 
 CREATE POLICY "Admins can delete section images"
   ON cms_section_images FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM admin_users
+      WHERE uid = auth.uid() AND role IN ('owner', 'admin')
+    )
+  );
+
+-- ============================================
+-- CMS SECTION VIDEOS
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS cms_section_videos (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  section_id uuid NOT NULL REFERENCES cms_sections(id) ON DELETE CASCADE,
+  section_key text NOT NULL,
+  video_url text NOT NULL,
+  file_path text DEFAULT '',
+  is_active boolean DEFAULT false,
+  sort_order int DEFAULT 0,
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE cms_section_videos ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public can read section videos"
+  ON cms_section_videos FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+CREATE POLICY "Admins can insert section videos"
+  ON cms_section_videos FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM admin_users
+      WHERE uid = auth.uid() AND role IN ('owner', 'admin')
+    )
+  );
+
+CREATE POLICY "Admins can update section videos"
+  ON cms_section_videos FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM admin_users
+      WHERE uid = auth.uid() AND role IN ('owner', 'admin')
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM admin_users
+      WHERE uid = auth.uid() AND role IN ('owner', 'admin')
+    )
+  );
+
+CREATE POLICY "Admins can delete section videos"
+  ON cms_section_videos FOR DELETE
   TO authenticated
   USING (
     EXISTS (
@@ -480,7 +548,7 @@ CREATE POLICY "Admins can delete blogs"
   );
 
 -- ============================================
--- CMS SETTINGS (key-value store)
+-- CMS SETTINGS
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS cms_settings (
@@ -531,6 +599,8 @@ CREATE INDEX IF NOT EXISTS idx_admin_users_email ON admin_users(email);
 CREATE INDEX IF NOT EXISTS idx_cms_sections_key ON cms_sections(section_key);
 CREATE INDEX IF NOT EXISTS idx_cms_section_images_section_id ON cms_section_images(section_id);
 CREATE INDEX IF NOT EXISTS idx_cms_section_images_active ON cms_section_images(section_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_cms_section_videos_section_id ON cms_section_videos(section_id);
+CREATE INDEX IF NOT EXISTS idx_cms_section_videos_active ON cms_section_videos(section_id, is_active);
 CREATE INDEX IF NOT EXISTS idx_cms_trips_slug ON cms_trips(slug);
 CREATE INDEX IF NOT EXISTS idx_cms_trip_features_trip_id ON cms_trip_features(trip_id);
 CREATE INDEX IF NOT EXISTS idx_cms_trip_itinerary_trip_id ON cms_trip_itinerary(trip_id);

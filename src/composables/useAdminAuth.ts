@@ -43,31 +43,31 @@ export function useAdminAuth() {
     userRole.value = 'user'
   }
 
-  async function ensureUserDoc(currentUser: User, role: string) {
-    try {
-      const { data: existing } = await supabase
-        .from('admin_users')
-        .select('id, role')
-        .eq('uid', currentUser.id)
-        .maybeSingle()
+async function ensureUserDoc(currentUser: User, role: string) {
+  try {
+    const { data: existing } = await supabase
+      .from('admin_users')
+      .select('id, role')
+      .eq('uid', currentUser.id)
+      .maybeSingle()
 
-      if (!existing) {
-        await supabase.from('admin_users').insert({
-          uid: currentUser.id,
-          email: currentUser.email,
-          display_name: currentUser.user_metadata?.display_name || currentUser.email?.split('@')[0] || '',
-          role,
-        })
-      } else if (existing.role !== role) {
-        await supabase
-          .from('admin_users')
-          .update({ role })
-          .eq('uid', currentUser.id)
-      }
-    } catch (e) {
-      console.warn('Supabase unavailable, skipping user doc:', e)
+    if (!existing) {
+      // Trigger should have created it, but if not (e.g. old user before trigger),
+      // we can't insert due to RLS. Log warning.
+      console.warn('admin_users row missing for user:', currentUser.id)
+      return
     }
+
+    if (existing.role !== role) {
+      await supabase
+        .from('admin_users')
+        .update({ role })
+        .eq('uid', currentUser.id)
+    }
+  } catch (e) {
+    console.warn('Supabase unavailable, skipping user doc:', e)
   }
+}
 
   async function grantAdminAccess(targetEmail: string): Promise<boolean> {
     if (!isOwner.value) return false
@@ -130,46 +130,56 @@ export function useAdminAuth() {
     return data.user
   }
 
-  async function signUp(email: string, password: string, displayName: string) {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { display_name: displayName } },
-    })
-    if (error) throw error
+async function signUp(email: string, password: string, displayName: string) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { display_name: displayName } },
+  })
+  if (error) throw error
 
-    const newUser = data.user!
-    const isOwnerSignup = newUser.email?.toLowerCase() === OWNER_EMAIL
-    const role = isOwnerSignup ? 'owner' : 'user'
+  const newUser = data.user!
+  const isOwnerSignup = newUser.email?.toLowerCase() === OWNER_EMAIL
+  const role = isOwnerSignup ? 'owner' : 'user'
 
-    await ensureUserDoc(newUser, role)
+  // 1. Ensure user doc exists first
+  await ensureUserDoc(newUser, role)
 
-    if (!isOwnerSignup && newUser.email) {
-      try {
-        const { data: grant } = await supabase
+  let finalRole: 'owner' | 'admin' | 'user' = role
+
+  // 2. Check if they were pre-approved in admin_grants
+  if (!isOwnerSignup && newUser.email) {
+    try {
+      const { data: grant } = await supabase
+        .from('admin_grants')
+        .select('role')
+        .eq('email', newUser.email.toLowerCase())
+        .maybeSingle()
+
+      if (grant) {
+        // Upgrade them to admin immediately
+        await supabase
+          .from('admin_users')
+          .update({ role: grant.role })
+          .eq('uid', newUser.id)
+        
+        await supabase
           .from('admin_grants')
-          .select('role')
+          .delete()
           .eq('email', newUser.email.toLowerCase())
-          .maybeSingle()
-
-        if (grant) {
-          await supabase
-            .from('admin_users')
-            .update({ role: grant.role })
-            .eq('uid', newUser.id)
-          await supabase
-            .from('admin_grants')
-            .delete()
-            .eq('email', newUser.email.toLowerCase())
-        }
-      } catch { /* ignore */ }
-    }
-
-    user.value = newUser
-    isAdmin.value = isOwnerSignup
-    userRole.value = isOwnerSignup ? 'owner' : 'user'
-    return newUser
+        
+        finalRole = grant.role as 'admin'
+      }
+    } catch { /* ignore */ }
   }
+
+  // 3. NOW set reactive state with the CORRECT role
+  user.value = newUser
+  isAdmin.value = finalRole === 'admin' || finalRole === 'owner'
+  userRole.value = finalRole
+
+  return newUser
+}
 
   async function signOut() {
     await supabase.auth.signOut()
