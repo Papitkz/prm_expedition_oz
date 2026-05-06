@@ -1,16 +1,29 @@
 import { ref, onMounted } from 'vue'
-import { supabase } from '@/lib/supabase'
+import { getFirebaseDb } from '@/lib/firebase'
+import {
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  serverTimestamp,
+} from 'firebase/firestore'
 
 interface SectionData {
   id: string
-  section_key: string
+  sectionKey: string
   page: string
   label: string
   description: string
-  default_image_url: string
-  default_video_url: string
-  active_image_url: string | null
-  active_video_url: string | null
+  defaultImageUrl: string
+  defaultVideoUrl: string
+  activeImageUrl: string | null
+  activeVideoUrl: string | null
 }
 
 const sectionCache = new Map<string, string>()
@@ -26,59 +39,55 @@ export function useCMS() {
     loading.value = true
 
     try {
-      const { data: sections } = await supabase
-        .from('cms_sections')
-        .select('id, section_key, page, label, description, default_image_url, default_video_url')
+      const db = getFirebaseDb()
 
-      const { data: images } = await supabase
-        .from('cms_section_images')
-        .select('section_id, image_url')
-        .eq('is_active', true)
+      // Load sections
+      const sectionsSnap = await getDocs(collection(db, 'cms_sections'))
+      const sections = sectionsSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
 
-      const { data: videos } = await supabase
-        .from('cms_section_videos')
-        .select('section_id, video_url')
-        .eq('is_active', true)
-
+      // Load active images
+      const imagesSnap = await getDocs(
+        query(collection(db, 'cms_section_images'), where('isActive', '==', true))
+      )
       const activeImages: Record<string, string> = {}
-      if (images) {
-        for (const img of images) {
-          activeImages[img.section_id] = img.image_url
-        }
-      }
+      imagesSnap.docs.forEach((d) => {
+        const data = d.data()
+        activeImages[data.sectionId] = data.imageUrl
+      })
 
+      // Load active videos
+      const videosSnap = await getDocs(
+        query(collection(db, 'cms_section_videos'), where('isActive', '==', true))
+      )
       const activeVideos: Record<string, string> = {}
-      if (videos) {
-        for (const vid of videos) {
-          activeVideos[vid.section_id] = vid.video_url
-        }
-      }
+      videosSnap.docs.forEach((d) => {
+        const data = d.data()
+        activeVideos[data.sectionId] = data.videoUrl
+      })
 
-      if (sections) {
-        for (const sec of sections) {
-          const activeImg = activeImages[sec.id] || null
-          const activeVid = activeVideos[sec.id] || null
+      for (const sec of sections as any[]) {
+        const activeImg = activeImages[sec.id] || null
+        const activeVid = activeVideos[sec.id] || null
 
-          sectionCache.set(sec.section_key, activeImg || sec.default_image_url || '')
-          sectionVideoCache.set(sec.section_key, activeVid || sec.default_video_url || '')
+        sectionCache.set(sec.sectionKey, activeImg || sec.defaultImageUrl || '')
+        sectionVideoCache.set(sec.sectionKey, activeVid || sec.defaultVideoUrl || '')
 
-          allSectionsCache.set(sec.section_key, {
-            id: sec.id,
-            section_key: sec.section_key,
-            page: sec.page,
-            label: sec.label,
-            description: sec.description || '',
-            default_image_url: sec.default_image_url || '',
-            default_video_url: sec.default_video_url || '',
-            active_image_url: activeImg,
-            active_video_url: activeVid,
-          })
-        }
+        allSectionsCache.set(sec.sectionKey, {
+          id: sec.id,
+          sectionKey: sec.sectionKey,
+          page: sec.page,
+          label: sec.label,
+          description: sec.description || '',
+          defaultImageUrl: sec.defaultImageUrl || '',
+          defaultVideoUrl: sec.defaultVideoUrl || '',
+          activeImageUrl: activeImg,
+          activeVideoUrl: activeVid,
+        })
       }
 
       cacheLoaded = true
     } catch (e) {
-      console.warn('Supabase unavailable, section cache will use fallbacks:', e)
+      console.warn('Firebase unavailable, section cache will use fallbacks:', e)
       cacheLoaded = true
     }
 
@@ -102,7 +111,7 @@ export function useCMS() {
   }
 
   function getSectionsByPage(page: string): SectionData[] {
-    return Array.from(allSectionsCache.values()).filter(s => s.page === page)
+    return Array.from(allSectionsCache.values()).filter((s) => s.page === page)
   }
 
   function clearCache() {
@@ -114,102 +123,140 @@ export function useCMS() {
 
   async function getTrips() {
     try {
-      const { data } = await supabase
-        .from('cms_trips')
-        .select('*')
-        .eq('is_published', true)
-        .order('sort_order')
-      return data || []
+      const db = getFirebaseDb()
+      const q = query(
+        collection(db, 'cms_trips'),
+        where('isPublished', '==', true),
+        orderBy('sortOrder')
+      )
+      const snap = await getDocs(q)
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
     } catch (e) {
-      console.warn('Supabase unavailable, returning empty trips:', e)
+      console.warn('Firebase unavailable, returning empty trips:', e)
       return []
     }
   }
 
   async function getTripBySlug(slug: string) {
     try {
-      const { data } = await supabase
-        .from('cms_trips')
-        .select('*')
-        .eq('slug', slug)
-        .eq('is_published', true)
-        .maybeSingle()
-      return data
+      const db = getFirebaseDb()
+      const q = query(
+        collection(db, 'cms_trips'),
+        where('slug', '==', slug),
+        where('isPublished', '==', true)
+      )
+      const snap = await getDocs(q)
+      if (snap.empty) return null
+      return { id: snap.docs[0].id, ...snap.docs[0].data() }
     } catch (e) {
-      console.warn('Supabase unavailable, cannot load trip:', e)
+      console.warn('Firebase unavailable, cannot load trip:', e)
       return null
     }
   }
 
   async function getTripFeatures(tripId: string) {
     try {
-      const { data } = await supabase
-        .from('cms_trip_features')
-        .select('feature_text')
-        .eq('trip_id', tripId)
-        .order('sort_order')
-      return data?.map(d => d.feature_text) || []
+      const db = getFirebaseDb()
+      const q = query(
+        collection(db, 'cms_trip_features'),
+        where('tripId', '==', tripId),
+        orderBy('sortOrder')
+      )
+      const snap = await getDocs(q)
+      return snap.docs.map((d) => d.data().featureText)
     } catch (e) {
-      console.warn('Supabase unavailable, cannot load features:', e)
+      console.warn('Firebase unavailable, cannot load features:', e)
       return []
     }
   }
 
   async function getTripItinerary(tripId: string) {
     try {
-      const { data } = await supabase
-        .from('cms_trip_itinerary')
-        .select('*')
-        .eq('trip_id', tripId)
-        .order('day_number')
-      return data || []
+      const db = getFirebaseDb()
+      const q = query(
+        collection(db, 'cms_trip_itinerary'),
+        where('tripId', '==', tripId),
+        orderBy('dayNumber')
+      )
+      const snap = await getDocs(q)
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
     } catch (e) {
-      console.warn('Supabase unavailable, cannot load itinerary:', e)
+      console.warn('Firebase unavailable, cannot load itinerary:', e)
       return []
     }
   }
 
   async function getBlogs() {
     try {
-      const { data } = await supabase
-        .from('cms_blogs')
-        .select('*')
-        .eq('is_published', true)
-        .order('published_at', { ascending: false })
-      return data || []
+      const db = getFirebaseDb()
+      const q = query(
+        collection(db, 'cms_blogs'),
+        where('isPublished', '==', true),
+        orderBy('publishedAt', 'desc')
+      )
+      const snap = await getDocs(q)
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
     } catch (e) {
-      console.warn('Supabase unavailable, returning empty blogs:', e)
+      console.warn('Firebase unavailable, returning empty blogs:', e)
       return []
     }
   }
 
   async function getBlogBySlug(slug: string) {
     try {
-      const { data } = await supabase
-        .from('cms_blogs')
-        .select('*')
-        .eq('slug', slug)
-        .eq('is_published', true)
-        .maybeSingle()
-      return data
+      const db = getFirebaseDb()
+      const q = query(
+        collection(db, 'cms_blogs'),
+        where('slug', '==', slug),
+        where('isPublished', '==', true)
+      )
+      const snap = await getDocs(q)
+      if (snap.empty) return null
+      return { id: snap.docs[0].id, ...snap.docs[0].data() }
     } catch (e) {
-      console.warn('Supabase unavailable, cannot load blog:', e)
+      console.warn('Firebase unavailable, cannot load blog:', e)
       return null
     }
   }
 
   async function getSetting(key: string): Promise<string> {
     try {
-      const { data } = await supabase
-        .from('cms_settings')
-        .select('value')
-        .eq('key', key)
-        .maybeSingle()
-      return data?.value || ''
+      const db = getFirebaseDb()
+      const docRef = doc(db, 'cms_settings', key)
+      const snap = await getDoc(docRef)
+      return snap.exists() ? snap.data().value || '' : ''
     } catch (e) {
-      console.warn('Supabase unavailable, cannot load setting:', e)
+      console.warn('Firebase unavailable, cannot load setting:', e)
       return ''
     }
+  }
+
+  // Admin CRUD operations
+  async function createSection(data: Partial<SectionData>) {
+    const db = getFirebaseDb()
+    const id = data.sectionKey || `section_${Date.now()}`
+    await setDoc(doc(db, 'cms_sections', id), {
+      ...data,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    clearCache()
+    return id
+  }
+
+  async function updateSection(id: string, data: Partial<SectionData>) {
+    const db = getFirebaseDb()
+    await updateDoc(doc(db, 'cms_sections', id), {
+      ...data,
+      updatedAt: serverTimestamp(),
+    })
+    clearCache()
+  }
+
+  async function deleteSection(id: string) {
+    const db = getFirebaseDb()
+    await deleteDoc(doc(db, 'cms_sections', id))
+    clearCache()
   }
 
   onMounted(loadSectionCache)
@@ -230,5 +277,8 @@ export function useCMS() {
     getBlogs,
     getBlogBySlug,
     getSetting,
+    createSection,
+    updateSection,
+    deleteSection,
   }
 }

@@ -18,6 +18,7 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/admin',
     component: () => import('@/views/admin/AdminLayout.vue'),
+    meta: { requiresAdmin: true },
     children: [
       { path: 'dashboard', name: 'admin-dashboard', component: () => import('@/views/admin/AdminDashboard.vue') },
       { path: 'sections', name: 'admin-sections', component: () => import('@/views/admin/AdminSections.vue') },
@@ -25,6 +26,7 @@ export const routes: RouteRecordRaw[] = [
       { path: 'blogs', name: 'admin-blogs', component: () => import('@/views/admin/AdminBlogs.vue') },
       { path: 'settings', name: 'admin-settings', component: () => import('@/views/admin/AdminSettings.vue') },
       { path: 'users', name: 'admin-users', component: () => import('@/views/admin/AdminUsers.vue') },
+      { path: 'bookings', name: 'admin-bookings', component: () => import('@/views/admin/AdminBookings.vue') },
     ],
   },
   { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue') },

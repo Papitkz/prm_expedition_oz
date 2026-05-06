@@ -1,36 +1,48 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { supabase } from '@/lib/supabase'
+import { getFirebaseDb } from '@/lib/firebase'
+import {
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  deleteDoc,
+  setDoc,
+  query,
+  where,
+  orderBy,
+  serverTimestamp,
+} from 'firebase/firestore'
 import { useStorageUpload } from '@/composables/useStorageUpload'
 
 interface Section {
   id: string
-  section_key: string
+  sectionKey: string
   page: string
   label: string
   description: string
-  default_image_url: string
-  default_video_url: string
+  defaultImageUrl: string
+  defaultVideoUrl: string
 }
 
 interface SectionImage {
   id: string
-  section_id: string
-  image_url: string
-  alt_text: string
-  sort_order: number
-  is_active: boolean
-  created_at: string
+  sectionId: string
+  imageUrl: string
+  altText: string
+  sortOrder: number
+  isActive: boolean
+  createdAt: any
 }
 
 interface SectionVideo {
   id: string
-  section_id: string
-  video_url: string
-  file_path: string
-  sort_order: number
-  is_active: boolean
-  created_at: string
+  sectionId: string
+  videoUrl: string
+  filePath: string
+  sortOrder: number
+  isActive: boolean
+  createdAt: any
 }
 
 const sections = ref<Section[]>([])
@@ -58,11 +70,11 @@ const filteredSections = computed(() => {
   return sections.value.filter(s => s.page === selectedPage.value)
 })
 
-const activeImage = computed(() => sectionImages.value.find(i => i.is_active))
-const activeVideo = computed(() => sectionVideos.value.find(v => v.is_active))
+const activeImage = computed(() => sectionImages.value.find(i => i.isActive))
+const activeVideo = computed(() => sectionVideos.value.find(v => v.isActive))
 
-const resolvedImageUrl = computed(() => activeImage.value?.image_url || selectedSection.value?.default_image_url || '')
-const resolvedVideoUrl = computed(() => activeVideo.value?.video_url || selectedSection.value?.default_video_url || '')
+const resolvedImageUrl = computed(() => activeImage.value?.imageUrl || selectedSection.value?.defaultImageUrl || '')
+const resolvedVideoUrl = computed(() => activeVideo.value?.videoUrl || selectedSection.value?.defaultVideoUrl || '')
 
 function showMessage(text: string, type: 'success' | 'error') {
   message.value = text
@@ -73,15 +85,11 @@ function showMessage(text: string, type: 'success' | 'error') {
 async function loadSections() {
   loading.value = true
   try {
-    const { data, error } = await supabase
-      .from('cms_sections')
-      .select('*')
-      .order('section_key')
-
-    if (error) throw error
-    sections.value = (data || []) as Section[]
+    const db = getFirebaseDb()
+    const snap = await getDocs(query(collection(db, 'cms_sections'), orderBy('sectionKey')))
+    sections.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Section))
   } catch (e) {
-    console.warn('Supabase unavailable, sections empty:', e)
+    console.warn('Firebase unavailable, sections empty:', e)
     sections.value = []
   }
   loading.value = false
@@ -95,32 +103,32 @@ async function selectSection(section: Section) {
 
 async function loadSectionImages(sectionId: string) {
   try {
-    const { data, error } = await supabase
-      .from('cms_section_images')
-      .select('*')
-      .eq('section_id', sectionId)
-      .order('sort_order')
-
-    if (error) throw error
-    sectionImages.value = (data || []) as SectionImage[]
+    const db = getFirebaseDb()
+    const q = query(
+      collection(db, 'cms_section_images'),
+      where('sectionId', '==', sectionId),
+      orderBy('sortOrder')
+    )
+    const snap = await getDocs(q)
+    sectionImages.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as SectionImage))
   } catch (e) {
-    console.warn('Supabase unavailable, cannot load section images:', e)
+    console.warn('Firebase unavailable, cannot load section images:', e)
     sectionImages.value = []
   }
 }
 
 async function loadSectionVideos(sectionId: string) {
   try {
-    const { data, error } = await supabase
-      .from('cms_section_videos')
-      .select('*')
-      .eq('section_id', sectionId)
-      .order('sort_order')
-
-    if (error) throw error
-    sectionVideos.value = (data || []) as SectionVideo[]
+    const db = getFirebaseDb()
+    const q = query(
+      collection(db, 'cms_section_videos'),
+      where('sectionId', '==', sectionId),
+      orderBy('sortOrder')
+    )
+    const snap = await getDocs(q)
+    sectionVideos.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as SectionVideo))
   } catch (e) {
-    console.warn('Supabase unavailable, cannot load section videos:', e)
+    console.warn('Firebase unavailable, cannot load section videos:', e)
     sectionVideos.value = []
   }
 }
@@ -137,30 +145,30 @@ async function handleImageUpload(event: Event) {
 
   uploading.value = true
   uploadingType.value = 'image'
-  const result = await uploadImage(file, selectedSection.value.section_key)
+  const result = await uploadImage(file, selectedSection.value.sectionKey)
 
   if (result) {
-    const activeImgs = sectionImages.value.filter(i => i.is_active)
-    if (activeImgs.length > 0) {
-      await supabase
-        .from('cms_section_images')
-        .update({ is_active: false })
-        .in('id', activeImgs.map(i => i.id))
+    const db = getFirebaseDb()
+
+    // Deactivate current active images
+    const activeImgs = sectionImages.value.filter(i => i.isActive)
+    for (const img of activeImgs) {
+      await updateDoc(doc(db, 'cms_section_images', img.id), { isActive: false })
     }
 
-    const { error } = await supabase
-      .from('cms_section_images')
-      .insert({
-        section_id: selectedSection.value.id,
-        section_key: selectedSection.value.section_key,
-        image_url: result.url,
-        file_path: result.path,
-        alt_text: selectedSection.value.label,
-        sort_order: sectionImages.value.length,
-        is_active: true,
-      })
+    // Add new image
+    const newId = `img_${Date.now()}`
+    await setDoc(doc(db, 'cms_section_images', newId), {
+      sectionId: selectedSection.value.id,
+      sectionKey: selectedSection.value.sectionKey,
+      imageUrl: result.url,
+      filePath: result.path,
+      altText: selectedSection.value.label,
+      sortOrder: sectionImages.value.length,
+      isActive: true,
+      createdAt: serverTimestamp(),
+    })
 
-    if (error) throw error
     showMessage('Image uploaded and set as active', 'success')
     await loadSectionImages(selectedSection.value.id)
   } else {
@@ -183,29 +191,29 @@ async function handleVideoUpload(event: Event) {
 
   uploading.value = true
   uploadingType.value = 'video'
-  const result = await uploadImage(file, selectedSection.value.section_key)
+  const result = await uploadImage(file, selectedSection.value.sectionKey)
 
   if (result) {
-    const activeVids = sectionVideos.value.filter(v => v.is_active)
-    if (activeVids.length > 0) {
-      await supabase
-        .from('cms_section_videos')
-        .update({ is_active: false })
-        .in('id', activeVids.map(v => v.id))
+    const db = getFirebaseDb()
+
+    // Deactivate current active videos
+    const activeVids = sectionVideos.value.filter(v => v.isActive)
+    for (const vid of activeVids) {
+      await updateDoc(doc(db, 'cms_section_videos', vid.id), { isActive: false })
     }
 
-    const { error } = await supabase
-      .from('cms_section_videos')
-      .insert({
-        section_id: selectedSection.value.id,
-        section_key: selectedSection.value.section_key,
-        video_url: result.url,
-        file_path: result.path,
-        sort_order: sectionVideos.value.length,
-        is_active: true,
-      })
+    // Add new video
+    const newId = `vid_${Date.now()}`
+    await setDoc(doc(db, 'cms_section_videos', newId), {
+      sectionId: selectedSection.value.id,
+      sectionKey: selectedSection.value.sectionKey,
+      videoUrl: result.url,
+      filePath: result.path,
+      sortOrder: sectionVideos.value.length,
+      isActive: true,
+      createdAt: serverTimestamp(),
+    })
 
-    if (error) throw error
     showMessage('Video uploaded and set as active', 'success')
     await loadSectionVideos(selectedSection.value.id)
   } else {
@@ -218,62 +226,46 @@ async function handleVideoUpload(event: Event) {
 
 async function setImageActive(image: SectionImage) {
   if (!selectedSection.value) return
+  const db = getFirebaseDb()
 
-  const activeImgs = sectionImages.value.filter(i => i.is_active && i.id !== image.id)
-  if (activeImgs.length > 0) {
-    await supabase
-      .from('cms_section_images')
-      .update({ is_active: false })
-      .in('id', activeImgs.map(i => i.id))
+  // Deactivate all other images
+  const otherActiveImgs = sectionImages.value.filter(i => i.isActive && i.id !== image.id)
+  for (const img of otherActiveImgs) {
+    await updateDoc(doc(db, 'cms_section_images', img.id), { isActive: false })
   }
 
-  await supabase
-    .from('cms_section_images')
-    .update({ is_active: true })
-    .eq('id', image.id)
-
+  await updateDoc(doc(db, 'cms_section_images', image.id), { isActive: true })
   await loadSectionImages(selectedSection.value.id)
   showMessage('Set as active image', 'success')
 }
 
 async function setVideoActive(video: SectionVideo) {
   if (!selectedSection.value) return
+  const db = getFirebaseDb()
 
-  const activeVids = sectionVideos.value.filter(v => v.is_active && v.id !== video.id)
-  if (activeVids.length > 0) {
-    await supabase
-      .from('cms_section_videos')
-      .update({ is_active: false })
-      .in('id', activeVids.map(v => v.id))
+  // Deactivate all other videos
+  const otherActiveVids = sectionVideos.value.filter(v => v.isActive && v.id !== video.id)
+  for (const vid of otherActiveVids) {
+    await updateDoc(doc(db, 'cms_section_videos', vid.id), { isActive: false })
   }
 
-  await supabase
-    .from('cms_section_videos')
-    .update({ is_active: true })
-    .eq('id', video.id)
-
+  await updateDoc(doc(db, 'cms_section_videos', video.id), { isActive: true })
   await loadSectionVideos(selectedSection.value.id)
   showMessage('Set as active video', 'success')
 }
 
 async function removeImage(image: SectionImage) {
   if (!confirm('Remove this image?')) return
-  await supabase
-    .from('cms_section_images')
-    .delete()
-    .eq('id', image.id)
-
+  const db = getFirebaseDb()
+  await deleteDoc(doc(db, 'cms_section_images', image.id))
   await loadSectionImages(selectedSection.value!.id)
   showMessage('Image removed', 'success')
 }
 
 async function removeVideo(video: SectionVideo) {
   if (!confirm('Remove this video?')) return
-  await supabase
-    .from('cms_section_videos')
-    .delete()
-    .eq('id', video.id)
-
+  const db = getFirebaseDb()
+  await deleteDoc(doc(db, 'cms_section_videos', video.id))
   await loadSectionVideos(selectedSection.value!.id)
   showMessage('Video removed', 'success')
 }
@@ -282,17 +274,14 @@ async function saveSection() {
   if (!selectedSection.value) return
   saving.value = true
   try {
-    const { error } = await supabase
-      .from('cms_sections')
-      .update({
-        default_image_url: selectedSection.value.default_image_url,
-        default_video_url: selectedSection.value.default_video_url,
-        label: selectedSection.value.label,
-        description: selectedSection.value.description,
-      })
-      .eq('id', selectedSection.value.id)
-
-    if (error) throw error
+    const db = getFirebaseDb()
+    await updateDoc(doc(db, 'cms_sections', selectedSection.value.id), {
+      defaultImageUrl: selectedSection.value.defaultImageUrl,
+      defaultVideoUrl: selectedSection.value.defaultVideoUrl,
+      label: selectedSection.value.label,
+      description: selectedSection.value.description,
+      updatedAt: serverTimestamp(),
+    })
     showMessage('Section saved', 'success')
     editing.value = false
     await loadSections()
@@ -304,28 +293,30 @@ async function saveSection() {
 
 async function clearDefaultVideo() {
   if (!selectedSection.value) return
-  const { error } = await supabase
-    .from('cms_sections')
-    .update({ default_video_url: '' })
-    .eq('id', selectedSection.value.id)
-
-  if (!error) {
-    selectedSection.value.default_video_url = ''
-    showMessage('Default video URL cleared', 'success')
-  }
+  const db = getFirebaseDb()
+  await updateDoc(doc(db, 'cms_sections', selectedSection.value.id), {
+    defaultVideoUrl: '',
+    updatedAt: serverTimestamp(),
+  })
+  selectedSection.value.defaultVideoUrl = ''
+  showMessage('Default video URL cleared', 'success')
 }
 
 async function clearDefaultImage() {
   if (!selectedSection.value) return
-  const { error } = await supabase
-    .from('cms_sections')
-    .update({ default_image_url: '' })
-    .eq('id', selectedSection.value.id)
+  const db = getFirebaseDb()
+  await updateDoc(doc(db, 'cms_sections', selectedSection.value.id), {
+    defaultImageUrl: '',
+    updatedAt: serverTimestamp(),
+  })
+  selectedSection.value.defaultImageUrl = ''
+  showMessage('Default image URL cleared', 'success')
+}
 
-  if (!error) {
-    selectedSection.value.default_image_url = ''
-    showMessage('Default image URL cleared', 'success')
-  }
+function formatDate(timestamp: any): string {
+  if (!timestamp) return ''
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+  return date.toLocaleDateString()
 }
 
 onMounted(loadSections)
@@ -363,14 +354,14 @@ onMounted(loadSections)
             :class="{ 'section-selected': selectedSection?.id === section.id }"
           >
             <div class="section-thumb">
-              <img :src="section.default_image_url || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2236%22%3E%3Crect fill=%22%230a2e4a%22 width=%2248%22 height=%2236%22/%3E%3C/svg%3E'" :alt="section.label" />
+              <img :src="section.defaultImageUrl || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2236%22%3E%3Crect fill=%22%230a2e4a%22 width=%2248%22 height=%2236%22/%3E%3C/svg%3E'" :alt="section.label" />
             </div>
             <div class="section-meta">
               <p class="section-label">{{ section.label }}</p>
               <p class="section-page">{{ section.page }}</p>
               <div class="section-badges">
-                <span v-if="section.default_video_url" class="video-badge">Video</span>
-                <span v-if="section.default_image_url" class="image-badge">Image</span>
+                <span v-if="section.defaultVideoUrl" class="video-badge">Video</span>
+                <span v-if="section.defaultImageUrl" class="image-badge">Image</span>
               </div>
             </div>
           </button>
@@ -410,11 +401,11 @@ onMounted(loadSections)
             </div>
             <div class="form-group">
               <label class="form-label">Default Image URL (fallback)</label>
-              <input v-model="selectedSection.default_image_url" class="form-input" placeholder="https://..." />
+              <input v-model="selectedSection.defaultImageUrl" class="form-input" placeholder="https://..." />
             </div>
             <div class="form-group">
               <label class="form-label">Default Video URL (fallback)</label>
-              <input v-model="selectedSection.default_video_url" class="form-input" placeholder="https://...mp4" />
+              <input v-model="selectedSection.defaultVideoUrl" class="form-input" placeholder="https://...mp4" />
             </div>
           </div>
 
@@ -424,7 +415,7 @@ onMounted(loadSections)
               <p class="sub-label">Image</p>
               <div class="sub-label-actions">
                 <span v-if="activeImage" class="status-badge status-override">Custom Override</span>
-                <span v-else-if="selectedSection.default_image_url" class="status-badge status-default">Using Default</span>
+                <span v-else-if="selectedSection.defaultImageUrl" class="status-badge status-default">Using Default</span>
                 <span v-else class="status-badge status-none">No Image</span>
                 <label class="upload-btn-sm" :class="{ 'uploading': uploading && uploadingType === 'image' }">
                   <input type="file" accept="image/*" @change="handleImageUpload" :disabled="uploading" class="hidden-input" />
@@ -450,7 +441,7 @@ onMounted(loadSections)
                 </svg>
                 <span>No image set</span>
               </div>
-              <div v-if="!activeImage && selectedSection.default_image_url" class="default-badge">Default</div>
+              <div v-if="!activeImage && selectedSection.defaultImageUrl" class="default-badge">Default</div>
               <div v-if="activeImage" class="override-badge">Custom</div>
             </div>
 
@@ -465,15 +456,15 @@ onMounted(loadSections)
                   v-for="img in sectionImages"
                   :key="img.id"
                   class="upload-card"
-                  :class="{ 'upload-active': img.is_active }"
+                  :class="{ 'upload-active': img.isActive }"
                 >
-                  <img :src="img.image_url" :alt="img.alt_text" class="upload-thumb" />
+                  <img :src="img.imageUrl" :alt="img.altText" class="upload-thumb" />
                   <div class="upload-actions">
                     <button
                       @click="setImageActive(img)"
                       class="upload-action"
-                      :class="{ 'upload-action-active': img.is_active }"
-                      :title="img.is_active ? 'Currently active' : 'Set as active'"
+                      :class="{ 'upload-action-active': img.isActive }"
+                      :title="img.isActive ? 'Currently active' : 'Set as active'"
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
@@ -485,12 +476,12 @@ onMounted(loadSections)
                       </svg>
                     </button>
                   </div>
-                  <div class="upload-date">{{ new Date(img.created_at).toLocaleDateString() }}</div>
+                  <div class="upload-date">{{ formatDate(img.createdAt) }}</div>
                 </div>
               </div>
             </div>
 
-            <button v-if="!editing && selectedSection.default_image_url" @click="clearDefaultImage" class="clear-btn" title="Remove default image URL">Clear Default Image URL</button>
+            <button v-if="!editing && selectedSection.defaultImageUrl" @click="clearDefaultImage" class="clear-btn" title="Remove default image URL">Clear Default Image URL</button>
           </div>
 
           <!-- ============ VIDEO SECTION ============ -->
@@ -499,7 +490,7 @@ onMounted(loadSections)
               <p class="sub-label">Video</p>
               <div class="sub-label-actions">
                 <span v-if="activeVideo" class="status-badge status-override">Custom Override</span>
-                <span v-else-if="selectedSection.default_video_url" class="status-badge status-default">Using Default</span>
+                <span v-else-if="selectedSection.defaultVideoUrl" class="status-badge status-default">Using Default</span>
                 <span v-else class="status-badge status-none">No Video</span>
                 <label class="upload-btn-sm" :class="{ 'uploading': uploading && uploadingType === 'video' }">
                   <input type="file" accept="video/*" @change="handleVideoUpload" :disabled="uploading" class="hidden-input" />
@@ -520,7 +511,7 @@ onMounted(loadSections)
                 class="preview-video"
                 preload="metadata"
               ></video>
-              <div v-if="!activeVideo && selectedSection.default_video_url" class="default-badge">Default</div>
+              <div v-if="!activeVideo && selectedSection.defaultVideoUrl" class="default-badge">Default</div>
               <div v-if="activeVideo" class="override-badge">Custom</div>
             </div>
             <div v-else class="no-media-placeholder-wide">
@@ -541,7 +532,7 @@ onMounted(loadSections)
                   v-for="vid in sectionVideos"
                   :key="vid.id"
                   class="video-card"
-                  :class="{ 'video-active': vid.is_active }"
+                  :class="{ 'video-active': vid.isActive }"
                 >
                   <div class="video-card-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -549,15 +540,15 @@ onMounted(loadSections)
                     </svg>
                   </div>
                   <div class="video-card-info">
-                    <p class="video-card-url">{{ vid.video_url.length > 60 ? vid.video_url.substring(0, 60) + '...' : vid.video_url }}</p>
-                    <p class="video-card-date">{{ new Date(vid.created_at).toLocaleDateString() }}</p>
+                    <p class="video-card-url">{{ vid.videoUrl.length > 60 ? vid.videoUrl.substring(0, 60) + '...' : vid.videoUrl }}</p>
+                    <p class="video-card-date">{{ formatDate(vid.createdAt) }}</p>
                   </div>
                   <div class="video-card-actions">
                     <button
                       @click="setVideoActive(vid)"
                       class="upload-action"
-                      :class="{ 'upload-action-active': vid.is_active }"
-                      :title="vid.is_active ? 'Currently active' : 'Set as active'"
+                      :class="{ 'upload-action-active': vid.isActive }"
+                      :title="vid.isActive ? 'Currently active' : 'Set as active'"
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
@@ -573,7 +564,7 @@ onMounted(loadSections)
               </div>
             </div>
 
-            <button v-if="!editing && selectedSection.default_video_url" @click="clearDefaultVideo" class="clear-btn" title="Remove default video URL">Clear Default Video URL</button>
+            <button v-if="!editing && selectedSection.defaultVideoUrl" @click="clearDefaultVideo" class="clear-btn" title="Remove default video URL">Clear Default Video URL</button>
           </div>
         </div>
       </div>

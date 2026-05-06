@@ -1,6 +1,25 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { supabase } from '@/lib/supabase'
-import type { User } from '@supabase/supabase-js'
+import { getFirebaseAuth, getFirebaseDb } from '@/lib/firebase'
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  type User,
+} from 'firebase/auth'
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  deleteDoc,
+  serverTimestamp,
+} from 'firebase/firestore'
 
 const OWNER_EMAIL = 'johnfritzizar35@gmail.com'
 
@@ -9,9 +28,18 @@ const loading = ref(true)
 const isAdmin = ref(false)
 const userRole = ref<'owner' | 'admin' | 'user' | null>(null)
 
+export interface FirebaseUser {
+  uid: string
+  email: string
+  displayName: string
+  role: 'owner' | 'admin' | 'user'
+  createdAt: any
+  updatedAt: any
+}
+
 export function useAdminAuth() {
   const isLoggedIn = computed(() => !!user.value && isAdmin.value)
-  const isOwner = computed(() => user.value?.email === OWNER_EMAIL)
+  const isOwner = computed(() => user.value?.email?.toLowerCase() === OWNER_EMAIL)
 
   async function resolveRole(currentUser: User) {
     const email = currentUser.email?.toLowerCase() || ''
@@ -24,77 +52,76 @@ export function useAdminAuth() {
     }
 
     try {
-      const { data } = await supabase
-        .from('admin_users')
-        .select('role')
-        .eq('uid', currentUser.id)
-        .maybeSingle()
+      const db = getFirebaseDb()
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid))
 
-      if (data && (data.role === 'admin' || data.role === 'owner')) {
-        isAdmin.value = true
-        userRole.value = data.role as 'owner' | 'admin'
-        return
+      if (userDoc.exists()) {
+        const data = userDoc.data()
+        if (data.role === 'admin' || data.role === 'owner') {
+          isAdmin.value = true
+          userRole.value = data.role as 'owner' | 'admin'
+          return
+        }
       }
     } catch (e) {
-      console.warn('Supabase unavailable, cannot verify admin role:', e)
+      console.warn('Firebase unavailable, cannot verify admin role:', e)
     }
 
     isAdmin.value = false
     userRole.value = 'user'
   }
 
-async function ensureUserDoc(currentUser: User, role: string) {
-  try {
-    const { data: existing } = await supabase
-      .from('admin_users')
-      .select('id, role')
-      .eq('uid', currentUser.id)
-      .maybeSingle()
+  async function ensureUserDoc(currentUser: User, role: string) {
+    try {
+      const db = getFirebaseDb()
+      const userRef = doc(db, 'users', currentUser.uid)
+      const userDoc = await getDoc(userRef)
 
-    if (!existing) {
-      // Trigger should have created it, but if not (e.g. old user before trigger),
-      // we can't insert due to RLS. Log warning.
-      console.warn('admin_users row missing for user:', currentUser.id)
-      return
+      if (!userDoc.exists()) {
+        await setDoc(userRef, {
+          uid: currentUser.uid,
+          email: currentUser.email?.toLowerCase() || '',
+          displayName: currentUser.displayName || '',
+          role,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        })
+      } else if (userDoc.data().role !== role && role === 'owner') {
+        await updateDoc(userRef, { role, updatedAt: serverTimestamp() })
+      }
+    } catch (e) {
+      console.warn('Firebase unavailable, skipping user doc:', e)
     }
-
-    if (existing.role !== role) {
-      await supabase
-        .from('admin_users')
-        .update({ role })
-        .eq('uid', currentUser.id)
-    }
-  } catch (e) {
-    console.warn('Supabase unavailable, skipping user doc:', e)
   }
-}
 
   async function grantAdminAccess(targetEmail: string): Promise<boolean> {
     if (!isOwner.value) return false
 
     try {
-      const { data: existingUser } = await supabase
-        .from('admin_users')
-        .select('uid')
-        .eq('email', targetEmail.toLowerCase())
-        .maybeSingle()
+      const db = getFirebaseDb()
+      const usersRef = collection(db, 'users')
+      const q = query(usersRef, where('email', '==', targetEmail.toLowerCase()))
+      const snap = await getDocs(q)
 
-      if (existingUser) {
-        await supabase
-          .from('admin_users')
-          .update({ role: 'admin' })
-          .eq('uid', existingUser.uid)
+      if (!snap.empty) {
+        const userDoc = snap.docs[0]
+        await updateDoc(doc(db, 'users', userDoc.id), {
+          role: 'admin',
+          updatedAt: serverTimestamp(),
+        })
         return true
       }
 
-      await supabase.from('admin_grants').insert({
+      // Create pending grant for future signup
+      await setDoc(doc(db, 'admin_grants', targetEmail.toLowerCase()), {
         email: targetEmail.toLowerCase(),
-        granted_by: user.value?.id,
+        grantedBy: user.value?.uid,
         role: 'admin',
+        createdAt: serverTimestamp(),
       })
       return true
     } catch (e) {
-      console.warn('Supabase unavailable, cannot grant admin:', e)
+      console.warn('Firebase unavailable, cannot grant admin:', e)
       return false
     }
   }
@@ -103,109 +130,134 @@ async function ensureUserDoc(currentUser: User, role: string) {
     if (!isOwner.value) return false
 
     try {
-      const { data: existingUser } = await supabase
-        .from('admin_users')
-        .select('uid')
-        .eq('email', targetEmail.toLowerCase())
-        .maybeSingle()
+      const db = getFirebaseDb()
+      const usersRef = collection(db, 'users')
+      const q = query(usersRef, where('email', '==', targetEmail.toLowerCase()))
+      const snap = await getDocs(q)
 
-      if (existingUser) {
-        await supabase
-          .from('admin_users')
-          .update({ role: 'user' })
-          .eq('uid', existingUser.uid)
+      if (!snap.empty) {
+        const userDoc = snap.docs[0]
+        await updateDoc(doc(db, 'users', userDoc.id), {
+          role: 'user',
+          updatedAt: serverTimestamp(),
+        })
       }
       return true
     } catch (e) {
-      console.warn('Supabase unavailable, cannot revoke admin:', e)
+      console.warn('Firebase unavailable, cannot revoke admin:', e)
       return false
     }
   }
 
   async function signInWithEmail(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
-    user.value = data.user
-    await resolveRole(data.user)
-    return data.user
+    const auth = getFirebaseAuth()
+    const result = await signInWithEmailAndPassword(auth, email, password)
+    user.value = result.user
+    await resolveRole(result.user)
+    return result.user
   }
 
-async function signUp(email: string, password: string, displayName: string) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { data: { display_name: displayName } },
-  })
-  if (error) throw error
+  async function signUp(email: string, password: string, displayName: string) {
+    const auth = getFirebaseAuth()
+    const result = await createUserWithEmailAndPassword(auth, email, password)
+    const newUser = result.user
 
-  const newUser = data.user!
-  const isOwnerSignup = newUser.email?.toLowerCase() === OWNER_EMAIL
-  const role = isOwnerSignup ? 'owner' : 'user'
+    const isOwnerSignup = newUser.email?.toLowerCase() === OWNER_EMAIL
+    const role = isOwnerSignup ? 'owner' : 'user'
 
-  // 1. Ensure user doc exists first
-  await ensureUserDoc(newUser, role)
+    // Create user doc
+    const db = getFirebaseDb()
+    await setDoc(doc(db, 'users', newUser.uid), {
+      uid: newUser.uid,
+      email: newUser.email?.toLowerCase() || '',
+      displayName,
+      role,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
 
-  let finalRole: 'owner' | 'admin' | 'user' = role
+    let finalRole: 'owner' | 'admin' | 'user' = role
 
-  // 2. Check if they were pre-approved in admin_grants
-  if (!isOwnerSignup && newUser.email) {
-    try {
-      const { data: grant } = await supabase
-        .from('admin_grants')
-        .select('role')
-        .eq('email', newUser.email.toLowerCase())
-        .maybeSingle()
-
-      if (grant) {
-        // Upgrade them to admin immediately
-        await supabase
-          .from('admin_users')
-          .update({ role: grant.role })
-          .eq('uid', newUser.id)
-        
-        await supabase
-          .from('admin_grants')
-          .delete()
-          .eq('email', newUser.email.toLowerCase())
-        
-        finalRole = grant.role as 'admin'
+    // Check for pending admin grant
+    if (!isOwnerSignup && newUser.email) {
+      try {
+        const grantDoc = await getDoc(doc(db, 'admin_grants', newUser.email.toLowerCase()))
+        if (grantDoc.exists()) {
+          await updateDoc(doc(db, 'users', newUser.uid), {
+            role: 'admin',
+            updatedAt: serverTimestamp(),
+          })
+          await deleteDoc(doc(db, 'admin_grants', newUser.email.toLowerCase()))
+          finalRole = 'admin'
+        }
+      } catch {
+        /* ignore */
       }
-    } catch { /* ignore */ }
+    }
+
+    user.value = newUser
+    isAdmin.value = finalRole === 'admin' || finalRole === 'owner'
+    userRole.value = finalRole
+
+    return newUser
   }
-
-  // 3. NOW set reactive state with the CORRECT role
-  user.value = newUser
-  isAdmin.value = finalRole === 'admin' || finalRole === 'owner'
-  userRole.value = finalRole
-
-  return newUser
-}
 
   async function signOut() {
-    await supabase.auth.signOut()
+    const auth = getFirebaseAuth()
+    await firebaseSignOut(auth)
     user.value = null
     isAdmin.value = false
     userRole.value = null
   }
 
-  let authSubscription: { subscription: { unsubscribe: () => void } } | null = null
+  // Get all users for admin management
+  async function getAllUsers(): Promise<FirebaseUser[]> {
+    try {
+      const db = getFirebaseDb()
+      const usersRef = collection(db, 'users')
+      const q = query(usersRef, orderBy('createdAt', 'asc'))
+      const snap = await getDocs(q)
+      return snap.docs.map((d) => ({ ...d.data() } as FirebaseUser))
+    } catch (e) {
+      console.warn('Firebase unavailable, cannot load users:', e)
+      return []
+    }
+  }
+
+  // Update user role
+  async function updateUserRole(uid: string, role: 'admin' | 'user'): Promise<boolean> {
+    if (!isOwner.value) return false
+    try {
+      const db = getFirebaseDb()
+      await updateDoc(doc(db, 'users', uid), {
+        role,
+        updatedAt: serverTimestamp(),
+      })
+      return true
+    } catch (e) {
+      console.warn('Firebase unavailable, cannot update role:', e)
+      return false
+    }
+  }
+
+  let unsubscribe: (() => void) | null = null
 
   onMounted(() => {
-    const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      user.value = session?.user ?? null
-      if (session?.user) {
-        await resolveRole(session.user)
+    const auth = getFirebaseAuth()
+    unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      user.value = firebaseUser
+      if (firebaseUser) {
+        await resolveRole(firebaseUser)
       } else {
         isAdmin.value = false
         userRole.value = null
       }
       loading.value = false
     })
-    authSubscription = data
   })
 
   onUnmounted(() => {
-    authSubscription?.subscription.unsubscribe()
+    unsubscribe?.()
   })
 
   return {
@@ -220,5 +272,7 @@ async function signUp(email: string, password: string, displayName: string) {
     signOut,
     grantAdminAccess,
     revokeAdminAccess,
+    getAllUsers,
+    updateUserRole,
   }
 }

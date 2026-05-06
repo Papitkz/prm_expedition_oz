@@ -1,12 +1,16 @@
 import { ref } from 'vue'
-import { supabase } from '@/lib/supabase'
+import { getFirebaseStorage } from '@/lib/firebase'
+import {
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from 'firebase/storage'
 
 interface UploadResult {
   url: string
   path: string
 }
-
-const BUCKET = 'cms'
 
 export function useStorageUpload() {
   const uploading = ref(false)
@@ -23,28 +27,22 @@ export function useStorageUpload() {
     error.value = null
 
     try {
+      const storage = getFirebaseStorage()
       const timestamp = Date.now()
       const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
       const filePath = `cms/${sectionKey}/${timestamp}_${safeName}`
+      const fileRef = storageRef(storage, filePath)
 
-      const { error: uploadError } = await supabase.storage
-        .from(BUCKET)
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        })
-
-      if (uploadError) throw uploadError
+      await uploadBytes(fileRef, file, {
+        customMetadata: { sectionKey, uploadedAt: new Date().toISOString() },
+      })
 
       progress.value = 100
       onProgress?.(100)
 
-      const { data: urlData } = supabase.storage
-        .from(BUCKET)
-        .getPublicUrl(filePath)
-
+      const url = await getDownloadURL(fileRef)
       uploading.value = false
-      return { url: urlData.publicUrl, path: filePath }
+      return { url, path: filePath }
     } catch (err: any) {
       error.value = err.message || 'Upload failed'
       uploading.value = false
@@ -54,11 +52,9 @@ export function useStorageUpload() {
 
   async function deleteImage(filePath: string): Promise<boolean> {
     try {
-      const { error: removeError } = await supabase.storage
-        .from(BUCKET)
-        .remove([filePath])
-
-      if (removeError) throw removeError
+      const storage = getFirebaseStorage()
+      const fileRef = storageRef(storage, filePath)
+      await deleteObject(fileRef)
       return true
     } catch {
       return false

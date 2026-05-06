@@ -1,27 +1,39 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAdminAuth } from '@/composables/useAdminAuth'
 
 const router = useRouter()
 const route = useRoute()
-const { user, signOut, isOwner, userRole } = useAdminAuth()
+const { user, signOut, isOwner, userRole, isAdmin, loading } = useAdminAuth()
 const sidebarOpen = ref(false)
 
-const navItems = [
+// Redirect non-admin users
+watch([isAdmin, loading], ([admin, isLoading]) => {
+  if (!isLoading && !admin && route.path.startsWith('/admin/') && route.path !== '/admin') {
+    router.push('/admin')
+  }
+})
+
+const baseNavItems = [
   { label: 'Dashboard', icon: 'dashboard', to: '/admin/dashboard' },
   { label: 'Section Images', icon: 'images', to: '/admin/sections' },
   { label: 'Trips & Pricing', icon: 'trips', to: '/admin/trips' },
   { label: 'Blog Posts', icon: 'blog', to: '/admin/blogs' },
+  { label: 'Bookings', icon: 'bookings', to: '/admin/bookings' },
   { label: 'Settings', icon: 'settings', to: '/admin/settings' },
 ]
 
-if (isOwner.value) {
-  navItems.push({ label: 'User Access', icon: 'users', to: '/admin/users' })
-}
+const navItems = computed(() => {
+  const items = [...baseNavItems]
+  if (isOwner.value) {
+    items.push({ label: 'User Access', icon: 'users', to: '/admin/users' })
+  }
+  return items
+})
 
 const currentPage = computed(() => {
-  const item = navItems.find(n => n.to === route.path)
+  const item = navItems.value.find(n => n.to === route.path)
   return item?.label || 'Dashboard'
 })
 
@@ -48,6 +60,7 @@ const iconPaths: Record<string, string> = {
   blog: 'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z',
   settings: 'M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z',
   users: 'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z',
+  bookings: 'M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z',
 }
 </script>
 
