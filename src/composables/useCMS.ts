@@ -1,8 +1,21 @@
 import { ref, onMounted } from 'vue'
 import { supabase } from '@/lib/supabase'
 
+interface SectionData {
+  id: string
+  section_key: string
+  page: string
+  label: string
+  description: string
+  default_image_url: string
+  default_video_url: string
+  active_image_url: string | null
+  active_video_url: string | null
+}
+
 const sectionCache = new Map<string, string>()
 const sectionVideoCache = new Map<string, string>()
+const allSectionsCache = new Map<string, SectionData>()
 let cacheLoaded = false
 
 export function useCMS() {
@@ -15,11 +28,16 @@ export function useCMS() {
     try {
       const { data: sections } = await supabase
         .from('cms_sections')
-        .select('id, section_key, default_image_url, default_video_url')
+        .select('id, section_key, page, label, description, default_image_url, default_video_url')
 
       const { data: images } = await supabase
         .from('cms_section_images')
         .select('section_id, image_url')
+        .eq('is_active', true)
+
+      const { data: videos } = await supabase
+        .from('cms_section_videos')
+        .select('section_id, video_url')
         .eq('is_active', true)
 
       const activeImages: Record<string, string> = {}
@@ -29,10 +47,32 @@ export function useCMS() {
         }
       }
 
+      const activeVideos: Record<string, string> = {}
+      if (videos) {
+        for (const vid of videos) {
+          activeVideos[vid.section_id] = vid.video_url
+        }
+      }
+
       if (sections) {
         for (const sec of sections) {
-          sectionCache.set(sec.section_key, activeImages[sec.id] || sec.default_image_url || '')
-          sectionVideoCache.set(sec.section_key, sec.default_video_url || '')
+          const activeImg = activeImages[sec.id] || null
+          const activeVid = activeVideos[sec.id] || null
+
+          sectionCache.set(sec.section_key, activeImg || sec.default_image_url || '')
+          sectionVideoCache.set(sec.section_key, activeVid || sec.default_video_url || '')
+
+          allSectionsCache.set(sec.section_key, {
+            id: sec.id,
+            section_key: sec.section_key,
+            page: sec.page,
+            label: sec.label,
+            description: sec.description || '',
+            default_image_url: sec.default_image_url || '',
+            default_video_url: sec.default_video_url || '',
+            active_image_url: activeImg,
+            active_video_url: activeVid,
+          })
         }
       }
 
@@ -51,6 +91,25 @@ export function useCMS() {
 
   function getSectionVideo(sectionKey: string, fallbackUrl: string): string {
     return sectionVideoCache.get(sectionKey) || fallbackUrl
+  }
+
+  function getSectionData(sectionKey: string): SectionData | null {
+    return allSectionsCache.get(sectionKey) || null
+  }
+
+  function getAllSections(): SectionData[] {
+    return Array.from(allSectionsCache.values())
+  }
+
+  function getSectionsByPage(page: string): SectionData[] {
+    return Array.from(allSectionsCache.values()).filter(s => s.page === page)
+  }
+
+  function clearCache() {
+    cacheLoaded = false
+    sectionCache.clear()
+    sectionVideoCache.clear()
+    allSectionsCache.clear()
   }
 
   async function getTrips() {
@@ -160,6 +219,10 @@ export function useCMS() {
     loadSectionCache,
     getSectionImage,
     getSectionVideo,
+    getSectionData,
+    getAllSections,
+    getSectionsByPage,
+    clearCache,
     getTrips,
     getTripBySlug,
     getTripFeatures,
