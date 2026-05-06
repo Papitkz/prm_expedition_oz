@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useSEO } from '@/composables/useSEO'
 import { useScrollReveal } from '@/composables/useScrollReveal'
-import { useCMS } from '@/composables/useCMS'
+import { useCMSStore, initializeCMS } from '@/stores/cmsStore'
 import PageHero from '@/components/PageHero.vue'
 
 useScrollReveal()
@@ -14,13 +14,17 @@ useSEO({
   type: 'article',
 })
 
-const blogs = ref<any[]>([])
-const loading = ref(true)
-const { getBlogs } = useCMS()
+const { store, getBlogs } = useCMSStore()
 
-onMounted(async () => {
-  blogs.value = await getBlogs()
-  loading.value = false
+// Computed loading state - only true while data is being fetched
+const loading = computed(() => store.isLoading && !store.isInitialized)
+
+// Computed blogs - instantly available once store is ready
+const blogs = computed(() => getBlogs())
+
+// Ensure CMS is initialized
+onMounted(() => {
+  initializeCMS()
 })
 </script>
 
@@ -38,7 +42,19 @@ onMounted(async () => {
 
     <section class="py-24 lg:py-32" style="background: var(--color-ocean-950);">
       <div class="container mx-auto px-6 lg:px-12 max-w-6xl">
-        <div v-if="loading" class="text-center py-12 opacity-50">Loading posts...</div>
+        <!-- Skeleton loading state -->
+        <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div v-for="i in 6" :key="i" class="blog-card-skeleton">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-content">
+              <div class="skeleton-date"></div>
+              <div class="skeleton-title"></div>
+              <div class="skeleton-excerpt"></div>
+              <div class="skeleton-excerpt short"></div>
+              <div class="skeleton-link"></div>
+            </div>
+          </div>
+        </div>
 
         <div v-else-if="blogs.length === 0" class="text-center py-12 opacity-50">
           <p class="font-display text-2xl mb-4" style="font-family: var(--font-display); color: var(--color-sand-100);">No posts yet</p>
@@ -79,6 +95,77 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+/* Skeleton styles */
+.blog-card-skeleton {
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 46, 74, 0.3);
+  border: 1px solid rgba(201, 168, 76, 0.1);
+  overflow: hidden;
+}
+
+.skeleton-image {
+  height: 200px;
+  background: linear-gradient(90deg, rgba(201, 168, 76, 0.05) 25%, rgba(201, 168, 76, 0.1) 50%, rgba(201, 168, 76, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-content {
+  padding: 1.5rem;
+  flex: 1;
+}
+
+.skeleton-date {
+  width: 80px;
+  height: 10px;
+  background: linear-gradient(90deg, rgba(201, 168, 76, 0.1) 25%, rgba(201, 168, 76, 0.15) 50%, rgba(201, 168, 76, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 2px;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-title {
+  width: 100%;
+  height: 24px;
+  background: linear-gradient(90deg, rgba(201, 168, 76, 0.1) 25%, rgba(201, 168, 76, 0.15) 50%, rgba(201, 168, 76, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 2px;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-excerpt {
+  width: 100%;
+  height: 14px;
+  background: linear-gradient(90deg, rgba(201, 168, 76, 0.08) 25%, rgba(201, 168, 76, 0.12) 50%, rgba(201, 168, 76, 0.08) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 2px;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-excerpt.short {
+  width: 70%;
+}
+
+.skeleton-link {
+  width: 60px;
+  height: 10px;
+  background: linear-gradient(90deg, rgba(201, 168, 76, 0.1) 25%, rgba(201, 168, 76, 0.15) 50%, rgba(201, 168, 76, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 2px;
+  margin-top: 1rem;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Existing styles */
 .blog-card {
   display: flex;
   flex-direction: column;

@@ -2,7 +2,6 @@
   <section class="py-24 lg:py-32" style="background: var(--color-ocean-900);">
     <div class="container mx-auto px-6 lg:px-12">
       
-      <!-- ADD: Section anchor for navigation -->
       <a id="compare-tours" class="sr-only" aria-hidden="true"></a>
 
       <div class="text-center mb-16 section-reveal">
@@ -19,9 +18,22 @@
         </p>
       </div>
 
-      <!-- Loading state -->
-      <div v-if="loading" class="text-center py-12">
-        <p class="overline-text">Loading expeditions...</p>
+      <!-- Skeleton loading state -->
+      <div v-if="isLoading" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div v-for="i in 2" :key="i" class="tour-card-skeleton">
+          <div class="skeleton-image"></div>
+          <div class="skeleton-content">
+            <div class="skeleton-line skeleton-overline"></div>
+            <div class="skeleton-line skeleton-title"></div>
+            <div class="skeleton-divider"></div>
+            <div class="skeleton-line skeleton-text"></div>
+            <div class="skeleton-line skeleton-text short"></div>
+            <div class="skeleton-features">
+              <div v-for="j in 5" :key="j" class="skeleton-feature"></div>
+            </div>
+            <div class="skeleton-button"></div>
+          </div>
+        </div>
       </div>
 
       <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -75,8 +87,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useCMS } from '@/composables/useCMS'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useCMSStore, initializeCMS } from '@/stores/cmsStore'
 
 interface TourDisplay {
   id: string
@@ -91,10 +103,7 @@ interface TourDisplay {
   features: string[]
 }
 
-const { getTrips, getTripFeatures } = useCMS()
-
-const tours = ref<TourDisplay[]>([])
-const loading = ref(true)
+const { store, getTrips, getTripFeatures } = useCMSStore()
 
 // Fallback data if Supabase is unavailable
 const fallbackTours: TourDisplay[] = [
@@ -136,45 +145,39 @@ const fallbackTours: TourDisplay[] = [
   }
 ]
 
-async function loadTrips() {
-  loading.value = true
-  try {
-    const tripsData = await getTrips()
-    
-    if (tripsData && tripsData.length > 0) {
-      // Load features for each trip in parallel
-      const toursWithFeatures = await Promise.all(
-        tripsData.map(async (trip: any) => {
-          const features = await getTripFeatures(trip.id)
-          return {
-            id: trip.id,
-            name: trip.title || trip.vessel_name,
-            vessel: trip.subtitle || 'Live-Aboard Vessel',
-            duration: `${trip.duration_days} Day Expedition`,
-            link: `/expeditions/${trip.slug}`,
-            image: trip.hero_image_url || fallbackTours[0].image,
-            alt: `${trip.title} - ${trip.duration_days} day diving expedition`,
-            featured: trip.duration_days >= 7,
-            description: trip.short_description || trip.description,
-            features: features.length > 0 ? features : fallbackTours[0].features,
-          }
-        })
-      )
-      tours.value = toursWithFeatures
-    } else {
-      tours.value = fallbackTours
-    }
-  } catch (e) {
-    console.warn('Could not load trips from Supabase, using fallback data:', e)
-    tours.value = fallbackTours
+// Computed loading state from store
+const isLoading = computed(() => store.isLoading && !store.isInitialized)
+
+// Computed tours - instantly available once store is initialized
+const tours = computed<TourDisplay[]>(() => {
+  const tripsData = getTrips()
+  
+  if (!tripsData || tripsData.length === 0) {
+    return fallbackTours
   }
-  loading.value = false
-}
+  
+  return tripsData.map((trip) => {
+    const features = getTripFeatures(trip.id)
+    return {
+      id: trip.id,
+      name: trip.title || trip.vessel_name,
+      vessel: trip.subtitle || 'Live-Aboard Vessel',
+      duration: `${trip.duration_days} Day Expedition`,
+      link: `/expeditions/${trip.slug}`,
+      image: trip.hero_image_url || trip.card_image_url || fallbackTours[0].image,
+      alt: `${trip.title} - ${trip.duration_days} day diving expedition`,
+      featured: trip.duration_days >= 7,
+      description: trip.short_description || trip.description,
+      features: features.length > 0 ? features : fallbackTours[0].features,
+    }
+  })
+})
 
 let observer: IntersectionObserver | null = null
 
 onMounted(async () => {
-  await loadTrips()
+  // Ensure CMS is initialized (usually already done by App.vue)
+  await initializeCMS()
   
   observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
@@ -201,6 +204,90 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Skeleton loading styles */
+.tour-card-skeleton {
+  background: rgba(7, 26, 43, 0.6);
+  border: 1px solid rgba(201, 168, 76, 0.12);
+  overflow: hidden;
+}
+
+.skeleton-image {
+  height: 320px;
+  background: linear-gradient(90deg, rgba(201, 168, 76, 0.05) 25%, rgba(201, 168, 76, 0.1) 50%, rgba(201, 168, 76, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-content {
+  padding: 36px;
+}
+
+.skeleton-line {
+  background: linear-gradient(90deg, rgba(201, 168, 76, 0.1) 25%, rgba(201, 168, 76, 0.15) 50%, rgba(201, 168, 76, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-overline {
+  width: 100px;
+  height: 10px;
+  margin-bottom: 12px;
+}
+
+.skeleton-title {
+  width: 60%;
+  height: 36px;
+  margin-bottom: 12px;
+}
+
+.skeleton-divider {
+  width: 40px;
+  height: 2px;
+  background: rgba(201, 168, 76, 0.2);
+  margin-bottom: 16px;
+}
+
+.skeleton-text {
+  width: 100%;
+  height: 14px;
+  margin-bottom: 8px;
+}
+
+.skeleton-text.short {
+  width: 75%;
+}
+
+.skeleton-features {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 24px 0;
+}
+
+.skeleton-feature {
+  width: 70%;
+  height: 14px;
+  background: linear-gradient(90deg, rgba(201, 168, 76, 0.08) 25%, rgba(201, 168, 76, 0.12) 50%, rgba(201, 168, 76, 0.08) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-button {
+  width: 150px;
+  height: 44px;
+  background: linear-gradient(90deg, rgba(201, 168, 76, 0.1) 25%, rgba(201, 168, 76, 0.15) 50%, rgba(201, 168, 76, 0.1) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 /* Existing animations */
 .section-reveal,
 .section-reveal-left,
@@ -252,7 +339,6 @@ onUnmounted(() => {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
-/* NEW: Featured card gets special treatment */
 .tour-featured {
   border-color: rgba(201, 168, 76, 0.25);
   position: relative;
@@ -298,7 +384,6 @@ onUnmounted(() => {
   gap: 0.75rem;
 }
 
-/* Badge styles */
 .duration-badge {
   font-family: var(--font-heading);
   letter-spacing: 0.2em;
@@ -313,7 +398,6 @@ onUnmounted(() => {
   color: var(--color-ocean-950);
 }
 
-/* NEW: Featured tag */
 .featured-tag {
   font-family: var(--font-heading);
   letter-spacing: 0.15em;
@@ -330,7 +414,6 @@ onUnmounted(() => {
   padding: 36px;
 }
 
-/* NEW: Featured button */
 .btn-featured {
   background: var(--color-gold-400) !important;
   color: var(--color-ocean-950) !important;

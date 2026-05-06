@@ -1,14 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-// Support both Vite env vars and standard env vars (Vercel integration)
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://pnllpjvboanotbaozwbk.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBubGxwanZib2Fub3RiYW96d2JrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMTc2MDAsImV4cCI6MjA5MzU5MzYwMH0.2lxlOY_m9-89B1JQnl0MrCX7roF32Eh2jOeY3jTUQDE'
 
-// Create client even if env vars are empty (will gracefully fail on actual requests)
 export const supabase: SupabaseClient = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-key',
+  supabaseUrl,
+  supabaseAnonKey,
   {
     auth: {
       autoRefreshToken: true,
@@ -18,7 +16,6 @@ export const supabase: SupabaseClient = createClient(
   }
 )
 
-// Helper to check if Supabase is properly configured
 export function isSupabaseConfigured(): boolean {
-  return Boolean(supabaseUrl && supabaseAnonKey)
+  return Boolean(supabaseUrl && supabaseAnonKey && supabaseUrl.startsWith('https://'))
 }

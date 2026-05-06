@@ -2,11 +2,15 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useLenis } from '@/composables/useLenis'
+import { initializeCMS } from '@/stores/cmsStore'
 import NavBar from '@/components/NavBar.vue'
 import FooterSection from '@/components/FooterSection.vue'
 import CompassLoader from '@/components/CompassLoader.vue'
 
 useLenis()
+
+// Preload CMS data immediately on app start (non-blocking)
+initializeCMS()
 
 const router = useRouter()
 const route = useRoute()

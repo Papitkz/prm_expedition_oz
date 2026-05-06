@@ -15,10 +15,5 @@ export default defineConfig({
   },
   ssr: {
     noExternal: ['vuetify'],
-  },
-  define: {
-    // Expose Supabase env vars to the client (Vercel integration uses NEXT_PUBLIC_ prefix)
-    'import.meta.env.NEXT_PUBLIC_SUPABASE_URL': JSON.stringify(process.env.NEXT_PUBLIC_SUPABASE_URL),
-    'import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY': JSON.stringify(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
   }
 })
