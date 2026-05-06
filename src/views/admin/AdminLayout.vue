@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAdminAuth } from '@/composables/useAdminAuth'
-import { getFirebaseDb, initFirebase } from '@/lib/firebase'
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore'
 
 const router = useRouter()
 const route = useRoute()
