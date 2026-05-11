@@ -172,6 +172,15 @@ export function useSEO(config: SEOConfig = {}) {
   const robots = config.noindex ? 'noindex, nofollow' : 'index, follow'
   const keywords = config.keywords?.join(', ') || 'Ningaloo Reef, live-aboard, Western Australia, luxury tours, whale sharks, Exmouth, snorkeling'
 
+  // Use useHead for googlebot meta to avoid zhead type restrictions
+  useHead({
+    meta: [
+      { name: 'robots', content: robots },
+      { name: 'googlebot', content: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1' },
+      { name: 'bingbot', content: 'index, follow' },
+    ],
+  })
+
   useSeoMeta({
     title: () => title,
     titleTemplate: (t) => t === SITE_NAME ? `${SITE_NAME} | Luxury Meets Nature` : t as string,
@@ -192,9 +201,6 @@ export function useSEO(config: SEOConfig = {}) {
     twitterImage: () => ogImage,
     twitterSite: '@ExpeditionOz',
     twitterCreator: '@ExpeditionOz',
-    robots: () => robots,
-    googlebot: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
-    bingbot: 'index, follow',
     author: () => config.author || 'Expedition OZ',
     keywords: () => keywords,
     articlePublishedTime: config.articlePublishedAt,
