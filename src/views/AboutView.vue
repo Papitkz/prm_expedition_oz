@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
 import { useSEO } from '@/composables/useSEO'
 import { useScrollReveal } from '@/composables/useScrollReveal'
-import PageHero from '@/components/PageHero.vue'
 import CtaSection from '@/components/home/CtaSection.vue'
+import PageHero from '@/components/PageHero.vue'
+import NoImagePlaceholder from '@/components/NoImagePlaceholder.vue'
+import { useComponentCMS } from '@/composables/useComponentCMS'
 
-useScrollReveal()
+const cms = useComponentCMS('AboutView')
 
 useSEO({
   title: 'About Us',
@@ -21,7 +24,7 @@ useSEO({
     "mainEntity": {
       "@type": "Organization",
       "name": "Expedition OZ",
-      "url": "https://expeditionoz.netlify.app",  // ✅ Fixed
+      "url": "https://expeditionoz.netlify.app",
       "logo": "https://expeditionoz.netlify.app/logo.png",
       "description": "Luxury live-aboard experiences in Ningaloo Reef, Western Australia",
       "address": {
@@ -33,6 +36,17 @@ useSEO({
     }
   }
 })
+
+useScrollReveal()
+
+const heroImage = computed(() => cms.getImageUrl('hero', 0))
+const aboutImages = computed(() =>
+  cms.getSection('aboutImages').map((item) => ({
+    src: item.imageUrl || '',
+    alt: item.alt || '',
+    hasImage: !!item.imageUrl,
+  }))
+)
 
 const values = [
   {
@@ -56,6 +70,10 @@ const values = [
     desc: 'Born and raised in this extraordinary corner of the world. Our local knowledge of tides, seasons, and reef conditions is unmatched.'
   },
 ]
+
+onMounted(async () => {
+  await cms.load()
+})
 </script>
 
 <template>
@@ -65,12 +83,23 @@ const values = [
       title="Where Passion"
       title-italic="Meets the Ocean"
       subtitle="Expedition OZ was founded by ocean lovers who refused to choose between adventure and luxury."
-      image="https://images.pexels.com/photos/1430676/pexels-photo-1430676.jpeg?auto=compress&cs=tinysrgb&w=1920"
-      image-alt="Sunset over Ningaloo Reef Western Australia"
+      image=""
       height="60vh"
-    />
+    >
+      <template #default>
+        <template v-if="heroImage">
+          <img
+            :src="heroImage"
+            alt="Sunset over Ningaloo Reef Western Australia"
+            class="absolute inset-0 w-full h-full object-cover opacity-50"
+            style="opacity: 0.5;"
+          />
+        </template>
+        <NoImagePlaceholder v-else class="absolute inset-0" />
+      </template>
+    </PageHero>
 
-    <!-- About Section - FIXED MOBILE -->
+    <!-- About Section - Updated Content + Dynamic Images -->
     <section class="py-12 md:py-24 lg:py-32" style="background: var(--color-ocean-950);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center">
@@ -91,21 +120,23 @@ const values = [
             </p>
           </div>
 
-          <div class="section-reveal-right order-1 lg:order-2">
-            <div class="relative overflow-hidden h-[300px] md:h-[400px] lg:h-[500px]">
+          <div class="section-reveal-right order-1 lg:order-2 relative overflow-hidden h-[300px] md:h-[400px] lg:h-[500px]">
+            <template v-if="aboutImages[0]?.hasImage">
               <img
-                src="https://images.pexels.com/photos/1295138/pexels-photo-1295138.jpeg?auto=compress&cs=tinysrgb&w=900"
-                alt="Team aboard luxury vessel Ningaloo Reef"
-                class="w-full h-full object-cover"
+                :src="aboutImages[0].src"
+                :alt="aboutImages[0].alt || 'Team aboard luxury vessel Ningaloo Reef'"
+                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              <div class="absolute inset-0 border border-[rgba(201,168,76,0.2)] m-2 md:m-3 pointer-events-none"></div>
-            </div>
+              <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            </template>
+            <NoImagePlaceholder v-else label="Team Image" class="w-full h-full" />
+            <div class="absolute inset-0 border border-[rgba(201,168,76,0.2)] m-2 md:m-3 pointer-events-none"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Values Section - FIXED MOBILE -->
+    <!-- Values Section -->
     <section class="py-12 md:py-24" style="background: var(--color-ocean-900);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
         <div class="text-center mb-8 md:mb-16 section-reveal">
@@ -126,20 +157,11 @@ const values = [
       </div>
     </section>
 
-    <!-- Ningaloo Reef Section - FIXED MOBILE -->
+    <!-- Ningaloo Reef Section - Dynamic Image -->
     <section class="py-12 md:py-24" style="background: var(--color-ocean-950);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center">
           <div class="section-reveal-left order-2 lg:order-1">
-            <div class="overflow-hidden h-[250px] md:h-[350px] lg:h-[400px]">
-              <img
-                src="https://r4.wallpaperflare.com/wallpaper/375/728/857/australia-great-barrier-reef-natural-ocean-wallpaper-f21142d03de6ee5bda28029500b8c9f2.jpg"
-                alt="Marine naturalist with whale shark"
-                class="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-          <div class="section-reveal-right order-1 lg:order-2">
             <p class="overline-text mb-2 md:mb-4 text-xs md:text-sm">Ningaloo Reef</p>
             <div class="gold-divider-left mb-4 md:mb-6"></div>
             <h2 class="font-display text-2xl md:text-4xl font-light mb-4 md:mb-6" style="font-family: var(--font-display); color: var(--color-sand-100);">
@@ -151,6 +173,17 @@ const values = [
             <p class="text-sm md:text-base leading-relaxed opacity-80" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.9;">
               Unlike the Great Barrier Reef, Ningaloo fringes directly on the shore — accessible, pristine, and breathtakingly biodiverse. It is the centrepiece of our expeditions and the reason we do what we do.
             </p>
+          </div>
+          <div class="section-reveal-right order-1 lg:order-2 overflow-hidden h-[250px] md:h-[350px] lg:h-[400px]">
+            <template v-if="aboutImages[1]?.hasImage">
+              <img
+                :src="aboutImages[1].src"
+                :alt="aboutImages[1].alt || 'Marine naturalist with whale shark'"
+                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            </template>
+            <NoImagePlaceholder v-else label="Reef Image" class="w-full h-full" />
           </div>
         </div>
       </div>

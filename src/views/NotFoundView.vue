@@ -2,9 +2,9 @@
   <v-main class="error-page pa-0">
     <!-- Animated Ocean Background -->
     <div class="ocean-bg">
-      <div class="ocean-bg__layer ocean-bg__layer--back" />
-      <div class="ocean-bg__layer ocean-bg__layer--mid" />
-      <div class="ocean-bg__layer ocean-bg__layer--front" />
+      <div class="ocean-bg__layer ocean-bg__layer--back" :style="backImage ? { backgroundImage: `url(${backImage})` } : {}" />
+      <div class="ocean-bg__layer ocean-bg__layer--mid" :style="midImage ? { backgroundImage: `url(${midImage})` } : {}" />
+      <div class="ocean-bg__layer ocean-bg__layer--front" :style="frontImage ? { backgroundImage: `url(${frontImage})` } : {}" />
     </div>
 
     <!-- Floating Particles Canvas -->
@@ -163,7 +163,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useComponentCMS } from '@/composables/useComponentCMS'
+
+const cms = useComponentCMS('NotFoundView')
+
+const backImage = computed(() => cms.getImageUrl('oceanLayers', 0))
+const midImage = computed(() => cms.getImageUrl('oceanLayers', 1))
+const frontImage = computed(() => cms.getImageUrl('oceanLayers', 2))
 
 // Navigation links
 const links = ref([
@@ -263,6 +270,7 @@ const initParticles = () => {
 
 onMounted(() => {
   const cleanup = initParticles()
+  cms.load()
   onUnmounted(() => {
     if (animationId) cancelAnimationFrame(animationId)
     cleanup?.()
@@ -324,19 +332,16 @@ onMounted(() => {
 }
 
 .ocean-bg__layer--back {
-  background-image: url('https://images.unsplash.com/photo-1559827260-dc66d52bef19?q=80&w=2560&auto=format&fit=crop');
   animation-delay: 0s;
   filter: brightness(0.3) saturate(1.2);
 }
 
 .ocean-bg__layer--mid {
-  background-image: url('https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?q=80&w=2560&auto=format&fit=crop');
   animation-delay: -7s;
   filter: brightness(0.4) saturate(1.4);
 }
 
 .ocean-bg__layer--front {
-  background-image: url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=2560&auto=format&fit=crop');
   animation-delay: -14s;
   filter: brightness(0.5) saturate(1.6);
 }

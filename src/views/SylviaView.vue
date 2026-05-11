@@ -1,139 +1,95 @@
 <script setup lang="ts">
 import { useSEO } from '@/composables/useSEO'
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import CtaSection from '@/components/home/CtaSection.vue'
+import NoImagePlaceholder from '@/components/NoImagePlaceholder.vue'
+import { useComponentCMS } from '@/composables/useComponentCMS'
+
+const cms = useComponentCMS('SylviaView')
 
 useScrollReveal()
 
-useSEO({
-  title: 'Sylvia – 4-Day Luxury Live-Aboard',
-  description: 'Sylvia: Intimate 4-day Ningaloo Reef expedition. Luxury vessel for small groups with personalized whale shark encounters, pristine snorkeling, and all-inclusive dining.',
-  path: '/expeditions/sylvia',
-  type: 'product',
-  jsonLd: {
-   "@context": "https://schema.org",
-  "@type": "Product",
-  "name": "Sylvia 4-Day Northern Reef Expedition",
-  "description": "Intimate luxury live-aboard in the northern Ningaloo Reef",
-  "image": "https://expeditionoz.netlify.app/images/sylvia-hero.jpg",
-  "brand": {
-    "@type": "Brand",
-    "name": "Expedition OZ"
-  },
-  "url": "https://expeditionoz.netlify.app/expeditions/sylvia",
-  "offers": {
-    "@type": "Offer",
-    "price": "2495.00",
-    "priceCurrency": "AUD",
-    "availability": "https://schema.org/InStock",
-    "priceValidUntil": "2026-12-31",
-    "url": "https://expeditionoz.netlify.app/expeditions/sylvia",
-    "shippingDetails": {
-      "@type": "OfferShippingDetails",
-      "shippingRate": {
-        "@type": "MonetaryAmount",
-        "value": "0",
-        "currency": "AUD"
-      },
-      "shippingDestination": {
-        "@type": "DefinedRegion",
-        "addressCountry": "AU"
-      },
-      "deliveryTime": {
-        "@type": "ShippingDeliveryTime",
-        "handlingTime": {
-          "@type": "QuantitativeValue",
-          "minValue": 0,
-          "maxValue": 1,
-          "unitCode": "DAY"
-        },
-        "transitTime": {
-          "@type": "QuantitativeValue",
-          "minValue": 0,
-          "maxValue": 0,
-          "unitCode": "DAY"
-        }
-      }
-    },
-    "hasMerchantReturnPolicy": {
-      "@type": "MerchantReturnPolicy",
-      "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted",
-      "applicableCountry": "AU"
-    }
-  },
-  "aggregateRating": {
-    "@type": "AggregateRating",
-    "ratingValue": "4.8",
-    "reviewCount": "93"
-  }
+const isVideoLoaded = ref(false)
+const showVideo = ref(true)
+const lightboxOpen = ref(false)
+const currentImage = ref(0)
+
+// Hero media
+const heroMedia = computed(() => {
+  const video = cms.getSlot('hero', 0)
+  const poster = cms.getSlot('hero', 1)
+  return {
+    videoUrl: video?.imageUrl || '',
+    posterUrl: poster?.imageUrl || '',
   }
 })
 
-const isVideoLoaded = ref(false)
-const showVideo = ref(true)
-const activeDay = ref(0)
+// About section
+const aboutItem = computed(() => cms.getSlot('about', 0))
 
-const itinerary = [
-  { 
-    day: 'Day 1', 
-    title: 'Departure & First Dive', 
-    desc: 'Board Sylvia at Exmouth Marina. Brief safety orientation, then set sail for our first anchorage on the northern reef. Afternoon snorkel and sunset dinner on deck.',
-    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80',
-    thumb: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=400&q=80'
+// Vessel gallery
+const vesselImages = computed(() =>
+  cms.getSection('vesselGallery').map((item) => ({
+    src: item.imageUrl || '',
+    caption: item.caption || item.title || '',
+    category: item.category || '',
+    hasImage: !!item.imageUrl,
+  }))
+)
+
+// Dining gallery
+const diningImages = computed(() =>
+  cms.getSection('diningGallery').map((item, i) => ({
+    src: item.imageUrl || '',
+    title: item.title || '',
+    desc: item.description || '',
+    hasImage: !!item.imageUrl,
+    featured: i === 0,
+  }))
+)
+
+// Fallback itinerary data
+const fallbackItinerary = [
+  {
+    day: 'Day 1',
+    title: 'Departure & First Dive',
+    description: 'Board Sylvia at Exmouth Marina. Brief safety orientation, then set sail for our first anchorage on the northern reef. Afternoon snorkel and sunset dinner on deck.',
+    imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80',
   },
-  { 
-    day: 'Day 2', 
-    title: 'Whale Shark Encounter', 
-    desc: 'The highlight of the expedition. Our spotter plane locates whale sharks and we enter the water for multiple swims. You will be changed forever.',
-    image: 'https://images.unsplash.com/photo-1719450589784-c2c36ccf8e5b?q=80&w=1075&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    thumb: 'https://images.unsplash.com/photo-1719450589784-c2c36ccf8e5b?q=80&w=1075&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+  {
+    day: 'Day 2',
+    title: 'Whale Shark Encounter',
+    description: 'The highlight of the expedition. Our spotter plane locates whale sharks and we enter the water for multiple swims. You will be changed forever.',
+    imageUrl: 'https://images.unsplash.com/photo-1719450589784-c2c36ccf8e5b?q=80&w=1075&auto=format&fit=crop',
   },
-  { 
-    day: 'Day 3', 
-    title: 'Coral Gardens & Turquoise Bay', 
-    desc: 'A full day exploring the reefs most spectacular coral formations at Turquoise Bay. Shallow dives and snorkeling. Look out for sea turtles, reef sharks, and rays.',
-    image: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=1200&q=80',
-    thumb: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=400&q=80'
+  {
+    day: 'Day 3',
+    title: 'Coral Gardens & Turquoise Bay',
+    description: 'A full day exploring the reef\'s most spectacular coral formations at Turquoise Bay. Shallow dives and snorkeling. Look out for sea turtles, reef sharks, and rays.',
+    imageUrl: 'https://images.unsplash.com/photo-1583212292454-1fe6229603b7?auto=format&fit=crop&w=1200&q=80',
   },
-  { 
-    day: 'Day 4', 
-    title: 'Final Morning & Return', 
-    desc: 'One last sunrise swim before heading back to Exmouth. Farewell brunch and a lifetime of memories.',
-    image: 'https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?auto=format&fit=crop&w=1200&q=80',
-    thumb: 'https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?auto=format&fit=crop&w=400&q=80'
+  {
+    day: 'Day 4',
+    title: 'Final Morning & Return',
+    description: 'One last sunrise swim before heading back to Exmouth. Farewell brunch and a lifetime of memories.',
+    imageUrl: 'https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?auto=format&fit=crop&w=1200&q=80',
   },
 ]
 
-const vesselImages = [
-  { src: 'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=800&q=80', caption: 'Sylvia at Anchor', category: 'Exterior' },
-  { src: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80', caption: 'Premium Cabin', category: 'Accommodation' },
-  { src: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?auto=format&fit=crop&w=800&q=80', caption: 'Sun Deck Lounge', category: 'Common Areas' },
-  { src: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80', caption: 'Master Suite', category: 'Accommodation' },
-  { src: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80', caption: 'Dive Platform', category: 'Activities' },
-  { src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=800&q=80', caption: 'Dining Salon', category: 'Common Areas' },
-]
-
-const diningImages = [
-  { src: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=600&q=80', title: 'Sunset Dining', desc: 'Gourmet meals on deck' },
-  { src: 'https://images.unsplash.com/photo-1534939561126-855b8675edd7?auto=format&fit=crop&w=600&q=80', title: 'Exmouth Seafood', desc: 'Western Australian catch' },
-  { src: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80', title: 'Premium Cellar', desc: 'Margaret River wines' },
-  { src: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&w=600&q=80', title: 'Chefs Table', desc: 'Onboard culinary excellence' },
-]
-
-const highlights = [
-  'Whale shark encounters with certified marine naturalist',
-  'Northern Ningaloo Reef — pristine and rarely visited',
-  'All snorkel gear including wetsuits and fins',
-  'Gourmet meals prepared by our onboard chef',
-  'Premium beverages including wine and cocktails',
-  'Sunset yoga on deck (optional)',
-  'Maximum 12 guests for an intimate experience',
-  'Exmouth departure — gateway to Ningaloo',
-]
-
-const lightboxOpen = ref(false)
-const currentImage = ref(0)
+// Itinerary — CMS or fallback
+const itinerary = computed(() => {
+  const cmsData = cms.getSection('itinerary')
+  const source = cmsData.length > 0 ? cmsData : fallbackItinerary
+  return source.map((item, i) => ({
+    day: item.day || `Day ${i + 1}`,
+    title: item.title || `Day ${i + 1}`,
+    desc: item.description || '',
+    image: item.imageUrl || '',
+    thumb: item.imageUrl || '',
+    hasImage: !!item.imageUrl,
+  }))
+})
 
 const openLightbox = (index: number) => {
   currentImage.value = index
@@ -147,18 +103,84 @@ const closeLightbox = () => {
 }
 
 const nextImage = () => {
-  currentImage.value = (currentImage.value + 1) % vesselImages.length
+  currentImage.value = (currentImage.value + 1) % vesselImages.value.length
 }
 
 const prevImage = () => {
-  currentImage.value = (currentImage.value - 1 + vesselImages.length) % vesselImages.length
+  currentImage.value = (currentImage.value - 1 + vesselImages.value.length) % vesselImages.value.length
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await cms.load()
+
   const video = document.querySelector('video')
   if (video) {
     video.addEventListener('error', () => { showVideo.value = false })
     video.addEventListener('loadeddata', () => { isVideoLoaded.value = true })
+  }
+})
+
+useSEO({
+  title: 'Sylvia – 4-Day Luxury Live-Aboard',
+  description: 'Sylvia: Intimate 4-day Ningaloo Reef expedition. Luxury vessel for small groups with personalized whale shark encounters, pristine snorkeling, and all-inclusive dining.',
+  path: '/expeditions/sylvia',
+  type: 'product',
+  jsonLd: {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Sylvia 4-Day Northern Reef Expedition",
+    "description": "Intimate luxury live-aboard in the northern Ningaloo Reef",
+    "image": "https://expeditionoz.netlify.app/images/sylvia-hero.jpg",
+    "brand": {
+      "@type": "Brand",
+      "name": "Expedition OZ"
+    },
+    "url": "https://expeditionoz.netlify.app/expeditions/sylvia",
+    "offers": {
+      "@type": "Offer",
+      "price": "2495.00",
+      "priceCurrency": "AUD",
+      "availability": "https://schema.org/InStock",
+      "priceValidUntil": "2026-12-31",
+      "url": "https://expeditionoz.netlify.app/expeditions/sylvia",
+      "shippingDetails": {
+        "@type": "OfferShippingDetails",
+        "shippingRate": {
+         "@type": "MonetaryAmount",
+         "value": "0",
+         "currency": "AUD"
+        },
+        "shippingDestination": {
+          "@type": "DefinedRegion",
+          "addressCountry": "AU"
+        },
+        "deliveryTime": {
+          "@type": "ShippingDeliveryTime",
+          "handlingTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 0,
+            "maxValue": 1,
+            "unitCode": "DAY"
+          },
+          "transitTime": {
+            "@type": "QuantitativeValue",
+            "minValue": 0,
+            "maxValue": 0,
+            "unitCode": "DAY"
+          }
+        }
+      },
+      "hasMerchantReturnPolicy": {
+        "@type": "MerchantReturnPolicy",
+        "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted",
+        "applicableCountry": "AU"
+      }
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "reviewCount": "93"
+    }
   }
 })
 </script>
@@ -169,22 +191,23 @@ onMounted(() => {
     <section class="relative h-[85vh] md:h-screen w-full overflow-hidden">
       <div class="absolute inset-0 z-0">
         <video
-          v-if="showVideo"
+          v-if="showVideo && heroMedia.videoUrl"
           autoplay
           muted
           loop
           playsinline
-          poster="https://images.pexels.com/photos/6530412/pexels-photo-6530412.jpegw"
+          :poster="heroMedia.posterUrl"
           class="w-full h-full object-cover"
           @loadeddata="isVideoLoaded = true"
         >
-          <source src="https://cdn.pixabay.com/video/2021/02/18/65560-515098344_large.mp4" type="video/mp4">
+          <source :src="heroMedia.videoUrl" type="video/mp4">
         </video>
         <div 
-          v-else 
+          v-else-if="heroMedia.posterUrl" 
           class="w-full h-full bg-cover bg-center"
-          style="background-image: url('https://images.pexels.com/photos/6530412/pexels-photo-6530412.jpegw')"
+          :style="`background-image: url(${heroMedia.posterUrl})`"
         />
+        <NoImagePlaceholder v-else label="No Hero Media" class="w-full h-full" />
         <div class="absolute inset-0 bg-[#0A2E4A]/70" />
         <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
       </div>
@@ -201,7 +224,7 @@ onMounted(() => {
           Four extraordinary days exploring the untouched northern reaches of Ningaloo Reef aboard our elegant vessel.
         </p>
         <div class="flex gap-3 md:gap-4">
-          <router-link to="/contact" class="btn-primary px-6 py-3 md:px-8 md:py-4 text-sm md:text-base">
+          <router-link to="/book/sylvia" class="btn-primary px-6 py-3 md:px-8 md:py-4 text-sm md:text-base">
             Check Availability
           </router-link>
         </div>
@@ -246,18 +269,21 @@ onMounted(() => {
               </div>
             </div>
 
-            <router-link to="/contact" class="btn-primary inline-block text-sm md:text-base px-5 py-3 md:px-8 md:py-4">
+            <router-link to="/book/sylvia" class="btn-primary inline-block text-sm md:text-base px-5 py-3 md:px-8 md:py-4">
               Reserve Your Cabin
             </router-link>
           </div>
 
           <div class="section-reveal-right order-1 lg:order-2">
             <div class="relative overflow-hidden h-[250px] sm:h-[350px] md:h-[520px] group">
-              <img
-                src="https://www.ningaloodiscovery.com.au/wp-content/uploads/2016/01/swim-wth-turtles-1024x683.jpg"
-                alt="Whale shark encounter at Ningaloo Reef, Western Australia"
-                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
+              <template v-if="aboutItem?.imageUrl">
+                <img
+                  :src="aboutItem.imageUrl"
+                  :alt="aboutItem.alt || 'Sylvia expedition image'"
+                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+              </template>
+              <NoImagePlaceholder v-else label="No About Image" />
               <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             </div>
           </div>
@@ -286,17 +312,20 @@ onMounted(() => {
             class="relative overflow-hidden cursor-pointer group break-inside-avoid mb-2 md:mb-3"
             @click="openLightbox(i)"
           >
-            <img 
-              :src="img.src" 
-              :alt="img.caption"
-              class="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div class="absolute bottom-2 md:bottom-4 left-2 md:left-4 text-white">
-                <p class="text-[10px] md:text-xs uppercase tracking-wider text-[#C9A84C] mb-0.5 md:mb-1">{{ img.category }}</p>
-                <p class="font-display text-sm md:text-lg">{{ img.caption }}</p>
+            <template v-if="img.hasImage">
+              <img 
+                :src="img.src" 
+                :alt="img.caption"
+                class="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div class="absolute bottom-2 md:bottom-4 left-2 md:left-4 text-white">
+                  <p class="text-[10px] md:text-xs uppercase tracking-wider text-[#C9A84C] mb-0.5 md:mb-1">{{ img.category }}</p>
+                  <p class="font-display text-sm md:text-lg">{{ img.caption }}</p>
+                </div>
               </div>
-            </div>
+            </template>
+            <NoImagePlaceholder v-else :label="`Gallery ${i + 1}`" />
           </div>
         </div>
 
@@ -308,75 +337,86 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- Itinerary -->
-    <section class="py-12 md:py-24" style="background: var(--color-ocean-950);">
-      <div class="container mx-auto px-4 sm:px-6 lg:px-12">
-        <div class="text-center mb-6 md:mb-16 section-reveal">
+    <!-- Itinerary Timeline -->
+    <section class="py-12 md:py-24 lg:py-32" style="background: var(--color-ocean-950);">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-12 max-w-6xl">
+        <!-- Header -->
+        <div class="text-center mb-12 md:mb-20 lg:mb-24 section-reveal">
           <p class="overline-text mb-2 md:mb-4 text-xs md:text-sm">Day by Day</p>
-          <div class="gold-divider mb-3 md:mb-6 mx-auto"></div>
-          <h2 class="font-display text-2xl md:text-4xl font-light" style="font-family: var(--font-display); color: var(--color-sand-100);">
+          <div class="gold-divider mb-4 md:mb-6 mx-auto"></div>
+          <h2 class="font-display text-2xl md:text-4xl lg:text-5xl font-light" style="font-family: var(--font-display); color: var(--color-sand-100);">
             Your <span class="italic" style="color: var(--color-gold-400);">Itinerary</span>
           </h2>
         </div>
 
-        <div class="flex md:hidden justify-center gap-1.5 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-          <button 
-            v-for="(day, i) in itinerary" 
-            :key="i"
-            @click="activeDay = i"
-            class="px-3 py-2 text-xs whitespace-nowrap transition-all rounded-sm"
-            :class="activeDay === i ? 'bg-[#C9A84C] text-[#0A2E4A] font-medium' : 'border border-[#C9A84C]/30 text-[#C9A84C]'"
-          >
-            {{ day.day }}
-          </button>
-        </div>
+        <!-- Timeline -->
+        <div class="relative">
+          <!-- Vertical Line -->
+          <div class="absolute left-4 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-[#C9A84C]/30 via-[#C9A84C]/50 to-[#C9A84C]/30 md:-translate-x-1/2"></div>
 
-        <div class="max-w-5xl mx-auto">
+          <!-- Items -->
           <div 
-            v-for="(item, i) in itinerary" 
-            :key="item.day"
-            class="grid md:grid-cols-2 gap-4 md:gap-12 items-center mb-8 md:mb-20 section-reveal"
-            :class="[
-              i % 2 === 1 ? 'md:flex-row-reverse' : '',
-              i !== activeDay ? 'hidden md:grid' : '',
-              i === activeDay ? 'block' : ''
-            ]"
-            :style="`transition-delay: ${i * 0.1}s`"
+            v-for="(item, index) in itinerary" 
+            :key="index"
+            class="relative mb-8 md:mb-16 lg:mb-20 section-reveal"
+            :style="`--delay: ${index * 0.15}s`"
           >
-            <div :class="i % 2 === 1 ? 'md:order-2' : ''" class="relative group overflow-hidden">
-              <img 
-                :src="item.image" 
-                :alt="item.title"
-                class="w-full h-52 md:h-80 object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div class="absolute top-3 left-3 bg-[#0A2E4A]/90 px-3 py-1.5 backdrop-blur-sm">
-                <span class="text-[#C9A84C] font-display text-xs md:text-sm">{{ item.day }}</span>
-              </div>
+            <!-- Day Circle -->
+            <div 
+              class="absolute left-4 md:left-1/2 top-0 w-10 h-10 md:w-14 md:h-14 bg-[#C9A84C] flex items-center justify-center z-20 md:-translate-x-1/2"
+              style="box-shadow: 0 0 20px rgba(201, 168, 76, 0.3);"
+            >
+              <span class="font-display text-xs md:text-sm font-bold text-[#0A2E4A] tracking-wider" style="font-family: var(--font-display);">
+                {{ index + 1 }}
+              </span>
             </div>
 
-            <div :class="i % 2 === 1 ? 'md:order-1' : ''">
-              <h3 class="font-display text-xl md:text-3xl font-light mb-2 md:mb-4" style="font-family: var(--font-display); color: var(--color-sand-100);">
-                {{ item.title }}
-              </h3>
-              <p class="text-sm md:text-base leading-relaxed opacity-75 mb-4 md:mb-6" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.8;">
-                {{ item.desc }}
-              </p>
-              <div class="flex items-center gap-3 md:gap-4 text-[#C9A84C] text-xs md:text-sm">
-                <span class="flex items-center gap-1.5 md:gap-2">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  Full Day
-                </span>
-                <span class="flex items-center gap-1.5 md:gap-2">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                  </svg>
-                  All Meals
-                </span>
+            <!-- Content Grid -->
+            <div class="ml-14 md:ml-0 md:grid md:grid-cols-2 md:gap-8 lg:gap-12">
+              <!-- Image Side -->
+              <div 
+                class="mb-4 md:mb-0"
+                :class="index % 2 === 0 ? 'md:order-1 md:pr-8 lg:pr-12' : 'md:order-2 md:pl-8 lg:pl-12'"
+              >
+                <div class="relative overflow-hidden group h-48 sm:h-56 md:h-72 lg:h-80">
+                  <template v-if="item.hasImage && item.image">
+                    <img 
+                      :src="item.image"
+                      :alt="item.title"
+                      class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  </template>
+                  <NoImagePlaceholder v-else label="No Image" class="w-full h-full" />
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                </div>
+              </div>
+
+              <!-- Content Side -->
+              <div 
+                class="flex flex-col justify-center"
+                :class="index % 2 === 0 ? 'md:order-2 md:pl-8 lg:pl-12' : 'md:order-1 md:pr-8 lg:pr-12 md:text-right'"
+              >
+                <p class="overline-text text-[10px] md:text-xs mb-2 md:mb-3 tracking-[0.2em]">{{ item.day }}</p>
+                <h3 class="font-display text-xl md:text-2xl lg:text-3xl font-light mb-3 md:mb-4 leading-tight" style="font-family: var(--font-display); color: var(--color-sand-100);">
+                  {{ item.title }}
+                </h3>
+                <div class="w-8 h-px bg-[#C9A84C]/40 mb-3 md:mb-4" :class="index % 2 === 1 ? 'md:ml-auto' : ''"></div>
+                <p class="text-sm md:text-base leading-relaxed opacity-75" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.8;">
+                  {{ item.desc }}
+                </p>
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="text-center mt-12 md:mt-20 pt-8 md:pt-12 border-t border-[#C9A84C]/20 section-reveal">
+          <p class="text-xs md:text-sm opacity-60 mb-6 md:mb-8" style="color: var(--color-sand-200);">
+            *Schedule subject to weather & wildlife conditions
+          </p>
+          <router-link to="/book/sylvia" class="btn-primary px-8 py-3 md:px-12 md:py-4 text-sm md:text-base">
+            Book Expedition
+          </router-link>
         </div>
       </div>
     </section>
@@ -418,13 +458,16 @@ onMounted(() => {
 
           <div class="grid grid-cols-2 gap-2 md:gap-3 section-reveal-right">
             <div v-for="(img, i) in diningImages" :key="i" class="relative overflow-hidden group" :class="i === 0 ? 'col-span-2' : ''">
-              <img :src="img.src" :alt="img.title" class="w-full h-36 md:h-48 object-cover transition-transform duration-500 group-hover:scale-105" />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                <div class="absolute bottom-2 left-2 md:bottom-3 md:left-3 text-white">
-                  <p class="font-display text-xs md:text-sm">{{ img.title }}</p>
-                  <p class="text-[10px] opacity-80">{{ img.desc }}</p>
+              <template v-if="img.hasImage">
+                <img :src="img.src" :alt="img.title" class="w-full h-36 md:h-48 object-cover transition-transform duration-500 group-hover:scale-105" />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div class="absolute bottom-2 left-2 md:bottom-3 md:left-3 text-white">
+                    <p class="font-display text-xs md:text-sm">{{ img.title }}</p>
+                    <p class="text-[10px] opacity-80">{{ img.desc }}</p>
+                  </div>
                 </div>
-              </div>
+              </template>
+              <NoImagePlaceholder v-else :label="`Dining ${i + 1}`" />
             </div>
           </div>
         </div>
@@ -434,11 +477,14 @@ onMounted(() => {
     <!-- Route Map -->
     <section class="py-12 md:py-24 relative overflow-hidden" style="background: var(--color-ocean-900);">
       <div class="absolute inset-0 opacity-20">
-        <img 
-          src="https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?auto=format&fit=crop&w=1920&q=80" 
-          alt="Ningaloo Reef aerial view"
-          class="w-full h-full object-cover"
-        />
+        <template v-if="cms.getImageUrl('routeMap', 0)">
+          <img 
+            :src="cms.getImageUrl('routeMap', 0)"
+            alt="Ningaloo Reef aerial view"
+            class="w-full h-full object-cover"
+          />
+        </template>
+        <NoImagePlaceholder v-else label="No Route Map BG" class="w-full h-full" />
       </div>
       <div class="container mx-auto px-4 sm:px-6 lg:px-12 relative z-10">
         <div class="text-center mb-8 md:mb-12 section-reveal">
@@ -449,12 +495,12 @@ onMounted(() => {
           </h2>
         </div>
 
-        <div class="max-w-4xl mx-auto bg-[#0A2E4A]/80 backdrop-blur-md p-4 md:p-12 rounded-sm border border-[#C9A84C]/20 section-reveal">
+        <div class="max-w-4xl mx-auto bg-[#0A2E4A]/80 backdrop-blur-md p-4 md:p-12 border border-[#C9A84C]/20 section-reveal">
           <div class="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6 relative">
-            <div class="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-[#C9A84C]/30 -translate-y-1/2 z-0" />
+            <div class="hidden md:block absolute top-1/2 left-0 right-0 h-px bg-[#C9A84C]/30 -translate-y-1/2 z-0" />
 
             <div class="relative z-10 text-center flex md:block items-center gap-3 md:gap-0 w-full md:w-auto">
-              <div class="w-3 h-3 bg-[#C9A84C] rounded-full md:mx-auto md:mb-2 flex-shrink-0" />
+              <div class="w-2 h-2 bg-[#C9A84C] md:mx-auto md:mb-2 flex-shrink-0" />
               <div class="text-left md:text-center">
                 <p class="font-display text-base md:text-lg text-white">Exmouth</p>
                 <p class="text-[10px] md:text-xs opacity-60" style="color: var(--color-sand-200);">Departure</p>
@@ -462,7 +508,7 @@ onMounted(() => {
             </div>
 
             <div class="relative z-10 text-center flex md:block items-center gap-3 md:gap-0 w-full md:w-auto">
-              <div class="w-3 h-3 bg-[#C9A84C] rounded-full md:mx-auto md:mb-2 flex-shrink-0" />
+              <div class="w-2 h-2 bg-[#C9A84C] md:mx-auto md:mb-2 flex-shrink-0" />
               <div class="text-left md:text-center">
                 <p class="font-display text-base md:text-lg text-white">Northern Reef</p>
                 <p class="text-[10px] md:text-xs opacity-60" style="color: var(--color-sand-200);">Whale Sharks</p>
@@ -470,7 +516,7 @@ onMounted(() => {
             </div>
 
             <div class="relative z-10 text-center flex md:block items-center gap-3 md:gap-0 w-full md:w-auto">
-              <div class="w-3 h-3 bg-[#C9A84C] rounded-full md:mx-auto md:mb-2 flex-shrink-0" />
+              <div class="w-2 h-2 bg-[#C9A84C] md:mx-auto md:mb-2 flex-shrink-0" />
               <div class="text-left md:text-center">
                 <p class="font-display text-base md:text-lg text-white">Turquoise Bay</p>
                 <p class="text-[10px] md:text-xs opacity-60" style="color: var(--color-sand-200);">Coral Gardens</p>
@@ -478,7 +524,7 @@ onMounted(() => {
             </div>
 
             <div class="relative z-10 text-center flex md:block items-center gap-3 md:gap-0 w-full md:w-auto">
-              <div class="w-3 h-3 bg-[#C9A84C] rounded-full md:mx-auto md:mb-2 flex-shrink-0" />
+              <div class="w-2 h-2 bg-[#C9A84C] md:mx-auto md:mb-2 flex-shrink-0" />
               <div class="text-left md:text-center">
                 <p class="font-display text-base md:text-lg text-white">Exmouth</p>
                 <p class="text-[10px] md:text-xs opacity-60" style="color: var(--color-sand-200);">Return</p>
@@ -499,7 +545,7 @@ onMounted(() => {
     <section class="py-12 md:py-24" style="background: var(--color-ocean-950);">
       <div class="container mx-auto px-4 sm:px-6 lg:px-12">
         <div class="text-center mb-6 md:mb-12 section-reveal">
-          <p class="overline-text mb-2 md:mb-4 text-xs md:text-sm">What's Included</p>
+          <p class="overline-text mb-2 md:mb-4 text-xs md:text-sm">What\'s Included</p>
           <div class="gold-divider mb-3 md:mb-6 mx-auto"></div>
           <h2 class="font-display text-2xl md:text-4xl font-light" style="font-family: var(--font-display); color: var(--color-sand-100);">
             Everything You <span class="italic" style="color: var(--color-gold-400);">Need</span>
@@ -508,7 +554,16 @@ onMounted(() => {
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 max-w-3xl mx-auto">
           <div 
-            v-for="(item, i) in highlights" 
+            v-for="(item, i) in [
+              'Whale shark encounters with certified marine naturalist',
+              'Northern Ningaloo Reef — pristine and rarely visited',
+              'All snorkel gear including wetsuits and fins',
+              'Gourmet meals prepared by our onboard chef',
+              'Premium beverages including wine and cocktails',
+              'Sunset yoga on deck (optional)',
+              'Maximum 12 guests for an intimate experience',
+              'Exmouth departure — gateway to Ningaloo',
+            ]" 
             :key="item" 
             class="highlight-item section-reveal"
             :style="`transition-delay: ${i * 0.07}s`"
@@ -560,14 +615,17 @@ onMounted(() => {
       </button>
 
       <div class="max-w-5xl max-h-[85vh]" @click.stop>
-        <img 
-          :src="vesselImages[currentImage].src" 
-          :alt="vesselImages[currentImage].caption"
-          class="max-w-full max-h-[85vh] object-contain"
-        />
+        <template v-if="vesselImages[currentImage]?.hasImage">
+          <img 
+            :src="vesselImages[currentImage].src" 
+            :alt="vesselImages[currentImage].caption"
+            class="max-w-full max-h-[85vh] object-contain"
+          />
+        </template>
+        <NoImagePlaceholder v-else label="No Image" class="max-w-full max-h-[85vh]" />
         <div class="text-center mt-3 md:mt-4 text-white">
-          <p class="font-display text-base md:text-lg">{{ vesselImages[currentImage].caption }}</p>
-          <p class="text-xs md:text-sm text-[#C9A84C] uppercase tracking-wider">{{ vesselImages[currentImage].category }}</p>
+          <p class="font-display text-base md:text-lg">{{ vesselImages[currentImage]?.caption }}</p>
+          <p class="text-xs md:text-sm text-[#C9A84C] uppercase tracking-wider">{{ vesselImages[currentImage]?.category }}</p>
         </div>
       </div>
     </div>
@@ -636,14 +694,6 @@ html {
 @keyframes bounce {
   0%, 100% { transform: translateX(-50%) translateY(0); }
   50% { transform: translateX(-50%) translateY(-10px); }
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
 }
 
 .break-inside-avoid {

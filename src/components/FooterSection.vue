@@ -8,6 +8,7 @@ const quickLinks = [
   { label: 'About Us', to: '/about' },
   { label: 'Blog', to: '/blog' },
   { label: 'FAQ', to: '/faq' },
+  { label: 'Book', to: '/book' },
   { label: 'Contact', to: '/contact' },
 ]
 </script>
@@ -25,6 +26,9 @@ const quickLinks = [
               Limited departures — secure your place today.
             </p>
           </div>
+          <router-link to="/book" class="btn-primary px-8 py-3 text-sm md:text-base">
+            Book Now
+          </router-link>
         </div>
       </div>
     </div>

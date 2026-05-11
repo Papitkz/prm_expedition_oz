@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { useSEO, buildBreadcrumbSchema, buildFAQSchema } from '@/composables/useSEO'
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import PageHero from '@/components/PageHero.vue'
 import CtaSection from '@/components/home/CtaSection.vue'
+import NoImagePlaceholder from '@/components/NoImagePlaceholder.vue'
+import { useComponentCMS } from '@/composables/useComponentCMS'
 
 useScrollReveal()
+
+const heroCms = useComponentCMS('FaqView')
+const heroImage = computed(() => heroCms.getImageUrl('hero', 0))
 
 const categories = [
   {
@@ -116,6 +121,10 @@ useSEO({
     ])
   ]
 })
+
+onMounted(async () => {
+  await heroCms.load()
+})
 </script>
 
 <template>
@@ -125,10 +134,21 @@ useSEO({
       title="Frequently Asked"
       title-italic="Questions"
       subtitle="Everything you need to know before embarking on your Expedition OZ adventure."
-      image="https://images.pexels.com/photos/1430677/pexels-photo-1430677.jpeg?auto=compress&cs=tinysrgb&w=1920"
+      image=""
       image-alt="Clear turquoise waters of Ningaloo Reef"
       height="50vh"
-    />
+    >
+      <template #default>
+        <template v-if="heroImage">
+          <img
+            :src="heroImage"
+            alt="Clear turquoise waters of Ningaloo Reef"
+            class="absolute inset-0 w-full h-full object-cover"
+          />
+        </template>
+        <NoImagePlaceholder v-else class="absolute inset-0" />
+      </template>
+    </PageHero>
 
     <section class="py-24 lg:py-32" style="background: var(--color-ocean-950);">
       <div class="container mx-auto px-6 lg:px-12 max-w-4xl">

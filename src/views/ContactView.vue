@@ -1,10 +1,18 @@
 <script setup lang="ts">
 import { useSEO } from '@/composables/useSEO'
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useScrollReveal } from '@/composables/useScrollReveal'
 import PageHero from '@/components/PageHero.vue'
+import NoImagePlaceholder from '@/components/NoImagePlaceholder.vue'
+import { useComponentCMS } from '@/composables/useComponentCMS'
+import { getFirebaseDb, initFirebase } from '@/lib/firebase'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { useEmail } from '@/composables/useEmail'
 
 useScrollReveal()
+
+const route = useRoute()
 
 useSEO({
   title: 'Contact & Bookings',
@@ -21,7 +29,7 @@ jsonLd: {
   "mainEntity": {
     "@type": "TravelAgency",
     "name": "Expedition OZ",
-    "url": "https://expeditionoz.netlify.app",  // ✅ Add this
+    "url": "https://expeditionoz.netlify.app",
     "telephone": "+61-8-9123-4567",
     "email": "hello@expeditionoz.com.au",
     "address": {
@@ -36,31 +44,117 @@ jsonLd: {
 }
 })
 
+const heroCms = useComponentCMS('ContactView')
+const heroImage = computed(() => heroCms.getImageUrl('hero', 0))
+
+// Trip data (same as BookView)
+const trips = {
+  sylvia: {
+    id: 'sylvia',
+    name: 'Sylvia – 4-Day Northern Reef Expedition',
+    duration: '4 Days / 3 Nights',
+    guests: 12,
+    price: 2495,
+    priceCurrency: 'AUD',
+  },
+  millenium: {
+    id: 'millenium',
+    name: 'Millenium – 7-Day Ultimate Reef Expedition',
+    duration: '7 Days / 6 Nights',
+    guests: 14,
+    price: 3995,
+    priceCurrency: 'AUD',
+  },
+}
+
+// Pre-select trip from URL query (same as BookView)
+const preselectedTrip = computed(() => {
+  const query = route.query.trip as string
+  return query && trips[query as keyof typeof trips] ? query : ''
+})
+
 const form = ref({
   name: '',
   email: '',
   phone: '',
-  expedition: '',
+  expedition: preselectedTrip.value,
   guests: '',
-  dates: '',
+  dateFrom: '',
+  dateTo: '',
   message: '',
 })
 
 const submitted = ref(false)
 const submitting = ref(false)
+const error = ref('')
+
+const { sendBookingEmails } = useEmail()
+
+const expeditionOptions = [
+  { value: 'sylvia', label: 'Sylvia – 4 Days – AUD $2,495 pp' },
+  { value: 'millenium', label: 'Millenium – 7 Days – AUD $3,995 pp' },
+  { value: 'unsure', label: 'Not sure yet – please advise' },
+]
+
+const selectedTripDetails = computed(() => {
+  if (!form.value.expedition || form.value.expedition === 'unsure') return null
+  return trips[form.value.expedition as keyof typeof trips] || null
+})
 
 async function handleSubmit() {
+  error.value = ''
+  if (!form.value.name.trim() || !form.value.email.trim() || !form.value.expedition) {
+    error.value = 'Please fill in all required fields'
+    return
+  }
+
   submitting.value = true
-  await new Promise(r => setTimeout(r, 1200))
-  submitted.value = true
+
+  try {
+    initFirebase()
+    const db = getFirebaseDb()
+
+    const tripName = selectedTripDetails.value?.name || form.value.expedition
+
+    await addDoc(collection(db, 'bookings'), {
+      name: form.value.name.trim(),
+      email: form.value.email.trim().toLowerCase(),
+      phone: form.value.phone.trim(),
+      tripName: tripName,
+      tripId: selectedTripDetails.value?.id || null,
+      guests: form.value.guests ? parseInt(form.value.guests) : null,
+      dateFrom: form.value.dateFrom,
+      dateTo: form.value.dateTo,
+      message: form.value.message.trim(),
+      status: 'new',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+
+    // Send email notification (non-blocking)
+    sendBookingEmails({
+      fullName: form.value.name.trim(),
+      email: form.value.email.trim().toLowerCase(),
+      phone: form.value.phone.trim() || 'Not provided',
+      tripName: tripName,
+      selectedDate: form.value.dateFrom && form.value.dateTo 
+        ? `${form.value.dateFrom} to ${form.value.dateTo}` 
+        : (form.value.dateFrom || 'Not specified'),
+      participants: form.value.guests ? parseInt(form.value.guests) : 1,
+      specialRequirements: form.value.message.trim() || 'None',
+    }).catch(console.error)
+
+    submitted.value = true
+  } catch (e: any) {
+    error.value = e.message || 'Failed to send enquiry. Please try again.'
+  }
+
   submitting.value = false
 }
 
-const expeditions = [
-  'Sylvia – 4 Day Northern Reef Expedition',
-  'Millenium – 7 Day Ultimate Reef Expedition',
-  'Not sure yet – please advise',
-]
+onMounted(async () => {
+  await heroCms.load()
+})
 </script>
 
 <template>
@@ -70,10 +164,21 @@ const expeditions = [
       title="Check"
       title-italic="Availability"
       subtitle="Reach out to our team to discuss dates, pricing, and all the details for your perfect expedition."
-      image="https://images.pexels.com/photos/1295138/pexels-photo-1295138.jpeg?auto=compress&cs=tinysrgb&w=1920"
+      image=""
       image-alt="Luxury vessel on calm turquoise waters"
       height="55vh"
-    />
+    >
+      <template #default>
+        <template v-if="heroImage">
+          <img
+            :src="heroImage"
+            alt="Luxury vessel on calm turquoise waters"
+            class="absolute inset-0 w-full h-full object-cover"
+          />
+        </template>
+        <NoImagePlaceholder v-else class="absolute inset-0" />
+      </template>
+    </PageHero>
 
     <section class="py-24 lg:py-32" style="background: var(--color-ocean-950);">
       <div class="container mx-auto px-6 lg:px-12">
@@ -87,6 +192,34 @@ const expeditions = [
             <p class="text-sm leading-relaxed mb-8 opacity-75" style="font-family: var(--font-body); color: var(--color-sand-200); line-height: 1.8;">
               We personally respond to every enquiry. Our team is happy to discuss expedition options, tailor dates, and answer any questions about life aboard our vessels.
             </p>
+
+            <!-- Trip Summary Card (shows when expedition selected) -->
+            <div
+              v-if="selectedTripDetails"
+              class="p-6 border border-[#C9A84C]/20 mb-8"
+              style="background: rgba(10, 46, 74, 0.4);"
+            >
+              <p class="overline-text mb-3">Selected Expedition</p>
+              <h3 class="font-display text-lg font-light mb-3" style="font-family: var(--font-display); color: var(--color-sand-100);">
+                {{ selectedTripDetails.name }}
+              </h3>
+              <div class="grid grid-cols-2 gap-3 text-sm" style="color: var(--color-sand-200);">
+                <div>
+                  <span class="overline-text block" style="font-size: 0.55rem;">Duration</span>
+                  {{ selectedTripDetails.duration }}
+                </div>
+                <div>
+                  <span class="overline-text block" style="font-size: 0.55rem;">Max Guests</span>
+                  {{ selectedTripDetails.guests }}
+                </div>
+                <div class="col-span-2">
+                  <span class="overline-text block" style="font-size: 0.55rem;">Price</span>
+                  <span style="color: var(--color-gold-400); font-weight: 600;">
+                    {{ selectedTripDetails.priceCurrency }} ${{ selectedTripDetails.price.toLocaleString() }} per person
+                  </span>
+                </div>
+              </div>
+            </div>
 
             <div class="space-y-6">
               <div class="contact-info-item">
@@ -126,6 +259,8 @@ const expeditions = [
           <div class="lg:col-span-2 section-reveal-right">
             <div v-if="!submitted" class="contact-form-wrap">
               <form @submit.prevent="handleSubmit" class="space-y-6">
+                <div v-if="error" class="error-message">{{ error }}</div>
+                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div class="form-group">
                     <label class="form-label">Full Name *</label>
@@ -144,7 +279,14 @@ const expeditions = [
                   </div>
                   <div class="form-group">
                     <label class="form-label">Number of Guests</label>
-                    <input v-model="form.guests" type="number" min="1" max="14" class="form-input" placeholder="e.g. 2" />
+                    <input 
+                      v-model="form.guests" 
+                      type="number" 
+                      min="1" 
+                      :max="selectedTripDetails?.guests || 14" 
+                      class="form-input" 
+                      placeholder="e.g. 2" 
+                    />
                   </div>
                 </div>
 
@@ -152,13 +294,33 @@ const expeditions = [
                   <label class="form-label">Expedition Interest *</label>
                   <select v-model="form.expedition" required class="form-input">
                     <option value="" disabled>Select an expedition</option>
-                    <option v-for="exp in expeditions" :key="exp" :value="exp">{{ exp }}</option>
+                    <option v-for="exp in expeditionOptions" :key="exp.value" :value="exp.value">{{ exp.label }}</option>
                   </select>
                 </div>
 
+                <!-- Date Range (replaces single text input) -->
                 <div class="form-group">
                   <label class="form-label">Preferred Dates</label>
-                  <input v-model="form.dates" type="text" class="form-input" placeholder="e.g. March – April 2025, flexible" />
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <input 
+                        v-model="form.dateFrom" 
+                        type="date" 
+                        class="form-input" 
+                        :min="new Date().toISOString().split('T')[0]"
+                      />
+                      <span class="text-xs opacity-50 mt-1 block" style="color: var(--color-sand-200);">From</span>
+                    </div>
+                    <div>
+                      <input 
+                        v-model="form.dateTo" 
+                        type="date" 
+                        class="form-input" 
+                        :min="form.dateFrom || new Date().toISOString().split('T')[0]"
+                      />
+                      <span class="text-xs opacity-50 mt-1 block" style="color: var(--color-sand-200);">To</span>
+                    </div>
+                  </div>
                 </div>
 
                 <div class="form-group">
@@ -247,6 +409,16 @@ const expeditions = [
   border-color: var(--color-gold-400);
 }
 
+/* Date input dark theme styling */
+input[type="date"].form-input {
+  color-scheme: dark;
+}
+
+input[type="date"].form-input::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(0.8) sepia(1) hue-rotate(180deg) saturate(3);
+  cursor: pointer;
+}
+
 .success-message {
   background: rgba(10, 46, 74, 0.35);
   border: 1px solid rgba(201, 168, 76, 0.3);
@@ -264,5 +436,13 @@ const expeditions = [
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.error-message {
+  background: rgba(224, 123, 90, 0.1);
+  border: 1px solid rgba(224, 123, 90, 0.3);
+  color: #e07b5a;
+  padding: 0.75rem 1rem;
+  font-size: 0.8rem;
 }
 </style>

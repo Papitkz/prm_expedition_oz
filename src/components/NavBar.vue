@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAdminAuth } from '@/composables/useAdminAuth'
+import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
 const { user, isAdmin } = useAdminAuth()
+const { currentTheme, toggleTheme } = useTheme()
 const scrolled = ref(false)
 const mobileOpen = ref(false)
+const isDark = computed(() => currentTheme.value === 'expeditionDark')
 
 // --- Cursor Effects Toggle ---
 const cursorEffectsEnabled = ref(true)
@@ -168,8 +171,9 @@ onUnmounted(() => {
             </svg>
             Login
           </router-link>
-          <router-link to="/contact" class="btn-primary ml-4" style="padding: 10px 24px; font-size: 0.62rem;">
-            Check Availability
+
+          <router-link to="/book" class="btn-primary ml-4" style="padding: 10px 24px; font-size: 0.62rem;">
+            Book Now
           </router-link>
         </nav>
 
@@ -206,8 +210,30 @@ onUnmounted(() => {
       >
         {{ link.label }}
       </router-link>
-      <button class="btn-primary mt-4" @click="navigate('/contact')">
-        Check Availability
+      <button
+        @click="toggleTheme"
+        class="theme-toggle-btn-mobile"
+        aria-label="Toggle dark and light mode"
+      >
+        <svg v-if="isDark" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <span>{{ isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode' }}</span>
+      </button>
+
+      <button class="btn-primary mt-4" @click="navigate('/book')">
+        Book Now
       </button>
       <router-link
         v-if="user && isAdmin"
@@ -513,6 +539,66 @@ onUnmounted(() => {
   color: var(--color-gold-400);
 }
 
+/* Theme Toggle */
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(7, 26, 43, 0.6);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  color: rgba(248, 245, 239, 0.7);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: var(--font-heading);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(201, 168, 76, 0.15);
+  border-color: var(--color-gold-400);
+  color: var(--color-gold-400);
+}
+
+.theme-toggle-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.theme-toggle-btn:hover svg {
+  transform: rotate(15deg);
+}
+
+.theme-label {
+  display: inline;
+}
+
+/* Mobile theme toggle */
+.theme-toggle-btn-mobile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  color: rgba(248, 245, 239, 0.8);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  margin-top: 0.5rem;
+}
+
+.theme-toggle-btn-mobile:hover {
+  background: rgba(201, 168, 76, 0.1);
+  border-color: rgba(201, 168, 76, 0.4);
+  color: var(--color-gold-400);
+}
+
 /* Copyright */
 .copyright-notice {
   color: rgba(248, 245, 239, 0.5);
@@ -545,6 +631,14 @@ onUnmounted(() => {
 
   .control-label {
     display: none;
+  }
+
+  .theme-label {
+    display: none;
+  }
+
+  .theme-toggle-btn {
+    padding: 6px;
   }
 
   .time-text {

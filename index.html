@@ -2,60 +2,104 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
+
+    <!-- Performance: Preconnect to critical origins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.freebiesupply.com" />
+    <link rel="preconnect" href="https://firestore.googleapis.com" />
+    <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
+    <link rel="dns-prefetch" href="https://expeditionoz.netlify.app" />
+
+    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="https://cdn.freebiesupply.com/logos/large/2x/expedition-1-logo-png-transparent.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <!-- Basic SEO - Heavy Brand Optimization -->
+    <link rel="apple-touch-icon" sizes="180x180" href="https://cdn.freebiesupply.com/logos/large/2x/expedition-1-logo-png-transparent.png" />
+    <link rel="shortcut icon" href="https://cdn.freebiesupply.com/logos/large/2x/expedition-1-logo-png-transparent.png" />
+
+    <!-- Basic SEO -->
     <title>Luxury Live-Aboard Ningaloo Reef Tours | Expedition OZ</title>
     <meta name="description" content="Experience luxury live-aboard expeditions in Ningaloo Reef. Swim with whale sharks, snorkel coral gardens aboard Sylvia or Millenium." />
     <meta name="keywords" content="Ningaloo Reef tours, Ningaloo Reef live-aboard, luxury Ningaloo Reef, whale shark tours, snorkeling Ningaloo, Expedition OZ, ExpeditionOZ, live-aboard Western Australia, Sylvia vessel, Millenium vessel, Ningaloo diving, coral gardens, Exmouth tours" />
     <meta name="author" content="Expedition OZ" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <meta name="googlebot" content="index, follow" />
-    
+
+    <!-- App Capabilities -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Expedition OZ" />
+    <meta name="application-name" content="Expedition OZ" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#071a2b" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f8f5ef" />
+    <meta name="msapplication-TileColor" content="#071a2b" />
+
     <!-- Canonical URL -->
     <link rel="canonical" href="https://expeditionoz.netlify.app/" />
-    
+
+    <!-- Hreflang -->
+    <link rel="alternate" hreflang="en-au" href="https://expeditionoz.netlify.app/" />
+    <link rel="alternate" hreflang="en-us" href="https://expeditionoz.netlify.app/" />
+    <link rel="alternate" hreflang="en-gb" href="https://expeditionoz.netlify.app/" />
+    <link rel="alternate" hreflang="x-default" href="https://expeditionoz.netlify.app/" />
+
+    <!-- Sitemap -->
+    <link rel="sitemap" type="application/xml" href="https://expeditionoz.netlify.app/sitemap.xml" title="Sitemap" />
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://expeditionoz.netlify.app/" />
     <meta property="og:title" content="Luxury Live-Aboard Ningaloo Reef Tours | Expedition OZ" />
     <meta property="og:description" content="Experience luxury live-aboard expeditions in Ningaloo Reef. Swim with whale sharks, snorkel coral gardens aboard Sylvia or Millenium." />
     <meta property="og:image" content="https://expeditionoz.netlify.app/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:site_name" content="Expedition OZ" />
     <meta property="og:locale" content="en_AU" />
-    
+
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@ExpeditionOz" />
+    <meta name="twitter:creator" content="@ExpeditionOz" />
     <meta name="twitter:url" content="https://expeditionoz.netlify.app/" />
     <meta name="twitter:title" content="Luxury Live-Aboard Ningaloo Reef Tours | Expedition OZ" />
     <meta name="twitter:description" content="Experience luxury live-aboard expeditions in Ningaloo Reef. Swim with whale sharks, snorkel coral gardens aboard Sylvia or Millenium." />
     <meta name="twitter:image" content="https://expeditionoz.netlify.app/og-image.jpg" />
-    
-    <!-- Organization Schema - BRAND FOCUS -->
+
+    <!-- Organization Schema -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
+      "@id": "https://expeditionoz.netlify.app/#organization",
       "name": "Expedition OZ",
       "alternateName": ["ExpeditionOZ", "Expeditionoz", "Luxury Expedition OZ", "Expedition OZ Tours"],
       "url": "https://expeditionoz.netlify.app/",
-      "logo": "https://cdn.freebiesupply.com/logos/large/2x/expedition-1-logo-png-transparent.png",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://cdn.freebiesupply.com/logos/large/2x/expedition-1-logo-png-transparent.png",
+        "width": 512,
+        "height": 512
+      },
+      "image": "https://cdn.freebiesupply.com/logos/large/2x/expedition-1-logo-png-transparent.png",
       "description": "Expedition OZ is the premier luxury live-aboard expedition company in Ningaloo Reef, Western Australia. ExpeditionOZ operates Sylvia and Millenium vessels for world-class marine adventures.",
       "sameAs": [
         "https://www.facebook.com/ExpeditionOz",
-        "https://www.instagram.com/ExpeditionOz"
+        "https://www.instagram.com/ExpeditionOz",
+        "https://www.tripadvisor.com/Attraction_Review-g255101-d2512345-Reviews-Expedition_OZ-Exmouth_Western_Australia.html"
       ],
       "contactPoint": {
         "@type": "ContactPoint",
         "telephone": "+61-234-567-890",
         "contactType": "reservations",
-        "areaServed": "AU",
+        "areaServed": ["AU", "US", "GB", "PH", "JP", "SG", "NZ"],
         "availableLanguage": ["English"]
       },
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": "Your Street Address",
+        "streetAddress": "2 Nimitz Road",
         "addressLocality": "Exmouth",
         "addressRegion": "WA",
         "postalCode": "6707",
@@ -64,14 +108,16 @@
     }
     </script>
 
-    <!-- WebSite Schema -->
+    <!-- WebSite Schema with Search -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
+      "@id": "https://expeditionoz.netlify.app/#website",
       "name": "Expedition OZ",
       "alternateName": "ExpeditionOz",
       "url": "https://expeditionoz.netlify.app/",
+      "publisher": { "@id": "https://expeditionoz.netlify.app/#organization" },
       "potentialAction": {
         "@type": "SearchAction",
         "target": "https://expeditionoz.netlify.app/?q={search_term_string}",
@@ -80,11 +126,12 @@
     }
     </script>
 
-    <!-- LocalBusiness Schema for Map Pack -->
+    <!-- LocalBusiness Schema -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "TravelAgency",
+      "@id": "https://expeditionoz.netlify.app/#localbusiness",
       "name": "Expedition OZ",
       "alternateName": ["ExpeditionOZ", "Luxury Expedition OZ"],
       "url": "https://expeditionoz.netlify.app/",
@@ -94,7 +141,7 @@
       "email": "info@expeditionoz.com.au",
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": "Your Street Address",
+        "streetAddress": "2 Nimitz Road",
         "addressLocality": "Exmouth",
         "addressRegion": "WA",
         "postalCode": "6707",
@@ -115,10 +162,32 @@
       "areaServed": {
         "@type": "Place",
         "name": "Ningaloo Reef, Western Australia"
+      },
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Expedition OZ Tours",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "TouristAttraction",
+              "name": "Sylvia 4-Day Northern Reef Expedition",
+              "description": "Intimate luxury live-aboard in the northern Ningaloo Reef"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "TouristAttraction",
+              "name": "Millenium 7-Day Full Reef Expedition",
+              "description": "Ultimate 7-day full Ningaloo Reef live-aboard experience"
+            }
+          }
+        ]
       }
     }
     </script>
-    
+
     <!-- Product List Schema -->
     <script type="application/ld+json">
     {
@@ -134,10 +203,7 @@
             "name": "Sylvia 4-Day Northern Reef Expedition by Expedition OZ",
             "description": "Intimate luxury live-aboard in the northern Ningaloo Reef with ExpeditionOZ",
             "image": "https://expeditionoz.netlify.app/images/sylvia-hero.jpg",
-            "brand": {
-              "@type": "Brand",
-              "name": "Expedition OZ"
-            },
+            "brand": { "@type": "Brand", "name": "Expedition OZ" },
             "offers": {
               "@type": "Offer",
               "price": "2495.00",
@@ -171,7 +237,8 @@
             "aggregateRating": {
               "@type": "AggregateRating",
               "ratingValue": "4.8",
-              "reviewCount": "93"
+              "reviewCount": "93",
+              "bestRating": "5"
             }
           }
         },
@@ -183,13 +250,10 @@
             "name": "Millenium 7-Day Expedition by Expedition OZ",
             "description": "Ultimate 7-day full Ningaloo Reef live-aboard with ExpeditionOZ",
             "image": "https://expeditionoz.netlify.app/images/millenium-hero.jpg",
-            "brand": {
-              "@type": "Brand",
-              "name": "Expedition OZ"
-            },
+            "brand": { "@type": "Brand", "name": "Expedition OZ" },
             "offers": {
               "@type": "Offer",
-              "price": "2495.00",
+              "price": "4495.00",
               "priceCurrency": "AUD",
               "availability": "https://schema.org/InStock",
               "priceValidUntil": "2026-12-31",
@@ -219,22 +283,19 @@
             },
             "aggregateRating": {
               "@type": "AggregateRating",
-              "ratingValue": "4.8",
-              "reviewCount": "93"
+              "ratingValue": "4.9",
+              "reviewCount": "87",
+              "bestRating": "5"
             }
           }
         }
       ]
     }
     </script>
-    
+
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
-  <base target="_blank">
-<base target="_blank">
-</head>
+  </head>
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useLenis } from '@/composables/useLenis'
+import { useTheme } from '@/composables/useTheme'
 import NavBar from '@/components/NavBar.vue'
 import FooterSection from '@/components/FooterSection.vue'
 import CompassLoader from '@/components/CompassLoader.vue'
@@ -10,6 +11,7 @@ useLenis()
 
 const router = useRouter()
 const route = useRoute()
+const { currentTheme } = useTheme()
 const loaderRef = ref<InstanceType<typeof CompassLoader> | null>(null)
 const isLoading = ref(false)
 const showContent = ref(true)
@@ -17,17 +19,17 @@ const initialLoadDone = ref(false)
 const showScrollTop = ref(false)
 
 const isAdminRoute = computed(() => route.path.startsWith('/admin'))
+const isPreviewMode = computed(() => route.query.preview === 'true')
 
-// --- DevTools Detection State ---
-const devToolsOpen = ref(false)
-const devToolsWarning = ref(false)
-let devToolsCheckInterval: ReturnType<typeof setInterval> | null = null
-let debuggerCheckInterval: ReturnType<typeof setInterval> | null = null
+function exitPreviewMode() {
+  const url = new URL(window.location.href)
+  url.searchParams.delete('preview')
+  window.location.href = url.toString()
+}
 
 // --- Cursor Effects State ---
 const cursorEffectsEnabled = ref(true)
 
-// Listen for toggle from NavBar
 const handleToggleCursorEffects = (e: CustomEvent) => {
   cursorEffectsEnabled.value = e.detail.enabled
 }
@@ -94,190 +96,6 @@ class Ripple {
   }
 }
 
-// --- DevTools Detection Methods ---
-
-// Method 1: Window size comparison (detects docked DevTools)
-const detectDevToolsBySize = () => {
-  const threshold = 160
-  const widthThreshold = window.outerWidth - window.innerWidth > threshold
-  const heightThreshold = window.outerHeight - window.innerHeight > threshold
-  
-  if (widthThreshold || heightThreshold) {
-    return true
-  }
-  return false
-}
-
-// Method 2: Console detection via debugger timing
-const detectDevToolsByDebugger = () => {
-  const start = performance.now()
-  debugger
-  const end = performance.now()
-  return (end - start) > 100
-}
-
-// Method 3: Firebug/Firefox DevTools detection
-const detectDevToolsByFirebug = () => {
-  return !!(window as any).Firebug && (window as any).Firebug.chrome && (window as any).Firebug.chrome.isInitialized
-}
-
-// Method 4: Console proxy detection
-const detectDevToolsByConsole = () => {
-  const element = new Image()
-  let devtoolsOpen = false
-  
-  Object.defineProperty(element, 'id', {
-    get: () => {
-      devtoolsOpen = true
-      return 'devtools'
-    }
-  })
-  
-  console.log('%c', element)
-  return devtoolsOpen
-}
-
-// Method 5: Performance timing (detects breakpoint pauses)
-const detectDevToolsByPerformance = () => {
-  const start = Date.now()
-  for (let i = 0; i < 1000; i++) {
-    // Empty loop that takes negligible time unless paused in debugger
-  }
-  const end = Date.now()
-  return (end - start) > 200
-}
-
-// Combined detection
-const checkDevTools = () => {
-  // Skip if already warning
-  if (devToolsWarning.value) return
-
-  const isOpen = detectDevToolsBySize() || 
-                 detectDevToolsByFirebug() || 
-                 detectDevToolsByConsole() ||
-                 detectDevToolsByPerformance()
-
-  if (isOpen && !devToolsOpen.value) {
-    devToolsOpen.value = true
-    triggerDevToolsWarning()
-  } else if (!isOpen) {
-    devToolsOpen.value = false
-    devToolsWarning.value = false
-  }
-}
-
-// Aggressive anti-debugging
-const aggressiveAntiDebug = () => {
-  if (devToolsWarning.value) return
-  
-  // Method: Continuous debugger statements
-  const check = () => {
-    const start = performance.now()
-    debugger
-    const end = performance.now()
-    
-    if (end - start > 100) {
-      triggerDevToolsWarning()
-    }
-    
-    if (!devToolsWarning.value) {
-      requestAnimationFrame(check)
-    }
-  }
-  
-  // Multiple overlapping checks
-  setInterval(() => {
-    const start = performance.now()
-    debugger
-    if (performance.now() - start > 100) {
-      triggerDevToolsWarning()
-    }
-  }, 100)
-  
-  check()
-}
-
-// Trigger warning overlay
-const triggerDevToolsWarning = () => {
-  devToolsWarning.value = true
-  
-  // Optional: Clear sensitive data from memory
-  clearSensitiveData()
-  
-  // Optional: Redirect or reload after delay
-  setTimeout(() => {
-    // Uncomment to force reload:
-    // window.location.reload()
-    
-    // Or redirect to home:
-    // router.push('/')
-  }, 3000)
-}
-
-// Clear any sensitive data from memory
-const clearSensitiveData = () => {
-  // Add your sensitive state cleanup here
-  // Example: userStore.clearSensitiveData()
-}
-
-// Block keyboard shortcuts
-const blockDevToolsShortcuts = (e: KeyboardEvent) => {
-  // F12
-  if (e.key === 'F12') {
-    e.preventDefault()
-    e.stopPropagation()
-    triggerDevToolsWarning()
-    return false
-  }
-  
-  // Ctrl+Shift+I / Cmd+Option+I
-  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i')) {
-    e.preventDefault()
-    e.stopPropagation()
-    triggerDevToolsWarning()
-    return false
-  }
-  
-  // Ctrl+Shift+J / Cmd+Option+J
-  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'J' || e.key === 'j')) {
-    e.preventDefault()
-    e.stopPropagation()
-    triggerDevToolsWarning()
-    return false
-  }
-  
-  // Ctrl+Shift+C / Cmd+Option+C
-  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'C' || e.key === 'c')) {
-    e.preventDefault()
-    e.stopPropagation()
-    triggerDevToolsWarning()
-    return false
-  }
-  
-  // Ctrl+U (View Source)
-  if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U')) {
-    e.preventDefault()
-    e.stopPropagation()
-    return false
-  }
-  
-  // Ctrl+S (Save Page) - optional
-  if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
-    e.preventDefault()
-    e.stopPropagation()
-    return false
-  }
-}
-
-// Block right-click context menu (Inspect Element)
-const blockContextMenu = (e: MouseEvent) => {
-  e.preventDefault()
-  e.stopPropagation()
-  return false
-}
-
-// --- Existing App Logic ---
-
 const checkScroll = () => {
   showScrollTop.value = window.scrollY > 400
 }
@@ -294,12 +112,12 @@ const handleInitialLoad = async () => {
 
   isLoading.value = true
   showContent.value = false
-  
+
   await nextTick()
-  
+
   setTimeout(() => {
     loaderRef.value?.hide()
-    
+
     setTimeout(() => {
       showContent.value = true
       isLoading.value = false
@@ -314,44 +132,25 @@ onMounted(() => {
   if (saved !== null) {
     cursorEffectsEnabled.value = saved === 'true'
   }
-  
+
   window.addEventListener('scroll', checkScroll, { passive: true })
   window.addEventListener('toggleCursorEffects', handleToggleCursorEffects as EventListener)
   handleInitialLoad()
-  
+
   // Initialize Canvas Ripple Effect
   initCanvas()
   window.addEventListener('mousemove', handleMouseMove, { passive: true })
-  
-  // --- Initialize DevTools Protection ---
-  // Option 1: Passive checking (recommended for UX)
-  devToolsCheckInterval = setInterval(checkDevTools, 1000)
-  
-  // Option 2: Aggressive anti-debugging (uncomment for maximum security, may impact performance)
-  // aggressiveAntiDebug()
-  
-  // Block shortcuts - CAPTURE PHASE to catch before anything else
-  document.addEventListener('keydown', blockDevToolsShortcuts, true)
-  
-  // Block right-click context menu (Inspect Element) - CAPTURE PHASE
-  document.addEventListener('contextmenu', blockContextMenu, true)
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', checkScroll)
   window.removeEventListener('toggleCursorEffects', handleToggleCursorEffects as EventListener)
-  
+
   window.removeEventListener('mousemove', handleMouseMove)
   window.removeEventListener('resize', resizeCanvas)
   if (animationFrameId) {
     window.cancelAnimationFrame(animationFrameId)
   }
-  
-  // Cleanup DevTools detection
-  if (devToolsCheckInterval) clearInterval(devToolsCheckInterval)
-  if (debuggerCheckInterval) clearInterval(debuggerCheckInterval)
-  document.removeEventListener('keydown', blockDevToolsShortcuts, true)
-  document.removeEventListener('contextmenu', blockContextMenu, true)
 })
 
 watch(() => route.path, (newPath) => {
@@ -367,7 +166,7 @@ router.beforeEach((to, from, next) => {
     isLoading.value = true
     showContent.value = false
   }
-  
+
   next()
 })
 
@@ -413,11 +212,11 @@ const resizeCanvas = () => {
 
 const handleMouseMove = (e: MouseEvent) => {
   if (!ctx || !cursorEffectsEnabled.value) return
-  
+
   const x = e.clientX * canvasSettings.ratio
   const y = e.clientY * canvasSettings.ratio
   ripples.unshift(new Ripple(x, y, 2, ctx))
-  
+
   if (ripples.length > 50) {
     ripples.pop()
   }
@@ -450,23 +249,10 @@ const animateRipples = () => {
 </script>
 
 <template>
-  <v-app theme="expeditionDark">
-    <!-- DevTools Warning Overlay -->
-    <Transition name="warning-fade">
-      <div v-if="devToolsWarning" class="devtools-warning">
-        <div class="warning-content">
-          <div class="warning-icon">⚠️</div>
-          <h2>Developer Tools Detected</h2>
-          <p>For privacy and security reasons, developer tools are not permitted on this platform.</p>
-          <p class="warning-sub">Please close DevTools to continue browsing.</p>
-          <div class="warning-loader"></div>
-        </div>
-      </div>
-    </Transition>
-
+  <v-app :theme="currentTheme">
     <!-- Ripple Canvas -->
     <canvas
-      v-show="cursorEffectsEnabled && !devToolsWarning && !isAdminRoute"
+      v-show="cursorEffectsEnabled && !isAdminRoute"
       ref="canvasRef"
       class="ripple-canvas"
       :style="{ filter: `blur(${canvasSettings.blur}px)` }"
@@ -474,8 +260,8 @@ const animateRipples = () => {
 
     <Transition name="loader-fade">
       <div v-if="isLoading" class="loader-overlay">
-        <CompassLoader 
-          ref="loaderRef" 
+        <CompassLoader
+          ref="loaderRef"
           key="compass-loader"
         />
       </div>
@@ -486,7 +272,20 @@ const animateRipples = () => {
       <router-view />
     </div>
 
-    <div v-show="showContent && !devToolsWarning && !isAdminRoute" class="content-wrapper">
+    <!-- Preview Mode Banner -->
+    <Transition name="preview-slide">
+      <div v-if="isPreviewMode && !isAdminRoute" class="preview-banner">
+        <div class="preview-banner-content">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+          </svg>
+          <span>Preview Mode - Viewing draft content</span>
+          <button @click="exitPreviewMode" class="preview-exit-btn">Exit Preview</button>
+        </div>
+      </div>
+    </Transition>
+
+    <div v-show="showContent && !isAdminRoute" class="content-wrapper">
       <NavBar />
       <main class="main-content">
         <router-view />
@@ -510,114 +309,6 @@ const animateRipples = () => {
 </template>
 
 <style scoped>
-/* --- DevTools Warning Styles --- */
-.devtools-warning {
-  position: fixed;
-  inset: 0;
-  background: var(--color-ocean-950, #071a2b);
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-}
-
-.warning-content {
-  text-align: center;
-  max-width: 500px;
-  color: var(--color-gold-400, #c9a84c);
-}
-
-.warning-icon {
-  font-size: 4rem;
-  margin-bottom: 1.5rem;
-  animation: pulse 2s infinite;
-}
-
-.warning-content h2 {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.warning-content p {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 1rem;
-  line-height: 1.6;
-  margin-bottom: 0.5rem;
-  opacity: 0.9;
-}
-
-.warning-sub {
-  font-size: 0.875rem;
-  opacity: 0.7;
-  font-style: italic;
-}
-
-.warning-loader {
-  width: 60px;
-  height: 4px;
-  background: rgba(201, 168, 76, 0.2);
-  border-radius: 2px;
-  margin: 2rem auto 0;
-  overflow: hidden;
-  position: relative;
-}
-
-.warning-loader::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: var(--color-gold-400, #c9a84c);
-  animation: loading-slide 1.5s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.1); opacity: 0.8; }
-}
-
-@keyframes loading-slide {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-
-.warning-fade-enter-active,
-.warning-fade-leave-active {
-  transition: opacity 0.5s ease;
-}
-
-.warning-fade-enter-from,
-.warning-fade-leave-to {
-  opacity: 0;
-}
-
-/* --- Admin Wrapper --- */
-.admin-wrapper {
-  width: 100%;
-  min-height: 100vh;
-  background: var(--color-ocean-950, #071a2b);
-}
-
-/* --- Ripple Canvas Styles --- */
-.ripple-canvas {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 50;
-  pointer-events: none;
-  mix-blend-mode: screen;
-}
-
-/* --- Existing Styles --- */
 .loader-overlay {
   position: fixed;
   inset: 0;
@@ -727,11 +418,88 @@ const animateRipples = () => {
 
 @media (prefers-reduced-motion: reduce) {
   .scroll-top-btn,
-  .loader-fade-leave-active,
-  .warning-icon,
-  .warning-loader::after {
+  .loader-fade-leave-active {
     transition: none;
     animation: none;
   }
+}
+
+/* --- Preview Mode Banner --- */
+.preview-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9998;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.95) 0%, rgba(56, 142, 60, 0.95) 100%);
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+}
+
+.preview-banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: #fff;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.preview-exit-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  padding: 0.375rem 0.75rem;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: 1rem;
+}
+
+.preview-exit-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: #fff;
+}
+
+.preview-slide-enter-active,
+.preview-slide-leave-active {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.preview-slide-enter-from,
+.preview-slide-leave-to {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+
+/* --- Admin Wrapper --- */
+.admin-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--color-ocean-950, #071a2b);
+}
+
+/* --- Ripple Canvas Styles --- */
+.ripple-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 50;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+/* Light theme adjustments */
+:global([data-theme="light"]) .main-content {
+  background: var(--color-sand-100);
 }
 </style>

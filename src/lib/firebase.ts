@@ -1,7 +1,34 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app'
-import { getAuth, type Auth } from 'firebase/auth'
+import { getAuth, GoogleAuthProvider, RecaptchaVerifier, type Auth } from 'firebase/auth'
 import { getFirestore, type Firestore } from 'firebase/firestore'
 import { getStorage, type FirebaseStorage } from 'firebase/storage'
+
+// Auth providers
+export const googleProvider = new GoogleAuthProvider()
+googleProvider.setCustomParameters({ prompt: 'select_account' })
+
+// reCAPTCHA verifier for phone auth (will be initialized when needed)
+let recaptchaVerifier: RecaptchaVerifier | null = null
+
+export function getRecaptchaVerifier(containerId: string): RecaptchaVerifier {
+  const auth = getFirebaseAuth()
+  if (!recaptchaVerifier) {
+    recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
+      size: 'invisible',
+      callback: () => {
+        // reCAPTCHA solved
+      },
+    })
+  }
+  return recaptchaVerifier
+}
+
+export function clearRecaptchaVerifier() {
+  if (recaptchaVerifier) {
+    recaptchaVerifier.clear()
+    recaptchaVerifier = null
+  }
+}
 
 const FIREBASE_CONFIG = {
   apiKey: 'AIzaSyC7jSYOGy5_ZbeZCVkPC1rCZ_Z8abZuhy0',

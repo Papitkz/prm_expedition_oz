@@ -11,6 +11,9 @@ interface SEOConfig {
   keywords?: string[]
   author?: string
   jsonLd?: Record<string, any> | Record<string, any>[]
+  articlePublishedAt?: string
+  articleModifiedAt?: string
+  articleTags?: string[]
 }
 
 const SITE_NAME = 'Expedition OZ'
@@ -25,6 +28,7 @@ const DEFAULT_DESCRIPTIONS: Record<string, string> = {
   '/about': 'Learn about Expedition OZ — luxury live-aboard expeditions in Ningaloo Reef since 2018. Our mission, crew, and commitment to sustainable marine tourism.',
   '/contact': 'Contact Expedition OZ for bookings and inquiries. Phone, email, or WhatsApp. Exmouth, Western Australia. Response within 24 hours.',
   '/faq': 'FAQ — What to pack, seasickness, diving certification, payment terms, cancellation policy, best time to visit Ningaloo Reef. All your questions answered.',
+  '/blog': 'Stories, guides, and insights from Ningaloo Reef. Read about whale shark encounters, marine conservation, and life aboard our luxury vessels.',
 }
 
 export function buildOrganizationSchema() {
@@ -83,6 +87,45 @@ export function buildFAQSchema(questions: { q: string; a: string }[]) {
   }
 }
 
+export function buildArticleSchema(config: {
+  title: string
+  description: string
+  image: string
+  url: string
+  publishedAt: string
+  modifiedAt?: string
+  author?: string
+  tags?: string[]
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: config.title,
+    description: config.description,
+    image: config.image,
+    url: config.url,
+    datePublished: config.publishedAt,
+    dateModified: config.modifiedAt || config.publishedAt,
+    author: {
+      '@type': 'Person',
+      name: config.author || 'Expedition OZ',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Expedition OZ',
+      logo: {
+        '@type': 'ImageObject',
+        url: `${SITE_URL}/logo.png`,
+      },
+    },
+    keywords: config.tags?.join(', ') || 'Ningaloo Reef, whale sharks, Western Australia',
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': config.url,
+    },
+  }
+}
+
 export function buildProductSchema(config: {
   name: string
   description: string
@@ -131,6 +174,7 @@ export function useSEO(config: SEOConfig = {}) {
 
   useSeoMeta({
     title: () => title,
+    titleTemplate: (t) => t === SITE_NAME ? `${SITE_NAME} | Luxury Meets Nature` : t as string,
     description: () => description,
     ogTitle: () => title,
     ogDescription: () => description,
@@ -139,26 +183,50 @@ export function useSEO(config: SEOConfig = {}) {
     ogImageHeight: 630,
     ogImageType: 'image/jpeg',
     ogUrl: () => canonical,
-    ogType: 'website',
+    ogType: ogType as 'website' | 'article',
     ogSiteName: SITE_NAME,
     ogLocale: 'en_AU',
     twitterCard: 'summary_large_image',
     twitterTitle: () => title,
     twitterDescription: () => description,
     twitterImage: () => ogImage,
+    twitterSite: '@ExpeditionOz',
+    twitterCreator: '@ExpeditionOz',
+    robots: () => robots,
+    googlebot: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
+    bingbot: 'index, follow',
+    author: () => config.author || 'Expedition OZ',
+    keywords: () => keywords,
+    articlePublishedTime: config.articlePublishedAt,
+    articleModifiedTime: config.articleModifiedAt,
+    articleAuthor: config.author ? [config.author] : undefined,
+    articleTag: config.articleTags,
+    articleSection: 'Travel',
   })
 
   useHead({
-    htmlAttrs: { lang: 'en-AU' },
+    htmlAttrs: { lang: 'en-AU', dir: 'ltr' },
     link: [
       { rel: 'canonical', href: canonical },
       { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'anonymous' },
+      { rel: 'dns-prefetch', href: 'https://cdn.freebiesupply.com' },
+      { rel: 'alternate', hreflang: 'en-au', href: canonical },
+      { rel: 'alternate', hreflang: 'x-default', href: `${SITE_URL}${path}` },
+      { rel: 'sitemap', type: 'application/xml', href: `${SITE_URL}/sitemap.xml`, title: 'Sitemap' },
     ],
     meta: [
       { name: 'author', content: config.author || 'Expedition OZ' },
-      { name: 'theme-color', content: '#071a2b' },
-      { name: 'keywords', content: keywords },
-      { name: 'robots', content: robots },
+      { name: 'theme-color', content: '#071a2b', media: '(prefers-color-scheme: dark)' },
+      { name: 'theme-color', content: '#f8f5ef', media: '(prefers-color-scheme: light)' },
+      { name: 'msapplication-TileColor', content: '#071a2b' },
+      { name: 'msapplication-config', content: '/browserconfig.xml' },
+      { name: 'apple-mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+      { name: 'apple-mobile-web-app-title', content: SITE_NAME },
+      { name: 'application-name', content: SITE_NAME },
+      { name: 'format-detection', content: 'telephone=no' },
+      { property: 'fb:app_id', content: '1234567890' },
     ],
     script: () => {
       const schemas: Record<string, any>[] = []
@@ -166,6 +234,20 @@ export function useSEO(config: SEOConfig = {}) {
       if (config.jsonLd) {
         const ld = Array.isArray(config.jsonLd) ? config.jsonLd : [config.jsonLd]
         schemas.push(...ld)
+      }
+
+      // Add article schema if this is an article type
+      if (config.type === 'article' && config.articlePublishedAt) {
+        schemas.push(buildArticleSchema({
+          title: config.title || 'Blog Post',
+          description: description,
+          image: ogImage,
+          url: canonical,
+          publishedAt: config.articlePublishedAt,
+          modifiedAt: config.articleModifiedAt,
+          author: config.author,
+          tags: config.articleTags,
+        }))
       }
 
       schemas.push(buildOrganizationSchema())
