@@ -50,7 +50,14 @@ const diningImages = computed(() =>
 )
 
 // Fallback itinerary data
-const fallbackItinerary = [
+interface ItineraryItem {
+  day: string
+  title: string
+  description: string
+  imageUrl: string
+}
+
+const fallbackItinerary: ItineraryItem[] = [
   {
     day: 'Day 1',
     title: 'Departure & First Dive',
@@ -80,7 +87,15 @@ const fallbackItinerary = [
 // Itinerary — CMS or fallback
 const itinerary = computed(() => {
   const cmsData = cms.getSection('itinerary')
-  const source = cmsData.length > 0 ? cmsData : fallbackItinerary
+  // Ensure CMS data has the ItineraryItem shape; fallback if empty
+  const source: ItineraryItem[] = cmsData.length > 0 
+    ? cmsData.map((item: any) => ({
+        day: item.day || '',
+        title: item.title || '',
+        description: item.description || '',
+        imageUrl: item.imageUrl || '',
+      }))
+    : fallbackItinerary
   return source.map((item, i) => ({
     day: item.day || `Day ${i + 1}`,
     title: item.title || `Day ${i + 1}`,
@@ -479,7 +494,7 @@ useSEO({
       <div class="absolute inset-0 opacity-20">
         <template v-if="cms.getImageUrl('routeMap', 0)">
           <img 
-            :src="cms.getImageUrl('routeMap', 0)"
+            :src="cms.getImageUrl('routeMap', 0) || undefined"
             alt="Ningaloo Reef aerial view"
             class="w-full h-full object-cover"
           />
