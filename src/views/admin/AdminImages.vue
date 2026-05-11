@@ -299,14 +299,27 @@ const activeSectionDef = computed(() =>
   activeComponentDef.value?.sections.find((s) => s.section === activeSection.value)
 )
 
-// Build slot items by merging registry + CMS data + staged state
-const slotItems = computed((): (ComponentContentItem & { 
+// Unified slot item type for the entire component
+interface SlotItem {
+  id: string | undefined
+  component: string
+  section: string
   slotIndex: number
+  imageUrl: string | null
+  alt: string
+  title: string
+  description: string
+  caption: string
+  category: string
+  mediaType: 'image' | 'video'
   label: string
   defaultMediaType: 'image' | 'video'
   isSeeded: boolean
   staged: StagedSlot
-})[] => {
+}
+
+// Build slot items by merging registry + CMS data + staged state
+const slotItems = computed((): SlotItem[] => {
   if (!activeComponentDef.value || !activeSectionDef.value) return []
 
   return activeSectionDef.value.slots.map((slot) => {
@@ -333,7 +346,6 @@ const slotItems = computed((): (ComponentContentItem & {
     )
 
     return {
-      ...cmsItem,
       id: cmsItem?.id,
       component: activeComponent.value,
       section: activeSection.value,
@@ -380,7 +392,7 @@ async function loadAll() {
   loading.value = false
 }
 
-async function handleFileUpload(event: Event, slot: ReturnType<typeof slotItems.value>[number]) {
+async function handleFileUpload(event: Event, slot: SlotItem) {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
@@ -398,7 +410,7 @@ async function handleFileUpload(event: Event, slot: ReturnType<typeof slotItems.
   target.value = ''
 }
 
-async function saveSlot(slot: ReturnType<typeof slotItems.value>[number]) {
+async function saveSlot(slot: SlotItem) {
   slot.staged.uploading = true
   try {
     const data = {
@@ -432,13 +444,13 @@ async function saveSlot(slot: ReturnType<typeof slotItems.value>[number]) {
   slot.staged.uploading = false
 }
 
-function removeImage(slot: ReturnType<typeof slotItems.value>[number]) {
+function removeImage(slot: SlotItem) {
   slot.staged.editImageUrl = ''
   slot.staged.hasUnsavedChanges = true
   toast.info('Image removed from preview. Click Save to confirm.')
 }
 
-async function moveSlot(slot: ReturnType<typeof slotItems.value>[number], direction: 'up' | 'down') {
+async function moveSlot(slot: SlotItem, direction: 'up' | 'down') {
   const siblings = slotItems.value
   const idx = siblings.findIndex((s) => s.slotIndex === slot.slotIndex)
   if (idx === -1) return
@@ -466,7 +478,7 @@ async function moveSlot(slot: ReturnType<typeof slotItems.value>[number], direct
   }
 }
 
-async function deleteSlot(slot: ReturnType<typeof slotItems.value>[number]) {
+async function deleteSlot(slot: SlotItem) {
   if (!slot.id) return
   if (!confirm('Delete this slot from CMS? This will remove the image and all content.')) return
 
