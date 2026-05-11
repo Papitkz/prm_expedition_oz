@@ -83,6 +83,7 @@ onMounted(async () => {
       subtitle="Discover"
       description="Choose your Ningaloo Reef adventure — from intimate 4-day escapes to the ultimate 7-day expedition"
       image=""
+      image-alt="Ningaloo Reef at sunset"
       height="60vh"
     >
       <template #default>
