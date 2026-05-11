@@ -183,12 +183,12 @@ onMounted(async () => {
                   'blog-gallery-single': galleryOnly.length === 1,
                   'blog-gallery-featured': index === 0 && galleryOnly.length > 1
                 }"
-                @click="openLightbox(index + (blog.coverImageUrl || blog.coverVideoUrl ? 1 : 0))"
+                @click="openLightbox(Number(index) + (blog.coverImageUrl || blog.coverVideoUrl ? 1 : 0))"
               >
                 <img
                   v-if="item.type === 'image'"
                   :src="item.url"
-                  :alt="item.caption || `Gallery item ${index + 1}`"
+                  :alt="item.caption || `Gallery item ${Number(index) + 1}`"
                   loading="lazy"
                 />
                 <div v-else class="relative">
