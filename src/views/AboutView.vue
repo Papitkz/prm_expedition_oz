@@ -84,6 +84,7 @@ onMounted(async () => {
       title-italic="Meets the Ocean"
       subtitle="Expedition OZ was founded by ocean lovers who refused to choose between adventure and luxury."
       image=""
+      image-alt="Sunset over Ningaloo Reef Western Australia"
       height="60vh"
     >
       <template #default>
